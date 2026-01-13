@@ -64,7 +64,14 @@
                     <h2 class="text-3xl font-serif text-gray-900 mb-2">User Management</h2>
                     <p class="text-gray-500">View all registered users and their status.</p>
                 </div>
-                <button @click="fetchUsers" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 text-sm font-bold">Refresh</button>
+                <div class="flex items-center gap-4">
+                    <select v-model="pageSize" @change="fetchUsers('first')" class="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:ring-black focus:border-black">
+                        <option :value="10">10 per page</option>
+                        <option :value="20">20 per page</option>
+                        <option :value="50">50 per page</option>
+                    </select>
+                    <button @click="fetchUsers('first')" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 text-sm font-bold">Refresh</button>
+                </div>
             </header>
 
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -104,6 +111,27 @@
                         </tr>
                     </tbody>
                 </table>
+
+                <!-- Pagination Footer -->
+                <div class="p-4 border-t border-gray-100 flex justify-between items-center bg-gray-50">
+                    <span class="text-xs text-gray-500 font-bold uppercase">Page {{ pageNumber }}</span>
+                    <div class="flex gap-2">
+                        <button
+                            @click="fetchUsers('prev')"
+                            :disabled="pageNumber === 1"
+                            class="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Previous
+                        </button>
+                        <button
+                            @click="fetchUsers('next')"
+                            :disabled="userList.length < pageSize"
+                            class="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -275,7 +303,7 @@
 </template>
 
 <script setup>
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, setDoc } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, setDoc, startAfter, endBefore, limit, limitToLast } from 'firebase/firestore'
 import { 
     LayoutDashboard, ExternalLink, LogOut, Check,
     Users, Briefcase, Plus, User 
@@ -295,11 +323,43 @@ const uploading = ref(false)
 
 // --- USERS LOGIC ---
 const userList = ref([])
-const fetchUsers = async () => {
+// Pagination State
+const pageSize = ref(10)
+const lastVisible = ref(null)
+const firstVisible = ref(null)
+const pageNumber = ref(1)
+
+const fetchUsers = async (direction = 'first') => {
+    // Handle Event object from click listeners
+    if (typeof direction !== 'string') direction = 'first'
+
     try {
-        const q = query(collection($db, 'users'), orderBy('createdAt', 'desc'))
+        let q = query(collection($db, 'users'), orderBy('createdAt', 'desc'))
+
+        if (direction === 'next' && lastVisible.value) {
+            q = query(q, startAfter(lastVisible.value), limit(pageSize.value))
+        } else if (direction === 'prev' && firstVisible.value) {
+            q = query(q, endBefore(firstVisible.value), limitToLast(pageSize.value))
+        } else {
+            // first or reset
+            q = query(q, limit(pageSize.value))
+            pageNumber.value = 1
+        }
+
         const snapshot = await getDocs(q)
-        userList.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+
+        if (!snapshot.empty) {
+            userList.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+            firstVisible.value = snapshot.docs[0]
+            lastVisible.value = snapshot.docs[snapshot.docs.length - 1]
+
+            if (direction === 'next') pageNumber.value++
+            if (direction === 'prev') pageNumber.value--
+        } else {
+            if (direction === 'first') {
+                userList.value = []
+            }
+        }
     } catch (e) {
         console.error('Error fetching users:', e)
     }

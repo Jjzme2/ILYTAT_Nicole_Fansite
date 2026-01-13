@@ -1,0 +1,23 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+  
+    // Helper to check role via Firestore
+    function isCreator() {
+      return request.auth != null && 
+             firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'creator';
+    }
+
+    // Media Posts
+    match /posts/{fileName} {
+      allow read: if true;
+      allow write: if isCreator();
+    }
+    
+    // Default fallback
+    match /{allPaths=**} {
+      allow read: if true;
+      allow write: if isCreator();
+    }
+  }
+}

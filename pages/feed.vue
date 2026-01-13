@@ -304,6 +304,12 @@
                 </form>
             </div>
         </article>
+
+        <!-- Load More Sentinel -->
+        <div ref="loadMoreTrigger" class="h-20 w-full flex items-center justify-center mt-4">
+             <p v-if="isFetchingMore" class="text-gray-400 text-sm animate-pulse">Loading more...</p>
+             <p v-if="!hasMore && posts.length > 0" class="text-gray-300 text-xs">You're all caught up!</p>
+        </div>
     </div>
 
     <!-- Bottom Navigation -->
@@ -329,7 +335,7 @@
 </template>
 
 <script setup>
-import { collection, query, orderBy, getDocs, deleteDoc, doc, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore'
+import { collection, query, orderBy, getDocs, deleteDoc, doc, addDoc, serverTimestamp, onSnapshot, limit, startAfter } from 'firebase/firestore'
 import { Lock, FileImage, LayoutGrid, Zap, Star, Trash2, Edit2, Lightbulb, ChevronDown, MessageSquare, Send } from 'lucide-vue-next'
 
 definePageMeta({
@@ -533,21 +539,56 @@ const handleSubscribe = async () => {
 // Feed Logic
 const posts = ref([])
 const loadingPosts = ref(true)
+const lastVisibleDoc = ref(null)
+const hasMore = ref(true)
+const isFetchingMore = ref(false)
+const POSTS_PER_PAGE = 10
 
-const fetchPosts = async () => {
+const fetchPosts = async (isLoadMore = false) => {
     // allow everyone to fetch, restricted content handles itself in template
+    if (isLoadMore) {
+        if (!hasMore.value || isFetchingMore.value) return
+        isFetchingMore.value = true
+    } else {
+        loadingPosts.value = true
+        lastVisibleDoc.value = null
+        hasMore.value = true
+    }
     
     try {
-        const q = query(collection($db, 'posts'), orderBy('createdAt', 'desc'))
+        let q
+        if (isLoadMore && lastVisibleDoc.value) {
+            q = query(collection($db, 'posts'), orderBy('createdAt', 'desc'), startAfter(lastVisibleDoc.value), limit(POSTS_PER_PAGE))
+        } else {
+            q = query(collection($db, 'posts'), orderBy('createdAt', 'desc'), limit(POSTS_PER_PAGE))
+        }
+
         const querySnapshot = await getDocs(q)
-        posts.value = querySnapshot.docs.map(doc => ({
+        const newPosts = querySnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         }))
+
+        if (querySnapshot.docs.length < POSTS_PER_PAGE) {
+            hasMore.value = false
+        }
+
+        if (querySnapshot.docs.length > 0) {
+            lastVisibleDoc.value = querySnapshot.docs[querySnapshot.docs.length - 1]
+        }
+
+        if (isLoadMore) {
+            posts.value = [...posts.value, ...newPosts]
+        } else {
+            posts.value = newPosts
+        }
+
+        console.log(`[Feed] Fetched ${newPosts.length} posts. Total displayed: ${posts.value.length}`)
     } catch (e) {
         console.error("Error fetching posts:", e)
     } finally {
         loadingPosts.value = false
+        isFetchingMore.value = false
     }
 }
 
@@ -563,9 +604,32 @@ const deletePost = async (postId) => {
     }
 }
 
+const loadMoreTrigger = ref(null)
+let observer = null
+
 // Load feed immediately
 onMounted(() => {
     fetchPosts()
+
+    // Intersection Observer for Infinite Scroll
+    observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore.value && !loadingPosts.value && !isFetchingMore.value) {
+             fetchPosts(true)
+        }
+    }, {
+        rootMargin: '200px'
+    })
+
+    // Watch for the trigger element
+    setTimeout(() => {
+        if (loadMoreTrigger.value) {
+            observer.observe(loadMoreTrigger.value)
+        }
+    }, 100)
+})
+
+onUnmounted(() => {
+    if (observer) observer.disconnect()
 })
 
 const formatDate = (timestamp) => {

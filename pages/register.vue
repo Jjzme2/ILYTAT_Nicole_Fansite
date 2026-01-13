@@ -5,6 +5,16 @@
             
             <form @submit.prevent="handleRegister" class="space-y-4">
                 <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Full Name</label>
+                    <input 
+                        v-model="name" 
+                        type="text" 
+                        required 
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none transition"
+                        placeholder="John Doe"
+                    />
+                </div>
+                <div>
                     <label class="block mb-1 text-sm font-medium text-gray-700">Email</label>
                     <input 
                         v-model="email" 
@@ -55,6 +65,7 @@ definePageMeta({
 const { register } = useAuth()
 const router = useRouter()
 
+const name = ref('')
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
@@ -64,7 +75,7 @@ const handleRegister = async () => {
     loading.value = true
     error.value = ''
     try {
-        await register(email.value, password.value)
+        await register(email.value, password.value, name.value)
         // Auth state watcher in useAuth/app.vue will handle redirect, 
         // but we can push manually to be safe/faster UX
         router.push('/feed')

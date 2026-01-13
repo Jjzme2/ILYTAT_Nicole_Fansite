@@ -4,6 +4,7 @@ import {
     signOut,
     onAuthStateChanged,
     GoogleAuthProvider,
+    updateProfile,
     signInWithPopup,
     type User
 } from 'firebase/auth'
@@ -65,8 +66,10 @@ export const useAuth = () => {
                 } else {
                     console.log('[useAuth] No Firestore doc, creating default')
                     // Create basic user profile if not exists
+                    // Note: If registering, the register function might create this first, but this handles Google Auth or direct path
                     await setDoc(userDocRef, {
                         email: currentUser.email,
+                        displayName: currentUser.displayName || '',
                         isSubscriber: false,
                         stripeCustomerId: null,
                         role: 'user',
@@ -90,9 +93,29 @@ export const useAuth = () => {
         await signInWithEmailAndPassword($auth, email, pass)
     }
 
-    const register = async (email: string, pass: string) => {
+    const register = async (email: string, pass: string, name: string) => {
         const cred = await createUserWithEmailAndPassword($auth, email, pass)
-        // Profile creation handled by onAuthStateChanged or here
+
+        if (cred.user) {
+            // Update Auth Profile
+            await updateProfile(cred.user, {
+                displayName: name
+            })
+
+            // Create Firestore Profile immediately with name
+            const userDocRef = doc($db, 'users', cred.user.uid)
+            await setDoc(userDocRef, {
+                email: email,
+                displayName: name,
+                isSubscriber: false,
+                stripeCustomerId: null,
+                role: 'user',
+                createdAt: new Date()
+            })
+
+            // Force local update if needed, though onAuthStateChanged should catch it
+            user.value = { ...cred.user, displayName: name }
+        }
     }
 
     const loginWithGoogle = async () => {

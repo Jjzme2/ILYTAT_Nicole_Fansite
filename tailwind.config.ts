@@ -19,6 +19,10 @@ export default <Config>{
                 text: 'var(--color-text)',
                 muted: 'var(--color-muted)',
                 border: 'var(--color-border)',
+                success: 'var(--color-success)',
+                error: 'var(--color-error)',
+                warning: 'var(--color-warning)',
+                info: 'var(--color-info)',
             }
         }
     }

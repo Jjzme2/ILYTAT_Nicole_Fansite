@@ -1,39 +1,39 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex">
+  <div class="min-h-screen bg-background flex text-text">
     
     <!-- Sidebar -->
-    <aside class="w-64 bg-black text-white hidden md:flex flex-col p-6">
+    <aside class="w-64 bg-surface border-r border-border text-text hidden md:flex flex-col p-6">
         <div class="mb-10">
             <h1 class="text-2xl font-bold tracking-tight">THE OFFICE</h1>
-            <p class="text-xs text-gray-400 mt-1">Admin Dashboard</p>
+            <p class="text-xs text-muted mt-1">Admin Dashboard</p>
         </div>
         
         <nav class="space-y-2 flex-1">
              <button 
                 @click="currentTab = 'deals'"
-                :class="['flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition', currentTab === 'deals' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white']"
+                :class="['flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition', currentTab === 'deals' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-text']"
             >
                 <Briefcase class="w-5 h-5" />
                 Brand Deals
             </button>
              <button 
                 @click="currentTab = 'users'"
-                :class="['flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition', currentTab === 'users' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white']"
+                :class="['flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition', currentTab === 'users' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-text']"
             >
                 <Users class="w-5 h-5" />
                 Users
             </button>
 
-            <div class="pt-4 mt-4 border-t border-white/10 space-y-2">
+            <div class="pt-4 mt-4 border-t border-border space-y-2">
                  <a 
                     v-if="role === 'creator'"
                     href="/creator" 
-                    class="flex items-center gap-3 px-4 py-3 text-indigo-400 hover:text-white rounded-xl text-sm font-medium transition"
+                    class="flex items-center gap-3 px-4 py-3 text-indigo-400 hover:text-text rounded-xl text-sm font-medium transition"
                 >
                     <LayoutDashboard class="w-5 h-5" />
                     Creator Studio
                 </a>
-                <a href="/feed" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white rounded-xl text-sm font-medium transition">
+                <a href="/feed" class="flex items-center gap-3 px-4 py-3 text-muted hover:text-text rounded-xl text-sm font-medium transition">
                     <ExternalLink class="w-5 h-5" />
                     View Feed
                 </a>
@@ -50,7 +50,7 @@
     <main class="flex-1 p-6 md:p-10 overflow-y-auto">
         <!-- Mobile Header -->
         <div class="md:hidden flex justify-between items-center mb-8">
-            <h1 class="font-bold text-xl">THE OFFICE</h1>
+            <h1 class="font-bold text-xl text-text">THE OFFICE</h1>
             <div class="flex gap-4">
                  <NuxtLink v-if="role === 'creator'" to="/creator" class="text-sm font-bold text-indigo-600">Studio</NuxtLink>
                 <button @click="logout" class="text-sm text-red-500">Log Out</button>
@@ -61,30 +61,30 @@
         <div v-if="currentTab === 'users'">
              <header class="mb-10 flex justify-between items-center">
                 <div>
-                    <h2 class="text-3xl font-serif text-gray-900 mb-2">User Management</h2>
-                    <p class="text-gray-500">View all registered users and their status.</p>
+                    <h2 class="text-3xl font-serif text-text mb-2">User Management</h2>
+                    <p class="text-muted">View all registered users and their status.</p>
                 </div>
-                <button @click="fetchUsers" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 text-sm font-bold">Refresh</button>
+                <button @click="fetchUsers" class="px-4 py-2 bg-surface border border-border rounded-lg hover:border-primary text-sm font-bold text-text">Refresh</button>
             </header>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
                 <table class="w-full text-left">
-                    <thead class="bg-gray-50 border-b border-gray-100">
+                    <thead class="bg-surface/50 border-b border-border">
                         <tr>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Email</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Role</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Subscriber</th>
-                            <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Joined</th>
+                            <th class="p-4 text-xs font-bold text-muted uppercase tracking-wider">Email</th>
+                            <th class="p-4 text-xs font-bold text-muted uppercase tracking-wider">Role</th>
+                            <th class="p-4 text-xs font-bold text-muted uppercase tracking-wider">Subscriber</th>
+                            <th class="p-4 text-xs font-bold text-muted uppercase tracking-wider">Joined</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <tr v-for="u in userList" :key="u.id" class="hover:bg-gray-50">
-                            <td class="p-4 font-medium">{{ u.email }}</td>
+                    <tbody class="divide-y divide-border">
+                        <tr v-for="u in userList" :key="u.id" class="hover:bg-background/50">
+                            <td class="p-4 font-medium text-text">{{ u.email }}</td>
                             <td class="p-4">
                                 <select 
                                     v-model="u.role" 
                                     @change="updateUserRole(u)"
-                                    class="bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded-lg focus:ring-black focus:border-black block w-auto p-2.5 font-bold uppercase"
+                                    class="bg-background border border-border text-text text-xs rounded-lg focus:ring-primary focus:border-primary block w-auto p-2.5 font-bold uppercase"
                                 >
                                     <option value="user">User</option>
                                     <option value="admin">Admin</option>
@@ -92,15 +92,15 @@
                                 </select>
                             </td>
                             <td class="p-4">
-                                <span v-if="u.isSubscriber" class="text-green-600 font-bold flex items-center gap-1">
+                                <span v-if="u.isSubscriber" class="text-green-500 font-bold flex items-center gap-1">
                                     <Check class="w-4 h-4" /> Active
                                 </span>
-                                <span v-else class="text-gray-400 text-xs">Free</span>
+                                <span v-else class="text-muted text-xs">Free</span>
                             </td>
-                            <td class="p-4 text-sm text-gray-500">{{ formatDate(u.createdAt) }}</td>
+                            <td class="p-4 text-sm text-muted">{{ formatDate(u.createdAt) }}</td>
                         </tr>
                         <tr v-if="userList.length === 0">
-                             <td colspan="4" class="p-8 text-center text-gray-400">Loading users...</td>
+                             <td colspan="4" class="p-8 text-center text-muted">Loading users...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -111,39 +111,39 @@
         <div v-if="currentTab === 'deals'">
              <header class="mb-10 flex justify-between items-center">
                 <div>
-                     <h2 class="text-3xl font-serif text-gray-900 mb-2">Brand Deals</h2>
-                    <p class="text-gray-500">Track and manage your sponsorships.</p>
+                     <h2 class="text-3xl font-serif text-text mb-2">Brand Deals</h2>
+                    <p class="text-muted">Track and manage your sponsorships.</p>
                 </div>
-                <button @click="showDealForm = true" class="bg-black text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition flex items-center gap-2">
+                <button @click="showDealForm = true" class="bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-primary/90 transition flex items-center gap-2">
                     <Plus class="w-5 h-5" />
                     New Deal
                 </button>
             </header>
 
             <!-- New Deal Modal/Form -->
-            <div v-if="showDealForm" class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8 animate-in fade-in slide-in-from-top-4">
-                <h3 class="font-bold text-lg mb-4">Add New Brand Deal</h3>
+            <div v-if="showDealForm" class="bg-surface rounded-2xl shadow-lg border border-border p-6 mb-8 animate-in fade-in slide-in-from-top-4">
+                <h3 class="font-bold text-lg mb-4 text-text">Add New Brand Deal</h3>
                 <form @submit.prevent="saveBrandDeal" class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Brand Name</label>
-                            <input v-model="newDeal.brandName" required type="text" class="w-full border rounded-lg p-2">
+                            <label class="block text-sm font-bold text-muted mb-1">Brand Name</label>
+                            <input v-model="newDeal.brandName" required type="text" class="w-full bg-background border border-border text-text rounded-lg p-2 focus:border-primary outline-none">
                         </div>
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Deal Value</label>
-                            <input v-model="newDeal.value" required type="text" placeholder="$500" class="w-full border rounded-lg p-2">
+                            <label class="block text-sm font-bold text-muted mb-1">Deal Value</label>
+                            <input v-model="newDeal.value" required type="text" placeholder="$500" class="w-full bg-background border border-border text-text rounded-lg p-2 focus:border-primary outline-none">
                         </div>
                          <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Contact Name</label>
-                            <input v-model="newDeal.contactName" type="text" class="w-full border rounded-lg p-2">
+                            <label class="block text-sm font-bold text-muted mb-1">Contact Name</label>
+                            <input v-model="newDeal.contactName" type="text" class="w-full bg-background border border-border text-text rounded-lg p-2 focus:border-primary outline-none">
                         </div>
                          <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Contact Email</label>
-                            <input v-model="newDeal.contactEmail" type="email" class="w-full border rounded-lg p-2">
+                            <label class="block text-sm font-bold text-muted mb-1">Contact Email</label>
+                            <input v-model="newDeal.contactEmail" type="email" class="w-full bg-background border border-border text-text rounded-lg p-2 focus:border-primary outline-none">
                         </div>
                          <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Status</label>
-                            <select v-model="newDeal.status" class="w-full border rounded-lg p-2 bg-white">
+                            <label class="block text-sm font-bold text-muted mb-1">Status</label>
+                            <select v-model="newDeal.status" class="w-full bg-background border border-border text-text rounded-lg p-2 focus:border-primary outline-none">
                                 <option value="pending">Pending</option>
                                 <option value="active">Active</option>
                                 <option value="completed">Completed</option>
@@ -151,17 +151,17 @@
                             </select>
                         </div>
                         <div class="col-span-2">
-                             <label class="block text-sm font-bold text-gray-700 mb-1">Deliverables</label>
-                             <textarea v-model="newDeal.deliverables" rows="2" class="w-full border rounded-lg p-2" placeholder="e.g. 1 Instagram Post, 2 Stories"></textarea>
+                             <label class="block text-sm font-bold text-muted mb-1">Deliverables</label>
+                             <textarea v-model="newDeal.deliverables" rows="2" class="w-full bg-background border border-border text-text rounded-lg p-2 focus:border-primary outline-none" placeholder="e.g. 1 Instagram Post, 2 Stories"></textarea>
                         </div>
                         <div class="col-span-2">
-                             <label class="block text-sm font-bold text-gray-700 mb-1">Notes / Description</label>
-                             <textarea v-model="newDeal.notes" rows="3" class="w-full border rounded-lg p-2" placeholder="Internal notes, campaign details, or reminders..."></textarea>
+                             <label class="block text-sm font-bold text-muted mb-1">Notes / Description</label>
+                             <textarea v-model="newDeal.notes" rows="3" class="w-full bg-background border border-border text-text rounded-lg p-2 focus:border-primary outline-none" placeholder="Internal notes, campaign details, or reminders..."></textarea>
                         </div>
                     </div>
                      <div class="flex justify-end gap-3 pt-4">
-                        <button type="button" @click="showDealForm = false" class="text-gray-500 hover:text-black">Cancel</button>
-                         <button type="submit" :disabled="uploading" class="bg-black text-white px-6 py-2 rounded-lg font-bold">
+                        <button type="button" @click="showDealForm = false" class="text-muted hover:text-text">Cancel</button>
+                         <button type="submit" :disabled="uploading" class="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-primary/90">
                              {{ uploading ? 'Saving...' : 'Save Deal' }}
                          </button>
                      </div>
@@ -169,25 +169,25 @@
             </div>
 
             <div class="grid gap-4">
-                <div v-for="deal in brandDeals" :key="deal.id" class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex justify-between items-center group hover:border-black transition">
+                <div v-for="deal in brandDeals" :key="deal.id" class="bg-surface p-6 rounded-xl border border-border shadow-sm flex justify-between items-center group hover:border-primary transition">
                     <div class="flex-1 pr-6">
                         <div class="flex items-center gap-3 mb-1">
-                            <h3 class="font-bold text-lg">{{ deal.brandName }}</h3>
+                            <h3 class="font-bold text-lg text-text">{{ deal.brandName }}</h3>
                             <span :class="getStatusColor(deal.status) + ' px-2 py-0.5 rounded text-[10px] font-bold uppercase'">{{ deal.status }}</span>
                         </div>
-                        <p class="text-sm text-gray-600 mb-1"><span class="font-bold">Deliverables:</span> {{ deal.deliverables }}</p>
-                        <p v-if="deal.notes" class="text-xs text-gray-500 italic mb-3 bg-gray-50 p-2 rounded max-w-lg">{{ deal.notes }}</p>
-                        <div class="flex items-center gap-4 text-xs text-gray-400">
+                        <p class="text-sm text-text mb-1"><span class="font-bold">Deliverables:</span> {{ deal.deliverables }}</p>
+                        <p v-if="deal.notes" class="text-xs text-muted italic mb-3 bg-background p-2 rounded max-w-lg">{{ deal.notes }}</p>
+                        <div class="flex items-center gap-4 text-xs text-muted">
                             <span class="flex items-center gap-1"><User class="w-3 h-3" /> {{ deal.contactName }}</span>
                             <span>{{ deal.contactEmail }}</span>
                         </div>
                     </div>
                     <div class="text-right whitespace-nowrap">
-                        <p class="font-bold text-xl">{{ deal.value }}</p>
-                        <p class="text-xs text-gray-400">{{ formatDate(deal.createdAt) }}</p>
+                        <p class="font-bold text-xl text-text">{{ deal.value }}</p>
+                        <p class="text-xs text-muted">{{ formatDate(deal.createdAt) }}</p>
                     </div>
                 </div>
-                 <div v-if="brandDeals.length === 0 && !showDealForm" class="text-center py-20 text-gray-400">
+                 <div v-if="brandDeals.length === 0 && !showDealForm" class="text-center py-20 text-muted">
                     <Briefcase class="w-12 h-12 mx-auto mb-2 opacity-20" />
                     <p>No brand deals yet.</p>
                 </div>
@@ -199,36 +199,36 @@
         <div v-if="currentTab === 'dev'">
              <header class="mb-10 flex justify-between items-center">
                 <div>
-                     <h2 class="text-3xl font-serif text-gray-900 mb-2">Dev Board</h2>
-                    <p class="text-gray-500">Track features, bugs, and tasks for the developer.</p>
+                     <h2 class="text-3xl font-serif text-text mb-2">Dev Board</h2>
+                    <p class="text-muted">Track features, bugs, and tasks for the developer.</p>
                 </div>
-                <button @click="fetchTasks" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 text-sm font-bold">Refresh</button>
+                <button @click="fetchTasks" class="px-4 py-2 bg-surface border border-border rounded-lg hover:border-primary text-sm font-bold text-text">Refresh</button>
             </header>
 
             <!-- New Task Form -->
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm mb-8">
+            <div class="bg-surface p-6 rounded-2xl border border-border shadow-sm mb-8">
                 <form @submit.prevent="submitTask" class="flex gap-4 items-end">
                     <div class="flex-1">
-                        <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Task Title</label>
-                         <input v-model="newTask.title" type="text" class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-black focus:ring-0 outline-none" placeholder="e.g. Fix login bug" required>
+                        <label class="block text-xs font-bold text-muted mb-1 uppercase">Task Title</label>
+                         <input v-model="newTask.title" type="text" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none" placeholder="e.g. Fix login bug" required>
                     </div>
                      <div class="w-40">
-                        <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Type</label>
-                         <select v-model="newTask.type" class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-black focus:ring-0 outline-none bg-white">
+                        <label class="block text-xs font-bold text-muted mb-1 uppercase">Type</label>
+                         <select v-model="newTask.type" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
                             <option value="feature">Feature</option>
                             <option value="bug">Bug</option>
                             <option value="chore">Chore</option>
                         </select>
                     </div>
                      <div class="w-40">
-                        <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Priority</label>
-                         <select v-model="newTask.priority" class="w-full border-2 border-gray-100 rounded-xl p-3 focus:border-black focus:ring-0 outline-none bg-white">
+                        <label class="block text-xs font-bold text-muted mb-1 uppercase">Priority</label>
+                         <select v-model="newTask.priority" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
                             <option value="low">Low</option>
                             <option value="med">Medium</option>
                             <option value="high">High</option>
                         </select>
                     </div>
-                     <button type="submit" :disabled="uploading" class="bg-black text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition h-full">
+                     <button type="submit" :disabled="uploading" class="bg-primary text-white font-bold px-6 py-3 rounded-xl hover:bg-primary/90 transition h-full">
                         {{ uploading ? '...' : 'Add' }}
                     </button>
                 </form>
@@ -236,7 +236,7 @@
 
             <!-- Task List -->
             <div class="space-y-4">
-                 <div v-for="task in tasks" :key="task.id" class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+                 <div v-for="task in tasks" :key="task.id" class="bg-surface p-4 rounded-xl border border-border shadow-sm flex items-center justify-between">
                     <div class="flex items-center gap-4">
                         <div :class="{
                             'bg-blue-100 text-blue-700': task.type === 'feature',
@@ -248,8 +248,8 @@
                             <Hammer v-else class="w-5 h-5" />
                         </div>
                         <div>
-                            <h4 class="font-bold text-lg">{{ task.title }}</h4>
-                             <div class="flex items-center gap-2 text-xs text-gray-400">
+                            <h4 class="font-bold text-lg text-text">{{ task.title }}</h4>
+                             <div class="flex items-center gap-2 text-xs text-muted">
                                 <span class="capitalize">{{ task.priority }} Priority</span>
                                 <span>•</span>
                                 <span class="capitalize">{{ task.status }}</span>

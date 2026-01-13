@@ -13,12 +13,10 @@ export interface UserProfile {
 export interface MediaKit {
     id?: string;
     bio: string;
-    stats: {
-        followers: string;
-        engagement: string;
-        impressions: string;
-        rank: string;
-    };
+    location?: string;
+    photoUrl?: string;
+    // Map of platform key (tiktok, instagram) to its specific stats
+    platforms: Record<string, Record<string, string | number>>;
     createdAt: any; // Firestore Timestamp
     createdBy: string;
 }

@@ -44,6 +44,19 @@
             <p class="text-gray-500 animate-pulse">Loading updates...</p>
         </div>
 
+        <!-- Feed Controls -->
+        <div class="flex justify-end mb-4 px-2">
+            <label class="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                Posts per page:
+                <select v-model="batchSize" class="bg-white border border-gray-200 rounded px-2 py-1 focus:ring-black focus:border-black transition cursor-pointer">
+                    <option :value="5">5</option>
+                    <option :value="10">10</option>
+                    <option :value="20">20</option>
+                    <option :value="50">50</option>
+                </select>
+            </label>
+        </div>
+
         <!-- Suggestion Box (Subscribers Only) -->
         <div v-if="isSubscriber" class="mb-8">
             <button 
@@ -304,6 +317,17 @@
                 </form>
             </div>
         </article>
+
+        <!-- Infinite Scroll Sentinel -->
+        <div ref="loadMoreTrigger" class="py-10 text-center">
+            <div v-if="loadingMore" class="flex justify-center items-center gap-2 text-gray-400 animate-pulse">
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+            </div>
+            <span v-else-if="!hasMore" class="text-xs text-gray-300 uppercase tracking-widest font-bold">End of Feed</span>
+            <span v-else class="text-xs text-gray-300 uppercase tracking-widest font-bold opacity-50">Scroll for more</span>
+        </div>
     </div>
 
     <!-- Bottom Navigation -->
@@ -530,43 +554,49 @@ const handleSubscribe = async () => {
     }
 }
 
-// Feed Logic
-const posts = ref([])
-const loadingPosts = ref(true)
+// Feed Logic (Optimized)
+const {
+    posts, loading: loadingPosts, loadingMore, hasMore, batchSize,
+    initFetch, loadMore, removePost
+} = useFeed($db)
 
-const fetchPosts = async () => {
-    // allow everyone to fetch, restricted content handles itself in template
+// Load feed immediately & Setup Infinite Scroll
+const loadMoreTrigger = ref(null)
+let observer = null
+
+onMounted(() => {
+    initFetch()
     
-    try {
-        const q = query(collection($db, 'posts'), orderBy('createdAt', 'desc'))
-        const querySnapshot = await getDocs(q)
-        posts.value = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }))
-    } catch (e) {
-        console.error("Error fetching posts:", e)
-    } finally {
-        loadingPosts.value = false
+    // Setup Observer
+    observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore.value && !loadingPosts.value && !loadingMore.value) {
+            loadMore()
+        }
+    }, { threshold: 0.1 })
+
+    if (loadMoreTrigger.value) {
+        observer.observe(loadMoreTrigger.value)
     }
-}
+})
+
+watch(loadMoreTrigger, (el) => {
+    if (el && observer) observer.observe(el)
+})
+
+onUnmounted(() => {
+    if (observer) observer.disconnect()
+})
 
 const deletePost = async (postId) => {
     if (!confirm('Are you sure you want to delete this post? This cannot be undone.')) return
     try {
         await deleteDoc(doc($db, 'posts', postId))
-        // Remove locally
-        posts.value = posts.value.filter(p => p.id !== postId)
+        removePost(postId)
     } catch (e) {
         console.error('Error deleting post:', e)
         alert('Failed to delete post: ' + e.message)
     }
 }
-
-// Load feed immediately
-onMounted(() => {
-    fetchPosts()
-})
 
 const formatDate = (timestamp) => {
     if (!timestamp) return ''

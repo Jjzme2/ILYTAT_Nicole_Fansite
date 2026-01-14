@@ -1,36 +1,36 @@
 <template>
-    <div class="flex items-center justify-center min-h-screen bg-gray-100 px-4">
-        <div class="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl">
-            <h2 class="mb-6 text-3xl font-bold text-center text-gray-900">Welcome Back</h2>
+    <div class="flex items-center justify-center min-h-screen bg-background px-4 transition-colors duration-300">
+        <div class="w-full max-w-md p-8 bg-surface rounded-2xl border border-border shadow-xl">
+            <h2 class="mb-6 text-3xl font-bold text-center text-text">Welcome Back</h2>
             
             <form @submit.prevent="handleLogin" class="space-y-4">
                 <div>
-                    <label class="block mb-1 text-sm font-medium text-gray-700">Email</label>
+                    <label class="block mb-1 text-sm font-medium text-muted">Email</label>
                     <input 
                         v-model="email" 
                         type="email" 
                         required 
-                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none transition"
+                        class="w-full px-4 py-2 bg-background border border-border text-text rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition placeholder-muted/50"
                         placeholder="you@example.com"
                     />
                 </div>
                 <div>
-                    <label class="block mb-1 text-sm font-medium text-gray-700">Password</label>
+                    <label class="block mb-1 text-sm font-medium text-muted">Password</label>
                     <input 
                         v-model="password" 
                         type="password" 
                         required 
-                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none transition"
+                        class="w-full px-4 py-2 bg-background border border-border text-text rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition placeholder-muted/50"
                         placeholder="••••••••"
                     />
                 </div>
                 
-                <p v-if="error" class="text-sm text-red-600 text-center">{{ error }}</p>
+                <p v-if="error" class="text-sm text-error text-center">{{ error }}</p>
 
                 <button 
                     type="submit" 
                     :disabled="loading"
-                    class="w-full py-3 font-bold text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50 transition"
+                    class="w-full py-3 font-bold text-white bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50 transition shadow-lg hover:shadow-primary/25"
                 >
                     {{ loading ? 'Signing in...' : 'Sign In' }}
                 </button>
@@ -38,16 +38,16 @@
             
             <div class="relative my-6">
                 <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-gray-200"></div>
+                    <div class="w-full border-t border-border"></div>
                 </div>
                 <div class="relative flex justify-center text-sm">
-                    <span class="px-2 bg-white text-gray-500">Or continue with</span>
+                    <span class="px-2 bg-surface text-muted">Or continue with</span>
                 </div>
             </div>
 
             <button 
                 @click="handleGoogle"
-                class="w-full flex items-center justify-center gap-3 py-3 font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                class="w-full flex items-center justify-center gap-3 py-3 font-medium text-text bg-background border border-border rounded-lg hover:bg-white/5 transition"
             >
                 <!-- Google Icon SVG -->
                 <svg class="w-5 h-5" viewBox="0 0 24 24">
@@ -71,9 +71,9 @@
                 Sign in with Google
             </button>
 
-            <div class="mt-6 text-center text-sm text-gray-600">
+            <div class="mt-6 text-center text-sm text-muted">
                 Don't have an account? 
-                <NuxtLink to="/register" class="font-medium text-black hover:underline">
+                <NuxtLink to="/register" class="font-bold text-primary hover:underline">
                     Sign up
                 </NuxtLink>
             </div>

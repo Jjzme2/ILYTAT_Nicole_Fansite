@@ -1,12 +1,18 @@
 <template>
-  <div :style="themeStyles" class="min-h-screen bg-background text-text font-sans selection:bg-primary selection:text-white">
+  <div class="min-h-screen bg-background text-text font-sans antialiased transition-colors duration-300">
+    
+    <!-- Loading Screen -->
     <div v-if="loading" class="fixed inset-0 flex items-center justify-center bg-background z-50">
          <LucideLoader class="w-10 h-10 animate-spin text-primary" />
     </div>
-    <div v-show="!loading">
-      <NuxtPage />
+
+    <!-- Main App -->
+    <div v-show="!loading" class="flex flex-col min-h-screen">
+      <NuxtLayout>
+        <NuxtPage />
+      </NuxtLayout>
       
-      <footer class="border-t border-border py-8 mt-12 bg-background">
+      <footer class="border-t border-border py-8 mt-auto bg-background">
         <div class="container mx-auto px-4 text-center">
           <div class="flex justify-center gap-6 mb-6 text-muted">
              <a 
@@ -33,13 +39,32 @@
         </div>
       </footer>
     </div>
+
+    <!-- Global Theme Styles -->
+    <Head>
+        <component :is="'style'">
+            :root {
+                --color-primary: {{ themeStyles['--color-primary'] }};
+                --color-secondary: {{ themeStyles['--color-secondary'] }};
+                --color-background: {{ themeStyles['--color-background'] }};
+                --color-surface: {{ themeStyles['--color-surface'] }};
+                --color-text: {{ themeStyles['--color-text'] }};
+                --color-muted: {{ themeStyles['--color-muted'] }};
+                --color-border: {{ themeStyles['--color-border'] }};
+                --color-success: {{ themeStyles['--color-success'] }};
+                --color-error: {{ themeStyles['--color-error'] }};
+                --color-warning: {{ themeStyles['--color-warning'] }};
+                --color-info: {{ themeStyles['--color-info'] }};
+            }
+        </component>
+    </Head>
   </div>
 </template>
 
 <script setup>
 import { Loader as LucideLoader } from 'lucide-vue-next'
 const config = useAppConfig()
-const { themeStyles } = useTheme()
+const { themeStyles, activeTheme } = useTheme()
 
 const { socialLinks } = useSocials()
 

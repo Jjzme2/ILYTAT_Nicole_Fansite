@@ -1,131 +1,144 @@
 <template>
-  <div class="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50">
-    <div class="w-full max-w-md space-y-8 text-center">
-        <!-- Header -->
-        <div class="mb-10">
-            <h1 class="text-3xl font-bold tracking-tight mb-2">{{ config.meta.name }}</h1>
-            <p class="text-gray-500 uppercase tracking-widest text-xs">{{ config.meta.tagline }}</p>
+  <div class="min-h-screen flex flex-col items-center p-6 bg-gradient-to-b from-background to-surface text-text">
+    
+    <!-- Hero Section -->
+    <div class="w-full max-w-2xl text-center mt-12 mb-16 space-y-6">
+        <div class="relative inline-block mb-4">
+           <!-- Placeholder for a user/hero avatar or logo if needed, using text for now or config image if available -->
+           <div class="w-24 h-24 mx-auto bg-primary rounded-full blur-[40px] opacity-40 absolute top-0 left-1/2 -translate-x-1/2"></div>
+           <h1 class="relative text-5xl md:text-6xl font-black tracking-tighter mb-2 text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+               {{ config.meta.name }}
+           </h1>
         </div>
+        
+        <p class="text-xl md:text-2xl font-medium text-muted">
+            Welcome to the <span class="text-text font-bold">Inner Circle</span>.
+        </p>
+        <p class="text-base text-muted/80 max-w-lg mx-auto leading-relaxed">
+            The official community for exclusive content, behind-the-scenes access, and direct connection. This is more than a fanbase—it's a family.
+        </p>
 
-        <!-- Links -->
-        <div class="space-y-4">
-            <NuxtLink 
-                v-if="isAdmin"
-                to="/admin"
-                class="block w-full py-4 px-6 bg-red-600 text-white rounded-xl hover:bg-red-700 hover:scale-[1.02] transition font-bold shadow-lg"
-            >
-                ⚡ Admin Dashboard
-            </NuxtLink>
-
-            <a 
-                v-for="link in socialLinks"
-                :key="link.name"
-                :href="link.url" 
-                target="_blank"
-                :class="['block w-full py-4 px-6 bg-white border border-gray-200 rounded-xl hover:scale-[1.02] transition font-medium text-gray-900 shadow-sm flex items-center justify-center gap-3', link.color]"
-            >
-                <img v-if="typeof link.icon === 'string'" :src="link.icon" class="w-6 h-6 object-contain" alt="" />
-                <component v-else :is="link.icon" class="w-5 h-5" />
-                {{ link.name }}
-            </a>
-
-            <NuxtLink 
-                to="/media-kit"
-                class="block w-full py-4 px-6 bg-white border border-gray-200 rounded-xl hover:border-black hover:scale-[1.02] transition font-medium text-gray-900 shadow-sm"
-            >
-                ✨ Media Kit
-            </NuxtLink>
-
-            <!-- Logged In State -->
-            <div v-if="user" class="space-y-4">
-                <div class="p-4 bg-gray-100 rounded-xl">
-                    <p class="text-sm text-gray-500 mb-1">Welcome back,</p>
-                    <p class="font-bold text-gray-900">{{ user.email }}</p>
-                </div>
-
-                <NuxtLink 
+        <!-- Primary CTA -->
+        <div class="pt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <template v-if="user">
+                 <NuxtLink 
                     to="/feed"
-                    class="block w-full py-4 px-6 bg-black text-white rounded-xl hover:opacity-90 hover:scale-[1.02] transition font-bold shadow-lg"
+                    class="w-full sm:w-auto px-8 py-4 bg-primary text-white text-lg font-bold rounded-full hover:scale-105 hover:shadow-[0_0_20px_rgba(217,70,239,0.4)] transition-all duration-300"
                 >
                     🚀 Enter The Circle
                 </NuxtLink>
-            </div>
-
-            <!-- Guest State -->
-            <NuxtLink 
-                v-else
-                to="/login"
-                class="block w-full py-4 px-6 bg-black text-white rounded-xl hover:opacity-90 hover:scale-[1.02] transition font-bold shadow-lg"
-            >
-                🔓 Member Login
-            </NuxtLink>
+            </template>
+            <template v-else>
+                 <NuxtLink 
+                    to="/register"
+                    class="w-full sm:w-auto px-8 py-4 bg-primary text-white text-lg font-bold rounded-full hover:scale-105 hover:shadow-[0_0_20px_rgba(217,70,239,0.4)] transition-all duration-300"
+                >
+                    Join the Family
+                </NuxtLink>
+                 <NuxtLink 
+                    to="/login"
+                    class="w-full sm:w-auto px-8 py-4 bg-surface border border-border text-text font-bold rounded-full hover:bg-white/5 transition-all"
+                >
+                    Member Login
+                </NuxtLink>
+            </template>
         </div>
+    </div>
 
-        <!-- Public Teaser Feed -->
-        <div v-if="publicPosts.length > 0" class="mt-12 w-full text-left">
-            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6 text-center">Latest Public Updates</h3>
+
+    <!-- Content & Community Preview -->
+    <div class="w-full max-w-4xl space-y-12">
+        
+        <!-- Public Feed / Highlights -->
+        <div v-if="publicPosts.length > 0">
+            <div class="flex items-center justify-between mb-8 px-4">
+                <h3 class="text-sm font-bold text-muted uppercase tracking-widest">Community Highlights</h3>
+                 <span class="text-xs text-muted/50">Latest Updates</span>
+            </div>
             
-            <div class="space-y-6">
-                <article v-for="post in publicPosts" :key="post.id" class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <article v-for="post in publicPosts" :key="post.id" class="group bg-surface/50 backdrop-blur-sm rounded-2xl border border-border hover:border-primary/30 transition-all duration-300 overflow-hidden hover:shadow-xl">
                     
-                    <!-- Media -->
-                    <div v-if="post.type !== 'text'" class="aspect-video w-full bg-black relative group">
-                         <div v-if="post.type === 'video'" class="w-full h-full">
-                             <!-- YouTube Embed -->
-                             <iframe 
-                                v-if="post.mediaUrl && (post.mediaUrl.includes('youtube.com') || post.mediaUrl.includes('youtu.be'))"
-                                :src="getEmbedUrl(post.mediaUrl)" 
-                                frameborder="0" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                allowfullscreen
-                                class="w-full h-full"
-                            ></iframe>
-                            <!-- Native Video -->
-                            <video 
-                                v-else
+                    <!-- Media Preview -->
+                    <div class="aspect-video w-full bg-black relative overflow-hidden">
+                        <template v-if="post.type !== 'text'">
+                            <img 
+                                v-if="post.type === 'image' || !post.type"
                                 :src="post.mediaUrl || post.imageUrl" 
-                                controls
-                                class="w-full h-full object-contain"
-                            ></video>
-                        </div>
-                        
-                        <div v-else-if="post.type === 'audio'" class="w-full h-full flex flex-col items-center justify-center bg-gray-900 text-white p-6">
-                             <audio :src="post.mediaUrl" controls class="w-full max-w-md"></audio>
-                        </div>
-
-                        <img 
-                            v-else
-                            :src="post.mediaUrl || post.imageUrl" 
-                            loading="lazy"
-                            class="object-contain w-full h-full"
-                        />
+                                loading="lazy"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            />
+                            <!-- Video Placeholder / Poster -->
+                            <div v-else-if="post.type === 'video'" class="w-full h-full flex items-center justify-center bg-gray-900 relative">
+                                <div class="absolute inset-0 bg-black/40 z-10"></div>
+                                <div class="z-20 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+                                     <div class="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white border-b-[8px] border-b-transparent ml-1"></div>
+                                </div>
+                                <img v-if="post.thumbnailUrl" :src="post.thumbnailUrl" class="absolute inset-0 w-full h-full object-cover opacity-60" />
+                            </div>
+                            <div v-else-if="post.type === 'audio'" class="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900 to-black">
+                                <div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                                    🎤
+                                </div>
+                            </div>
+                        </template>
+                        <template v-else>
+                            <div class="w-full h-full flex items-center justify-center p-6 bg-surface text-center">
+                                <p class="text-sm text-muted italic line-clamp-3">"{{ post.caption }}"</p>
+                            </div>
+                        </template>
                     </div>
 
-                    <!-- Text / Caption -->
-                    <div class="p-5">
-                         <div class="text-gray-900 text-sm mb-2" v-if="post.caption">
-                            <span class="font-bold mr-1">Nicole Christine</span> {{ post.caption }}
+                    <!-- Mini Content -->
+                    <div class="p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] text-white font-bold">N</div>
+                            <span class="text-xs font-bold text-text">Nicole</span>
+                            <span class="text-[10px] text-muted ml-auto">{{ formatDate(post.createdAt) }}</span>
                         </div>
-                        <p class="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
-                            {{ formatDate(post.createdAt) }}
-                        </p>
+                        <p v-if="post.caption" class="text-sm text-text/80 line-clamp-2">{{ post.caption }}</p>
                     </div>
 
                 </article>
             </div>
-             <div class="text-center mt-8">
-                 <NuxtLink to="/feed" class="text-sm font-bold border-b border-black pb-0.5 hover:text-gray-600 transition">View All Posts</NuxtLink>
+
+             <div class="text-center mt-10">
+                 <NuxtLink to="/feed" class="inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-primary/80 transition">
+                     See All Posts <span aria-hidden="true">&rarr;</span>
+                 </NuxtLink>
             </div>
         </div>
 
+        <!-- Social Footer Links -->
+        <div class="border-t border-border pt-12 mt-12">
+            <div class="flex flex-wrap justify-center gap-4 mb-8">
+                 <a 
+                    v-for="link in socialLinks"
+                    :key="link.name"
+                    :href="link.url" 
+                    target="_blank"
+                    :class="['flex items-center gap-2 px-4 py-2 rounded-lg bg-surface hover:bg-white/5 border border-transparent hover:border-border transition text-sm font-medium text-muted hover:text-text', link.color]"
+                >
+                    <img v-if="typeof link.icon === 'string'" :src="link.icon" class="w-4 h-4 object-contain opacity-70" alt="" />
+                    <component v-else :is="link.icon" class="w-4 h-4 opacity-70" />
+                    {{ link.name }}
+                </a>
+                 <NuxtLink 
+                    to="/media-kit"
+                    class="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface hover:bg-white/5 border border-transparent hover:border-border transition text-sm font-medium text-muted hover:text-text"
+                >
+                    ✨ Media Kit
+                </NuxtLink>
+            </div>
+            
+            <footer class="text-center text-xs text-muted/40 pb-8">
+                <p>&copy; {{ new Date().getFullYear() }} {{ config.meta.copyright }}</p>
+                <div v-if="isAdmin" class="mt-4">
+                     <NuxtLink to="/admin" class="text-red-500 hover:text-red-400 font-bold">Admin Dashboard</NuxtLink>
+                </div>
+            </footer>
+        </div>
 
-        <!-- Footer -->
-        <footer class="pt-10 text-xs text-gray-400">
-            <p>&copy; {{ new Date().getFullYear() }} {{ config.meta.copyright }}</p>
-            <p class="mt-2 opacity-75">
-                Made with the help of <a href="https://deepmind.google/technologies/antigravity/" target="_blank" class="hover:underline hover:text-gray-600">Google Antigravity</a>.
-            </p>
-        </footer>
     </div>
   </div>
 </template>

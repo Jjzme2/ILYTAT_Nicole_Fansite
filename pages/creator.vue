@@ -225,31 +225,59 @@
                             <label class="block text-sm font-bold text-muted mb-2">Bio</label>
                             <textarea v-model="mediaKit.bio" rows="4" class="w-full border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none"></textarea>
                         </div>
+                        <div class="mb-6">
+                            <label class="block text-sm font-bold text-muted mb-2">Platform</label>
+                            <select v-model="activePlatform" class="w-full border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
+                                <option value="tiktok">TikTok</option>
+                                <option value="instagram" disabled>Instagram (Coming Soon)</option>
+                                <option value="youtube" disabled>YouTube (Coming Soon)</option>
+                            </select>
+                        </div>
+                        
                         <div class="grid grid-cols-2 gap-4">
-                             <div>
-                                <label class="block text-sm font-bold text-muted mb-2">Followers</label>
-                                <input v-model="mediaKit.stats.followers" type="text" class="w-full border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
-                            </div>
-                             <div>
-                                <label class="block text-sm font-bold text-muted mb-2">Engagement</label>
-                                <input v-model="mediaKit.stats.engagement" type="text" class="w-full border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
-                            </div>
-                             <div>
-                                <label class="block text-sm font-bold text-muted mb-2">Impressions</label>
-                                <input v-model="mediaKit.stats.impressions" type="text" class="w-full border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
-                            </div>
-                             <div>
-                                <label class="block text-sm font-bold text-muted mb-2">Creator Rank</label>
-                                <input v-model="mediaKit.stats.rank" type="text" class="w-full border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
+                             <div v-for="field in platformSchemas[activePlatform]" :key="field.key">
+                                <label class="block text-sm font-bold text-muted mb-2">{{ field.label }}</label>
+                                <input 
+                                    v-model="mediaKit.platforms[activePlatform][field.key]" 
+                                    type="text" 
+                                    class="w-full border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none"
+                                >
                             </div>
                         </div>
-                        <button 
-                            type="submit" 
-                            :disabled="uploading"
-                            class="w-full bg-primary text-white font-bold py-4 rounded-xl hover:opacity-90 disabled:opacity-50 transition flex items-center justify-center gap-2 text-lg shadow-xl"
-                        >
-                            {{ uploading ? 'Saving...' : 'Save Updates' }}
-                        </button>
+
+                        <div class="grid grid-cols-2 gap-4 mt-6">
+                            <div>
+                                <label class="block text-sm font-bold text-muted mb-2">Location</label>
+                                <div class="relative">
+                                    <MapPin class="w-4 h-4 absolute left-3 top-3.5 text-muted" />
+                                    <input v-model="mediaKit.location" type="text" class="w-full pl-9 border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none" placeholder="e.g. Los Angeles, CA">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-muted mb-2">Hero Photo URL</label>
+                                <div class="flex gap-2">
+                                     <input v-model="mediaKit.photoUrl" type="text" class="flex-1 border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none" placeholder="https://...">
+                                     <button type="button" @click="openGalleryPicker" class="bg-surface border border-border hover:border-primary p-3 rounded-xl transition text-primary">
+                                        <ImageIcon class="w-5 h-5" />
+                                     </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-6 border-t border-border flex justify-end gap-4">
+                             <button 
+                                type="button" 
+                                class="px-6 py-3 font-bold text-muted hover:text-text transition"
+                            >
+                                Preview
+                            </button>
+                            <button 
+                                type="submit" 
+                                class="px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition shadow-lg shadow-primary/20"
+                            >
+                                {{ uploading ? 'Saving...' : 'Save Media Kit' }}
+                            </button>
+                        </div>
                     </form>
                  </div>
             </div>
@@ -296,6 +324,33 @@
 
     </main>
 
+    <!-- Gallery Picker Modal -->
+    <div v-if="showGalleryPicker" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" @click.self="showGalleryPicker = false">
+        <div class="bg-surface w-full max-w-2xl rounded-2xl shadow-2xl border border-border flex flex-col max-h-[80vh]">
+            <div class="p-4 border-b border-border flex justify-between items-center">
+                <h3 class="font-bold text-lg text-text">Select from Gallery</h3>
+                <button type="button" @click="showGalleryPicker = false" class="text-muted hover:text-text"><X class="w-6 h-6" /></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4">
+                <div v-if="loadingGallery" class="text-center py-10 text-muted">Loading photos...</div>
+                <div v-else-if="galleryImages.length === 0" class="text-center py-10 text-muted">No images found in your posts.</div>
+                <div v-else class="grid grid-cols-3 gap-2">
+                    <div 
+                        v-for="img in galleryImages" 
+                        :key="img.id" 
+                        @click="selectGalleryImage(img.mediaUrl || img.imageUrl)"
+                        class="aspect-square bg-black rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition relative group"
+                    >
+                        <img :src="img.mediaUrl || img.imageUrl" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                            <Check class="w-8 h-8 text-white drop-shadow-md" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Media Capturer Modal -->
     <MediaCapture 
         v-if="captureMode && captureMode !== 'link'" 
@@ -311,9 +366,20 @@
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore'
 import { 
-    LayoutDashboard, ExternalLink, LogOut, 
-    Camera, Video, Mic, FileText, Upload, Check, Pencil,
-    Briefcase, Link, Lightbulb, UserCircle
+    LayoutDashboard, 
+    FileText, 
+    BarChart, 
+    Lightbulb, 
+    Upload, 
+    X, 
+    Camera, 
+    Video as VideoIcon, 
+    Mic, 
+    Image as ImageIcon,
+    StopCircle,
+    RotateCcw,
+    Check,
+    MapPin
 } from 'lucide-vue-next'
 // ... (imports)
 
@@ -336,10 +402,7 @@ const fetchSuggestions = async () => {
     }
 }
 
-// Watch tab for fetch
-watch(currentTab, (val) => {
-    if (val === 'suggestions') fetchSuggestions()
-})
+
 
 const formatDate = (timestamp) => {
     if (!timestamp) return ''
@@ -358,6 +421,11 @@ const router = useRouter()
 
 // TABS
 const currentTab = ref('content') // 'content', 'media-kit'
+
+// Watch tab for fetch
+watch(currentTab, (val) => {
+    if (val === 'suggestions') fetchSuggestions()
+})
 
 // --- CONTENT LOGIC ---
 const captureMode = ref(null)
@@ -522,19 +590,79 @@ const handleUpload = async () => {
 // --- MEDIA KIT LOGIC ---
 const mediaKit = ref({
     bio: '',
-    stats: {
-        followers: '150K+',
-        engagement: '8.5%',
-        impressions: '2M+',
-        rank: 'Top 1%'
+    location: '',
+    photoUrl: '',
+    platforms: {
+        tiktok: {
+            followers_total: '',
+            followers_net: '',
+            views_post: '',
+            views_profile: '',
+            likes: '',
+            comments: '',
+            shares: '',
+            viewers_total: '',
+            viewers_new: '',
+            demographics: ''
+        }
     }
 })
+
+const platformSchemas = {
+    tiktok: [
+        { key: 'followers_total', label: 'Total Followers' },
+        { key: 'followers_net', label: 'Net Followers' },
+        { key: 'views_post', label: 'Post Views' },
+        { key: 'views_profile', label: 'Profile Views' },
+        { key: 'likes', label: 'Likes' },
+        { key: 'comments', label: 'Comments' },
+        { key: 'shares', label: 'Shares' },
+        { key: 'viewers_total', label: 'Total Viewers' },
+        { key: 'viewers_new', label: 'New Viewers' },
+        { key: 'demographics', label: 'Avg Age & Gender' }
+    ]
+}
+
+const activePlatform = ref('tiktok')
+
+// Gallery Picker Logic
+const showGalleryPicker = ref(false)
+const galleryImages = ref([])
+const loadingGallery = ref(false)
+
+const openGalleryPicker = async () => {
+    showGalleryPicker.value = true
+    loadingGallery.value = true
+    try {
+        // Fetch recent image posts
+        const q = query(
+            collection($db, 'posts'), 
+            where('type', '==', 'image'), 
+            orderBy('createdAt', 'desc'), 
+            limit(20)
+        )
+        const snapshot = await getDocs(q)
+        galleryImages.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    } catch (e) {
+        console.error("Error fetching gallery:", e)
+    } finally {
+        loadingGallery.value = false
+    }
+}
+
+const selectGalleryImage = (url) => {
+    mediaKit.value.photoUrl = url
+    showGalleryPicker.value = false
+}
+
 const saveMediaKit = async () => {
     uploading.value = true
     try {
         await addDoc(collection($db, 'media_kits'), {
             bio: mediaKit.value.bio,
-            stats: mediaKit.value.stats,
+            location: mediaKit.value.location || '',
+            photoUrl: mediaKit.value.photoUrl || '',
+            platforms: mediaKit.value.platforms,
             createdAt: serverTimestamp(),
             createdBy: user.value?.uid
         })
@@ -546,6 +674,29 @@ const saveMediaKit = async () => {
         uploading.value = false
     }
 }
+
+// Fetch existing Media Kit to populate form
+const fetchMediaKit = async () => {
+    try {
+        const q = query(collection($db, 'media_kits'), orderBy('createdAt', 'desc'), limit(1))
+        const snapshot = await getDocs(q)
+        if (!snapshot.empty) {
+            const data = snapshot.docs[0].data()
+            mediaKit.value = {
+                bio: data.bio || '',
+                location: data.location || '',
+                photoUrl: data.photoUrl || '',
+                platforms: data.platforms || mediaKit.value.platforms
+            }
+        }
+    } catch (e) {
+        console.error('Error fetching existing media kit:', e)
+    }
+}
+
+onMounted(() => {
+    fetchMediaKit()
+})
 </script>
 
 <style scoped>

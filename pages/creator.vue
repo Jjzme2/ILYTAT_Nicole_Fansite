@@ -47,7 +47,12 @@
             </div>
         </nav>
 
-        <button @click="logout" class="flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 transition text-sm font-medium mt-auto">
+        <button @click="showDevTaskModal = true" class="flex items-center gap-3 px-4 py-3 text-muted hover:text-text transition text-sm font-medium mt-auto">
+            <Bug class="w-5 h-5" />
+            Report Issue
+        </button>
+
+        <button @click="logout" class="flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 transition text-sm font-medium">
             <LogOut class="w-5 h-5" />
             Log Out
         </button>
@@ -119,6 +124,20 @@
                     <input type="file" class="hidden" @change="onFileSelected" accept="image/*,video/*,audio/*">
                 </label>
 
+            </div>
+
+            <!-- Random Drop Button (Special) + Bug Report -->
+            <div v-if="!file && postType !== 'text' && !captureMode" class="mb-10 flex gap-4">
+                 <button @click="startRandomDrop" class="flex-1 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-2 border-dashed border-purple-500/30 rounded-2xl p-4 flex items-center justify-center gap-3 hover:bg-purple-500/20 hover:border-purple-500 transition group">
+                    <Sparkles class="w-5 h-5 text-purple-500 group-hover:rotate-12 transition" />
+                    <span class="font-bold text-purple-700 dark:text-purple-300">Random Drop</span>
+                    <span class="text-xs text-muted">(Post to Random Room)</span>
+                </button>
+                 <button @click="showDevTaskModal = true" class="flex-1 bg-surface border-2 border-dashed border-border rounded-2xl p-4 flex items-center justify-center gap-3 hover:border-primary transition group">
+                    <Bug class="w-5 h-5 text-muted group-hover:text-primary transition" />
+                    <span class="font-bold text-muted group-hover:text-primary transition">Report Issue</span>
+                    <span class="text-xs text-muted">(Found a bug?)</span>
+                </button>
             </div>
 
              <!-- Editor / Preview Area -->
@@ -213,9 +232,15 @@
 
         <!-- MEDIA KIT TAB -->
         <div v-if="currentTab === 'media-kit'">
-            <header class="mb-10">
-                <h2 class="text-3xl font-serif text-text mb-2">Update Media Kit</h2>
-                <p class="text-muted">Keep your public profile up to date for brands.</p>
+            <header class="mb-10 flex justify-between items-end">
+                <div>
+                    <h2 class="text-3xl font-serif text-text mb-2">Update Media Kit</h2>
+                    <p class="text-muted">Keep your public profile up to date for brands.</p>
+                </div>
+                <div v-if="mediaKit.updatedAt" class="text-xs text-muted text-right">
+                    Last Updated<br>
+                    <span class="font-bold text-text">{{ formatDate(mediaKit.updatedAt) }}</span>
+                </div>
             </header>
 
              <div class="bg-surface rounded-2xl shadow-lg border border-border overflow-hidden max-w-2xl">
@@ -359,6 +384,42 @@
         @cancel="captureMode = null"
     />
 
+    <!-- Dev Task Modal -->
+    <div v-if="showDevTaskModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" @click.self="showDevTaskModal = false">
+        <div class="bg-surface w-full max-w-md rounded-2xl shadow-2xl border border-border p-6">
+            <h3 class="font-bold text-xl mb-4">Report Issue / Request Feature</h3>
+            <form @submit.prevent="submitDevTask" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-muted uppercase mb-1">Title</label>
+                    <input v-model="devTask.title" type="text" class="w-full bg-background border border-border rounded-lg p-2 focus:border-primary outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-muted uppercase mb-1">Type</label>
+                    <div class="flex gap-2">
+                        <button type="button" @click="devTask.type = 'bug'" :class="['px-3 py-1 rounded text-sm', devTask.type === 'bug' ? 'bg-red-500/20 text-red-500 border border-red-500' : 'bg-background border border-border']">Bug</button>
+                        <button type="button" @click="devTask.type = 'feature'" :class="['px-3 py-1 rounded text-sm', devTask.type === 'feature' ? 'bg-blue-500/20 text-blue-500 border border-blue-500' : 'bg-background border border-border']">Feature</button>
+                    </div>
+                </div>
+                 <div>
+                    <label class="block text-xs font-bold text-muted uppercase mb-1">Priority</label>
+                    <select v-model="devTask.priority" class="w-full bg-background border border-border rounded-lg p-2 outline-none">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-muted uppercase mb-1">Description</label>
+                    <textarea v-model="devTask.description" rows="3" class="w-full bg-background border border-border rounded-lg p-2 focus:border-primary outline-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 mt-4">
+                    <button type="button" @click="showDevTaskModal = false" class="text-muted hover:text-text text-sm">Cancel</button>
+                    <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg font-bold hover:opacity-90">Submit Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
   </div>
 </template>
 
@@ -379,7 +440,9 @@ import {
     StopCircle,
     RotateCcw,
     Check,
-    MapPin
+    MapPin,
+    Sparkles,
+    Bug
 } from 'lucide-vue-next'
 // ... (imports)
 
@@ -416,6 +479,7 @@ definePageMeta({
 
 const { $storage, $db } = useNuxtApp()
 const { logout, user } = useAuth()
+const toast = useToast()
 const route = useRoute()
 const router = useRouter()
 
@@ -430,6 +494,7 @@ watch(currentTab, (val) => {
 // --- CONTENT LOGIC ---
 const captureMode = ref(null)
 const postType = ref(null)
+const postFormat = ref(null) // 'image', 'video', 'audio', 'text' (subtype for random)
 const file = ref(null)
 const previewUrl = ref(null)
 const caption = ref('')
@@ -454,6 +519,7 @@ onMounted(async () => {
             if (docSnap.exists()) {
                 const data = docSnap.data()
                 postType.value = data.type
+                postFormat.value = data.format || data.type // Backwards compat
                 caption.value = data.caption || ''
                 isFree.value = data.isFree || false
                 
@@ -469,7 +535,7 @@ onMounted(async () => {
                     previewUrl.value = data.mediaUrl
                 }
             } else {
-                alert('Post not found!')
+                toast.error('Post not found!')
                 router.push('/creator')
             }
         } catch (e) {
@@ -490,17 +556,38 @@ const handleCapture = ({ blob, url, type }) => {
     const fileName = `capture_${Date.now()}.${ext}`
     file.value = new File([blob], fileName, { type: blob.type })
     previewUrl.value = url
-    postType.value = type === 'photo' ? 'image' : type
+    // If we are in random mode, keep type as random, set format
+    if (postType.value === 'random') {
+        postFormat.value = type === 'photo' ? 'image' : type
+    } else {
+        postType.value = type === 'photo' ? 'image' : type
+    }
     captureMode.value = null
 }
+
+const startRandomDrop = () => {
+    postType.value = 'random'
+    // Trigger file input
+    document.querySelector('input[type="file"]').click()
+}
+
 const onFileSelected = (e) => {
     const selected = e.target.files[0]
     if (selected) {
         file.value = selected
         previewUrl.value = URL.createObjectURL(selected)
-        if (selected.type.startsWith('video/')) postType.value = 'video'
-        else if (selected.type.startsWith('audio/')) postType.value = 'audio'
-        else postType.value = 'image'
+        previewUrl.value = URL.createObjectURL(selected)
+        
+        // Determine format
+        let detectedFormat = 'image'
+        if (selected.type.startsWith('video/')) detectedFormat = 'video'
+        else if (selected.type.startsWith('audio/')) detectedFormat = 'audio'
+        
+        if (postType.value === 'random') {
+            postFormat.value = detectedFormat
+        } else {
+            postType.value = detectedFormat
+        }
     }
 }
 
@@ -532,6 +619,7 @@ const resetForm = () => {
     file.value = null
     previewUrl.value = null
     postType.value = null
+    postFormat.value = null
     caption.value = ''
     embedUrl.value = ''
     embedInput.value = ''
@@ -539,6 +627,17 @@ const resetForm = () => {
     captureMode.value = null
     editingPostId.value = null
     router.replace('/creator') // Clear query param
+}
+
+const validateText = (text) => {
+    if (!text) return ''
+    // 1. Auto-capitalize first letter
+    let refined = text.charAt(0).toUpperCase() + text.slice(1)
+    
+    // 2. Ensure basic punctuation ending (optional, maybe too strict for social? Let's stick to capitalization for now)
+    // if (!/[.!?]$/.test(refined)) refined += '.'
+
+    return refined
 }
 
 const handleUpload = async () => {
@@ -559,8 +658,9 @@ const handleUpload = async () => {
         
         const payload = {
             mediaUrl: downloadURL,
-            type: embedUrl.value ? 'video' : postType.value,
-            caption: caption.value,
+            type: postType.value,
+            format: postType.value === 'random' ? (embedUrl.value ? 'video' : postFormat.value) : null,
+            caption: postType.value === 'text' ? validateText(caption.value) : caption.value,
             isFree: isFree.value,
             updatedAt: serverTimestamp()
         }
@@ -568,20 +668,26 @@ const handleUpload = async () => {
         if (editingPostId.value) {
             // UPDATE
             await updateDoc(doc($db, 'posts', editingPostId.value), payload)
-            alert('Post updated successfully!')
+            toast.success('Post updated successfully!', {
+                label: 'View Post',
+                onClick: () => router.push(`/feed?highlight=${editingPostId.value}`)
+            })
         } else {
              // CREATE
-             await addDoc(collection($db, 'posts'), {
+             const docRef = await addDoc(collection($db, 'posts'), {
                 ...payload,
                 createdAt: serverTimestamp()
             })
-            alert('Post created successfully!')
+            toast.success('Post created successfully!', {
+                label: 'View Post',
+                onClick: () => router.push(`/feed?highlight=${docRef.id}`)
+            })
         }
         
         resetForm()
     } catch (e) {
         console.error(e)
-        alert('Operation failed: ' + e.message)
+        toast.error('Operation failed: ' + e.message)
     } finally {
         uploading.value = false
     }
@@ -666,10 +772,10 @@ const saveMediaKit = async () => {
             createdAt: serverTimestamp(),
             createdBy: user.value?.uid
         })
-        alert('Media Kit updated!')
+        toast.success('Media Kit updated!')
     } catch (e) {
         console.error(e)
-        alert('Error saving Media Kit: ' + e.message)
+        toast.error('Error saving Media Kit: ' + e.message)
     } finally {
         uploading.value = false
     }
@@ -686,7 +792,8 @@ const fetchMediaKit = async () => {
                 bio: data.bio || '',
                 location: data.location || '',
                 photoUrl: data.photoUrl || '',
-                platforms: data.platforms || mediaKit.value.platforms
+                platforms: data.platforms || { ...mediaKit.value.platforms }, // Ensure default structure if missing
+                updatedAt: data.updatedAt || data.createdAt // Store for display
             }
         }
     } catch (e) {
@@ -697,6 +804,27 @@ const fetchMediaKit = async () => {
 onMounted(() => {
     fetchMediaKit()
 })
+
+// Dev Task Logic
+const showDevTaskModal = ref(false)
+const devTask = ref({ title: '', description: '', type: 'bug', priority: 'medium' })
+
+const submitDevTask = async () => {
+    try {
+        await addDoc(collection($db, 'tasks'), {
+            ...devTask.value,
+            status: 'todo',
+            createdBy: user.value.uid,
+            createdAt: serverTimestamp()
+        })
+        toast.success('Task submitted to Dev Board')
+        showDevTaskModal.value = false
+        devTask.value = { title: '', description: '', type: 'bug', priority: 'medium' }
+    } catch (e) {
+        console.error(e)
+        toast.error('Failed to submit task')
+    }
+}
 </script>
 
 <style scoped>

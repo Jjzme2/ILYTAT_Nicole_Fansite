@@ -7,7 +7,13 @@
            <!-- Placeholder for a user/hero avatar or logo if needed, using text for now or config image if available -->
            <div class="w-24 h-24 mx-auto bg-primary rounded-full blur-[40px] opacity-40 absolute top-0 left-1/2 -translate-x-1/2"></div>
            <h1 class="relative text-5xl md:text-6xl font-black tracking-tighter mb-2 text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
-               {{ config.meta.name }}
+               <span class="cursor-help relative group" @mouseenter="setRandomMessage">
+                   {{ config.meta.name }}
+                   <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-max max-w-[280px] md:max-w-md px-5 py-3 bg-zinc-900/95 backdrop-blur text-white text-base font-medium rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none shadow-2xl shadow-black/20 scale-95 group-hover:scale-100 transform origin-bottom z-50 text-center leading-relaxed tracking-wide border border-white/10">
+                        {{ currentHoverMessage }}
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-zinc-900/95"></div>
+                    </span>
+               </span>
            </h1>
         </div>
         
@@ -68,13 +74,22 @@
                                 loading="lazy"
                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                             />
-                            <!-- Video Placeholder / Poster -->
-                            <div v-else-if="post.type === 'video'" class="w-full h-full flex items-center justify-center bg-gray-900 relative">
-                                <div class="absolute inset-0 bg-black/40 z-10"></div>
-                                <div class="z-20 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
-                                     <div class="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white border-b-[8px] border-b-transparent ml-1"></div>
-                                </div>
-                                <img v-if="post.thumbnailUrl" :src="post.thumbnailUrl" class="absolute inset-0 w-full h-full object-cover opacity-60" />
+                            <div v-else-if="post.type === 'video'" class="w-full h-full bg-black">
+                                <iframe 
+                                    v-if="post.mediaUrl && (post.mediaUrl.includes('youtube.com') || post.mediaUrl.includes('youtu.be'))"
+                                    :src="getEmbedUrl(post.mediaUrl)" 
+                                    frameborder="0" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                    allowfullscreen
+                                    class="w-full h-full"
+                                ></iframe>
+                                <video 
+                                    v-else
+                                    :src="post.mediaUrl" 
+                                    controls
+                                    class="w-full h-full object-cover"
+                                    :poster="post.thumbnailUrl"
+                                ></video>
                             </div>
                             <div v-else-if="post.type === 'audio'" class="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900 to-black">
                                 <div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
@@ -154,6 +169,18 @@ const { socialLinks } = useSocials()
 definePageMeta({ layout: false })
 
 const publicPosts = ref([])
+
+// Hover Messages
+const currentHoverMessage = ref('Have a beautiful day!')
+const hoverMessages = config.hoverMessages || [
+    "Have a beautiful day!",
+    "You look great today!"
+]
+const setRandomMessage = () => {
+    const next = hoverMessages[Math.floor(Math.random() * hoverMessages.length)]
+    if (next === currentHoverMessage.value) setRandomMessage() // Retry if same
+    else currentHoverMessage.value = next
+}
 
 onMounted(async () => {
     try {

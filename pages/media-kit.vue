@@ -66,20 +66,66 @@
                 <h2 class="text-2xl font-bold mb-4 text-text">Partner with {{ config.meta.copyright }}</h2>
                 <p class="text-muted mb-8 max-w-xl mx-auto">Available for brand deals, sponsored content, and exclusive collaborations.</p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a :href="'mailto:' + config.socials.email" class="px-8 py-3 bg-primary text-white font-bold rounded-full hover:bg-primary/90 transition shadow-lg shadow-primary/20">
-                        Contact Management
-                    </a>
+                    <button @click="showCollabForm = true" class="px-8 py-3 bg-primary text-white font-bold rounded-full hover:bg-primary/90 transition shadow-lg shadow-primary/20 flex items-center gap-2 mx-auto">
+                        Inquire for Collaboration
+                    </button>
                 </div>
              </div>
         </section>
 
     </div>
+
+    <!-- Collab Modal -->
+    <div v-if="showCollabForm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" @click="showCollabForm = false"></div>
+        <div class="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-lg relative z-10 animate-in fade-in zoom-in-95 duration-300">
+            <button @click="showCollabForm = false" class="absolute top-4 right-4 text-muted hover:text-text">
+                <X class="w-6 h-6" />
+            </button>
+            
+            <div class="p-8">
+                <h3 class="text-2xl font-bold mb-2 text-text">Let's Work Together</h3>
+                <p class="text-muted text-sm mb-6">Fill out the details below to start the conversation.</p>
+                
+                <form @submit.prevent="submitCollab" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-muted mb-1">Brand Name</label>
+                        <input v-model="collabForm.brandName" required type="text" class="w-full bg-background border border-border text-text rounded-xl p-3 focus:border-primary outline-none transition">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-muted mb-1">Contact Name</label>
+                            <input v-model="collabForm.contactName" required type="text" class="w-full bg-background border border-border text-text rounded-xl p-3 focus:border-primary outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-muted mb-1">Budget / Value</label>
+                            <input v-model="collabForm.value" type="text" placeholder="e.g. $1,500" class="w-full bg-background border border-border text-text rounded-xl p-3 focus:border-primary outline-none transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-muted mb-1">Contact Email</label>
+                        <input v-model="collabForm.contactEmail" required type="email" class="w-full bg-background border border-border text-text rounded-xl p-3 focus:border-primary outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-muted mb-1">Vision & Deliverables</label>
+                        <textarea v-model="collabForm.deliverables" required rows="4" placeholder="Describe your campaign goals and what you are looking for..." class="w-full bg-background border border-border text-text rounded-xl p-3 focus:border-primary outline-none transition"></textarea>
+                    </div>
+
+                    <button type="submit" :disabled="submitting" class="w-full py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition shadow-lg shadow-primary/20 flex justify-center items-center gap-2">
+                        <LucideLoader v-if="submitting" class="w-5 h-5 animate-spin" />
+                        {{ submitting ? 'Sending Request...' : 'Submit Inquiry' }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
   </div>
 </template>
 
 <script setup>
-import { MapPin, Image as ImageIcon } from 'lucide-vue-next'
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore'
+import { MapPin, Image as ImageIcon, X, Loader as LucideLoader } from 'lucide-vue-next'
+import { collection, query, orderBy, limit, getDocs, addDoc, serverTimestamp } from 'firebase/firestore'
 
 const config = useAppConfig()
 const { $db } = useNuxtApp()
@@ -116,4 +162,47 @@ const { data: mediaKit } = await useAsyncData('mediaKit', async () => {
 })
 
 const displayData = computed(() => mediaKit.value || defaultData)
+
+// --- COLLAB FORM ---
+const showCollabForm = ref(false)
+const submitting = ref(false)
+const collabForm = ref({
+    brandName: '',
+    contactName: '',
+    contactEmail: '',
+    value: '',
+    deliverables: ''
+})
+
+const submitCollab = async () => {
+    submitting.value = true
+    try {
+        // 1. Create Pending Deal
+        await addDoc(collection($db, 'brand_deals'), {
+            brandName: collabForm.value.brandName,
+            contactName: collabForm.value.contactName,
+            contactEmail: collabForm.value.contactEmail,
+            value: collabForm.value.value || 'Waitlist / Inquire',
+            deliverables: collabForm.value.deliverables,
+            status: 'pending',
+            notes: 'Submitted via Media Kit Form',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        })
+
+        // 2. Alert / Simulate Email
+        const alertMsg = `New Collab Request from ${collabForm.value.brandName}!\n\nSimulating email notification sent to: ${config.socials.brandDealsEmail}`
+        console.log(alertMsg)
+        alert('Request Sent! We will be in touch shortly.')
+
+        showCollabForm.value = false
+        collabForm.value = { brandName: '', contactName: '', contactEmail: '', value: '', deliverables: '' }
+
+    } catch (e) {
+        console.error('Error submitting deal:', e)
+        alert('Something went wrong. Please try again.')
+    } finally {
+        submitting.value = false
+    }
+}
 </script>

@@ -183,16 +183,45 @@ const toggleRecording = () => {
     }
 }
 
+const recordingMimeType = ref('')
+
+const getSupportedMimeType = () => {
+    const types = props.mode === 'audio' 
+        ? ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'] 
+        : ['video/mp4', 'video/webm;codecs=vp9', 'video/webm']
+    
+    for (const type of types) {
+        if (MediaRecorder.isTypeSupported(type)) {
+            return type
+        }
+    }
+    return '' // Let browser default
+}
+
 const startRecording = () => {
     chunks.value = []
-    mediaRecorder.value = new MediaRecorder(stream.value)
+    
+    // Determine best mime type
+    const mimeType = getSupportedMimeType()
+    recordingMimeType.value = mimeType
+    
+    const options = mimeType ? { mimeType } : undefined
+    
+    try {
+        mediaRecorder.value = new MediaRecorder(stream.value, options)
+    } catch (e) {
+        console.warn('MediaRecorder failed with options, trying default', e)
+        mediaRecorder.value = new MediaRecorder(stream.value)
+        recordingMimeType.value = '' // Fallback to default
+    }
     
     mediaRecorder.value.ondataavailable = (e) => {
         if (e.data.size > 0) chunks.value.push(e.data)
     }
     
     mediaRecorder.value.onstop = () => {
-        const type = props.mode === 'audio' ? 'audio/webm' : 'video/webm'
+        // Use the actual mime type we recorded with, or a generic fallback
+        const type = recordingMimeType.value || (props.mode === 'audio' ? 'audio/webm' : 'video/webm')
         capturedBlob.value = new Blob(chunks.value, { type })
         capturedUrl.value = URL.createObjectURL(capturedBlob.value)
         stopStream()

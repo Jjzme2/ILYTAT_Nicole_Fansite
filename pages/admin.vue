@@ -71,10 +71,15 @@
     <main class="flex-1 p-6 md:p-10 overflow-y-auto">
         <!-- Mobile Header -->
         <div class="md:hidden flex justify-between items-center mb-6">
-            <h1 class="font-bold text-xl text-text">THE OFFICE</h1>
-            <div class="flex gap-4">
-                 <NuxtLink v-if="role === 'creator'" to="/creator" class="text-sm font-bold text-indigo-600">Studio</NuxtLink>
-                <button @click="logout" class="text-sm text-red-500">Log Out</button>
+            <div class="flex items-center gap-3">
+                <NuxtLink to="/feed" class="p-2 -ml-2 text-muted hover:text-text">
+                    <ArrowLeft class="w-6 h-6" />
+                </NuxtLink>
+                <h1 class="font-bold text-xl text-text">THE OFFICE</h1>
+            </div>
+            <div class="flex gap-4 items-center">
+                 <NuxtLink v-if="role === 'creator'" to="/creator" class="text-xs font-bold text-indigo-600 border border-indigo-200 px-2 py-1 rounded-full">Studio</NuxtLink>
+                <button @click="logout" class="text-xs text-red-500 font-medium">Log Out</button>
             </div>
         </div>
 
@@ -542,7 +547,7 @@ import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, setD
 import { 
     LayoutDashboard, ExternalLink, LogOut, Check,
     Users, Briefcase, Plus, User, Zap, Bug, Hammer, Trash2, Clipboard, Archive,
-    Rocket, Flame, Github, CreditCard, BarChart3, Triangle, Globe
+    Rocket, Flame, Github, CreditCard, BarChart3, Triangle, Globe, ArrowLeft
 } from 'lucide-vue-next'
 import { generateMarkdown } from '~/utils/taskMarkdown'
 

@@ -62,10 +62,15 @@
     <main class="flex-1 p-6 md:p-10 overflow-y-auto">
         <!-- Mobile Header -->
         <div class="md:hidden flex justify-between items-center mb-6">
-            <h1 class="font-bold text-xl">THE STUDIO</h1>
-            <div class="flex gap-4">
-                <NuxtLink to="/admin" class="text-sm font-bold">Admin</NuxtLink>
-                <button @click="logout" class="text-sm text-red-500">Log Out</button>
+            <div class="flex items-center gap-3">
+                 <NuxtLink to="/feed" class="p-2 -ml-2 text-muted hover:text-text">
+                    <ArrowLeft class="w-6 h-6" />
+                </NuxtLink>
+                <h1 class="font-bold text-xl">THE STUDIO</h1>
+            </div>
+            <div class="flex gap-4 items-center">
+                <NuxtLink to="/admin" class="text-xs font-bold font-mono uppercase text-muted border border-border px-2 py-1 rounded">Admin</NuxtLink>
+                <button @click="logout" class="text-xs text-red-500 font-medium">Log Out</button>
             </div>
         </div>
 
@@ -455,7 +460,8 @@ import {
     Check,
     MapPin,
     Sparkles,
-    Bug
+    Bug,
+    ArrowLeft
 } from 'lucide-vue-next'
 // ... (imports)
 
@@ -565,7 +571,16 @@ const selectType = (type) => {
     if (type === 'text') file.value = null
 }
 const handleCapture = ({ blob, url, type }) => {
-    const ext = type === 'audio' ? 'webm' : (type === 'video' ? 'webm' : 'jpg')
+    // Determine extension from MIME type
+    let ext = 'webm'
+    if (blob.type.includes('mp4')) {
+        ext = type === 'audio' ? 'm4a' : 'mp4'
+    } else if (blob.type.includes('webm')) {
+        ext = 'webm'
+    } else if (type === 'photo') {
+        ext = 'jpg'
+    }
+
     const fileName = `capture_${Date.now()}.${ext}`
     file.value = new File([blob], fileName, { type: blob.type })
     previewUrl.value = url

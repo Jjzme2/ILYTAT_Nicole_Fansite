@@ -391,16 +391,22 @@
 
     <!-- Bottom Nav -->
     <nav class="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-xl border-t border-border px-6 pb-6 pt-3 md:pb-3 flex justify-around items-center z-50">
-        <button @click="handleBack" class="flex flex-col items-center gap-1 text-muted hover:text-text transition group">
-            <ArrowLeft class="w-6 h-6 group-hover:-translate-x-1 transition" />
-            <span class="text-[10px] font-bold uppercase tracking-wider">Back</span>
+        <NuxtLink to="/feed" class="flex flex-col items-center gap-1 text-muted hover:text-text transition group">
+            <LayoutGrid class="w-6 h-6 group-hover:scale-110 transition" />
+            <span class="text-[10px] font-bold uppercase tracking-wider">Feed</span>
+        </NuxtLink>
+
+        <button class="flex flex-col items-center gap-1 text-text transition group">
+            <div class="bg-primary text-white p-3 rounded-full -mt-10 shadow-xl border-4 border-background group-hover:scale-105 transition">
+                <Zap class="w-6 h-6" />
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Hub</span>
         </button>
 
-         <div class="text-xs font-serif italic text-muted">
-            The Hub
-        </div>
-
-         <div class="w-6"></div> <!-- Spacer -->
+        <NuxtLink to="/profile" class="flex flex-col items-center gap-1 text-muted hover:text-text transition group">
+            <User class="w-6 h-6 group-hover:scale-110 transition" />
+            <span class="text-[10px] font-bold uppercase tracking-wider">Profile</span>
+        </NuxtLink>
     </nav>
 
   </div>
@@ -408,7 +414,7 @@
 
 <script setup>
 import { collection, query, orderBy, getDocs, where, limit } from 'firebase/firestore'
-import { BookOpen, Mic, ImageIcon, Sparkles, Ghost, Lock, Gamepad2, MousePointerClick, ArrowLeft, ArrowRight, Quote, Clapperboard, MonitorPlay, X, Brain, Grid } from 'lucide-vue-next'
+import { BookOpen, Mic, ImageIcon, Sparkles, Ghost, Lock, Gamepad2, MousePointerClick, ArrowLeft, ArrowRight, Quote, Clapperboard, MonitorPlay, X, Brain, Grid, LayoutGrid, Zap, User } from 'lucide-vue-next'
 import SnakeGame from '~/components/games/SnakeGame.vue'
 import ClickerGame from '~/components/games/ClickerGame.vue'
 import TicTacToe from '~/components/games/TicTacToe.vue'

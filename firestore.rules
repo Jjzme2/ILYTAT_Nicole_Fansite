@@ -80,6 +80,28 @@ service cloud.firestore {
         allow read, write: if canManage();
     }
 
+    // Archived Tasks (Admin Archive)
+    match /archived_tasks/{taskId} {
+        allow read, write: if canManage();
+    }
+
+    // Giveaways & Campaigns
+    match /giveaways/{campaignId} {
+        allow read: if true;
+        allow write: if canManage();
+
+        match /rounds/{roundId} {
+            allow read: if true;
+            allow write: if canManage();
+
+            // Entries
+            match /entries/{entryId} {
+                allow read: if canManage() || isOwner(resource.data.userId);
+                allow create: if isAuthenticated(); // One entry per user logic handled in app or via unique ID if structured
+            }
+        }
+    }
+
     // Tasks (New Dev Board)
     match /tasks/{taskId} {
         allow read: if canManage(); // Only admins/creators see the board

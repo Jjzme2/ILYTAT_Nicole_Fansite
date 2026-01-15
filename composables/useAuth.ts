@@ -90,7 +90,10 @@ export const useAuth = () => {
 
     // Actions
     const login = async (email: string, pass: string) => {
-        await signInWithEmailAndPassword($auth, email, pass)
+        const cred = await signInWithEmailAndPassword($auth, email, pass)
+        if (cred.user) {
+            localStorage.setItem('lastLogin_' + cred.user.uid, Date.now().toString())
+        }
     }
 
     const register = async (email: string, pass: string, name: string) => {
@@ -101,6 +104,9 @@ export const useAuth = () => {
             await updateProfile(cred.user, {
                 displayName: name
             })
+
+            // Set login time
+            localStorage.setItem('lastLogin_' + cred.user.uid, Date.now().toString())
 
             // Create Firestore Profile immediately with name
             const userDocRef = doc($db, 'users', cred.user.uid)
@@ -120,7 +126,10 @@ export const useAuth = () => {
 
     const loginWithGoogle = async () => {
         const provider = new GoogleAuthProvider()
-        await signInWithPopup($auth, provider)
+        const cred = await signInWithPopup($auth, provider)
+        if (cred.user) {
+            localStorage.setItem('lastLogin_' + cred.user.uid, Date.now().toString())
+        }
     }
 
     const logout = async () => {

@@ -2,7 +2,10 @@
 export default defineNuxtConfig({
   // Configuration
   compatibilityDate: '2025-07-15',
-  modules: ['@nuxtjs/tailwindcss'],
+  modules: ['@nuxtjs/tailwindcss', 'nuxt-gtag'],
+  gtag: {
+    id: 'G-XXXXXXXXXX' // TODO: Replace with actual Google Analytics ID
+  },
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
     // Private keys (server-side only)

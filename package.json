@@ -8,7 +8,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "manage-users": "node .dev/scripts/manage-users.js"
+    "manage-users": "node .dev/scripts/manage-users.js",
+    "create-task-list": "node .dev/scripts/createFile.js --name TaskList --path .dev/Tasks/"
   },
   "dependencies": {
     "@nuxtjs/tailwindcss": "^6.14.0",

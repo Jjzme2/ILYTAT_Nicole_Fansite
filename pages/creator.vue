@@ -61,12 +61,25 @@
     <!-- Main Content -->
     <main class="flex-1 p-6 md:p-10 overflow-y-auto">
         <!-- Mobile Header -->
-        <div class="md:hidden flex justify-between items-center mb-8">
+        <div class="md:hidden flex justify-between items-center mb-6">
             <h1 class="font-bold text-xl">THE STUDIO</h1>
             <div class="flex gap-4">
                 <NuxtLink to="/admin" class="text-sm font-bold">Admin</NuxtLink>
                 <button @click="logout" class="text-sm text-red-500">Log Out</button>
             </div>
+        </div>
+
+        <!-- Mobile Tab Navigation -->
+        <div class="md:hidden flex overflow-x-auto gap-2 mb-8 pb-2 -mx-6 px-6 scrollbar-hide">
+             <button @click="currentTab = 'content'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'content' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
+                Content
+            </button>
+             <button @click="currentTab = 'media-kit'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'media-kit' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
+                Media Kit
+            </button>
+             <button @click="currentTab = 'suggestions'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'suggestions' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
+                Suggestions
+            </button>
         </div>
 
         <!-- CONTENT TAB -->

@@ -9,6 +9,13 @@
         </div>
         
         <nav class="space-y-2 flex-1">
+            <button 
+                @click="currentTab = 'launchpad'"
+                :class="['flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition', currentTab === 'launchpad' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-text']"
+            >
+                <Rocket class="w-5 h-5" />
+                Launchpad
+            </button>
              <button 
                 @click="currentTab = 'deals'"
                 :class="['flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition', currentTab === 'deals' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-text']"
@@ -27,7 +34,7 @@
                 @click="currentTab = 'giveaways'"
                 :class="['flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition', currentTab === 'giveaways' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-text']"
             >
-                <div class="w-5 h-5 flex items-center justify-center"><component :is="activeCampaign ? Trophy : Gift" class="w-4 h-4" /></div>
+               <div class="w-5 h-5 flex items-center justify-center"><component :is="activeCampaign ? Trophy : Gift" class="w-4 h-4" /></div>
                 Giveaways
             </button>
              <button 
@@ -73,6 +80,9 @@
 
         <!-- Mobile Tab Navigation -->
         <div class="md:hidden flex overflow-x-auto gap-2 mb-8 pb-2 -mx-6 px-6 scrollbar-hide">
+             <button @click="currentTab = 'launchpad'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'launchpad' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
+                Launchpad
+            </button>
              <button @click="currentTab = 'deals'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'deals' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
                 Brand Deals
             </button>
@@ -85,6 +95,38 @@
              <button @click="currentTab = 'dev'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'dev' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
                 Dev Board
             </button>
+        </div>
+
+        <!-- LAUNCHPAD TAB -->
+        <div v-if="currentTab === 'launchpad'" class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <header class="mb-10">
+                <h2 class="text-3xl font-serif text-text mb-2">Mission Control</h2>
+                <p class="text-muted">Quick access to all essential external tools.</p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <a 
+                    v-for="(link, i) in appConfig.quickLaunch" 
+                    :key="i"
+                    :href="link.url"
+                    target="_blank"
+                    class="group relative overflow-hidden bg-surface border rounded-2xl p-6 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-xl"
+                    :class="[link.borderColor || 'border-border']"
+                >
+                     <!-- Background Splash -->
+                     <div class="absolute right-0 top-0 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-40 transition duration-700" :class="link.color.replace('text', 'bg')"></div>
+
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="p-3 rounded-xl transition-colors duration-300" :class="link.bgColor || 'bg-background'">
+                            <component :is="getIcon(link.icon)" class="w-6 h-6" :class="link.color" />
+                        </div>
+                        <ExternalLink class="w-4 h-4 text-muted group-hover:text-primary transition" />
+                    </div>
+
+                    <h3 class="font-bold text-lg text-text mb-1 group-hover:text-primary transition">{{ link.label }}</h3>
+                    <p class="text-sm text-muted leading-relaxed group-hover:text-text/70 transition">{{ link.description }}</p>
+                </a>
+            </div>
         </div>
 
         <!-- USERS TAB -->
@@ -499,7 +541,8 @@
 import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, setDoc, startAfter, endBefore, limit, limitToLast, deleteDoc } from 'firebase/firestore'
 import { 
     LayoutDashboard, ExternalLink, LogOut, Check,
-    Users, Briefcase, Plus, User, Zap, Bug, Hammer, Trash2, Clipboard, Archive
+    Users, Briefcase, Plus, User, Zap, Bug, Hammer, Trash2, Clipboard, Archive,
+    Rocket, Flame, Github, CreditCard, BarChart3, Triangle, Globe
 } from 'lucide-vue-next'
 import { generateMarkdown } from '~/utils/taskMarkdown'
 
@@ -510,6 +553,7 @@ definePageMeta({
 const { $db } = useNuxtApp()
 const { logout, user, isAdmin, role } = useAuth()
 const toast = useToast()
+const appConfig = useAppConfig()
 
 // --- GIFT/GIVEAWAY ICONS ---
 import { Gift, Calendar, Trophy } from 'lucide-vue-next'
@@ -517,8 +561,20 @@ import { Gift, Calendar, Trophy } from 'lucide-vue-next'
 // ... existing imports ...
 
 // TABS
-const currentTab = ref('deals') 
+const currentTab = ref('launchpad') 
 const uploading = ref(false)
+
+const getIcon = (iconName) => {
+    switch(iconName) {
+        case 'Flame': return Flame
+        case 'Github': return Github
+        case 'CreditCard': return CreditCard
+        case 'BarChart3': return BarChart3
+        case 'Triangle': return Triangle
+        case 'Globe': return Globe
+        default: return Rocket
+    }
+}
 
 // --- DEV BOARD LOGIC ---
 const tasks = ref([])

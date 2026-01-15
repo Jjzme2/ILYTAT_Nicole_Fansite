@@ -55,9 +55,19 @@
                 --color-error: {{ themeStyles['--color-error'] }};
                 --color-warning: {{ themeStyles['--color-warning'] }};
                 --color-info: {{ themeStyles['--color-info'] }};
+                --color-glow: {{ themeStyles['--color-glow'] }};
             }
         </component>
     </Head>
+    <!-- Toast Notifications -->
+    <ToastNotification />
+
+    <!-- Auth State Glow -->
+    <div 
+        class="fixed inset-0 pointer-events-none"
+        :class="glowConfig.class"
+        :style="glowConfig.style"
+    ></div>
   </div>
 </template>
 
@@ -72,6 +82,73 @@ const { loading, user } = useAuth()
 const router = useRouter()
 const route = useRoute()
 
+// --- Glow Configuration ---
+const glowActive = ref(false)
+let glowTimer = null
+
+const triggerGlow = () => {
+    glowActive.value = true
+    if (glowTimer) clearTimeout(glowTimer)
+    glowTimer = setTimeout(() => {
+        glowActive.value = false
+    }, 2500) // ~2-3 seconds duration
+}
+
+// Trigger on mount if we want an initial hello, otherwise only on change?
+// User said "after the user logs in or out", implies change. 
+// But if I refresh and I'm logged in, do I see it? Maybe not perpetual means not just state-based.
+// Let's stick to watching `user`.
+
+watch(user, () => {
+    triggerGlow()
+})
+
+const glowConfig = computed(() => {
+    const ui = config.ui.glow
+    const isActive = glowActive.value
+    
+    // Aesthetic Transition Constants
+    const opacity = isActive ? '0.8' : '0'
+    const scale = isActive ? '1.05' : '1' // Breathe in
+    const duration = isActive ? '800ms' : '2000ms' // Fast in, slow linger out
+    const easing = 'cubic-bezier(0.4, 0, 0.2, 1)' // Standard organic curve
+    
+    const commonStyle = {
+        transform: `scale(${scale})`,
+        opacity: opacity,
+        transition: `opacity ${duration} ${easing}, transform ${duration} ${easing}`,
+        willChange: 'opacity, transform'
+    }
+
+    if (user.value) {
+        // Logged In
+        return {
+            class: 'fixed inset-0 pointer-events-none', // Ensure fixed positioning
+            style: {
+                ...commonStyle,
+                background: ui.loggedIn.style.backgroundHelper(themeStyles.value['--color-glow']),
+                boxShadow: ui.loggedIn.style.boxShadowHelper(themeStyles.value['--color-glow']),
+                filter: ui.loggedIn.style.filter,
+                animation: ui.loggedIn.style.animation, // Pulse persists while visible
+                zIndex: ui.loggedIn.style.zIndex
+            }
+        }
+    } else {
+        // Logged Out
+        return {
+            class: 'fixed inset-0 pointer-events-none',
+            style: {
+                ...commonStyle,
+                background: ui.loggedOut.style.backgroundHelper(),
+                boxShadow: ui.loggedOut.style.boxShadowHelper(),
+                filter: ui.loggedOut.style.filter,
+                animation: ui.loggedOut.style.animation,
+                zIndex: ui.loggedOut.style.zIndex
+            }
+        }
+    }
+})
+
 watch(loading, (newLoading) => {
   if (!newLoading) {
     // Post-load redirect check
@@ -81,7 +158,17 @@ watch(loading, (newLoading) => {
     if (route.path === '/login' && user.value) {
       router.push('/feed')
     }
+    // Also trigger glow on initial load completion? "logs in or out"
+    // Let's trigger it once on load so they see *something* happens
+    triggerGlow()
   }
 })
 </script>
+
+<style>
+@keyframes pulse-glow {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.1); }
+}
+</style>
 

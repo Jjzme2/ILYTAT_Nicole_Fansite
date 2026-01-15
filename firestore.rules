@@ -8,19 +8,23 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    // Helper: Role Checks
+    // Helper: Role Checks (Safe)
     function getUserData() {
         return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function userDocExists() {
+        return exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
     
     // Management Access (Admin OR Creator)
     function canManage() {
-      return isAuthenticated() && (getUserData().role == 'admin' || getUserData().role == 'creator');
+      return isAuthenticated() && userDocExists() && (getUserData().role == 'admin' || getUserData().role == 'creator');
     }
     
     // Content Access (Creator ONLY)
     function canUpload() {
-      return isAuthenticated() && getUserData().role == 'creator';
+      return isAuthenticated() && userDocExists() && getUserData().role == 'creator';
     }
 
     function isOwner(userId) {
@@ -31,6 +35,13 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId) || canManage();
       allow write: if isOwner(userId) || canManage();
+
+      // Scores Subcollection
+      match /scores/{scoreId} {
+        allow read: if true;
+        allow create: if request.auth != null && request.auth.uid == userId;
+        allow update, delete: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // Posts Collection
@@ -54,23 +65,40 @@ service cloud.firestore {
 
     // Suggestions
     match /suggestions/{suggestionId} {
-        allow create: if isAuthenticated() && getUserData().isSubscriber == true;
-        allow read: if canManage() || isOwner(resource.data.userId);
+        // Allow subscribers to create
+        allow create: if isAuthenticated() && userDocExists() && getUserData().isSubscriber == true;
+        
+        // Allow reading if manager OR if the user owns the suggestion
+        // Note: For list queries, the query must filter by userId
+        allow read: if canManage() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+        
         allow delete: if canManage();
     }
 
-    // Developer Tasks
+    // Developer Tasks (Legacy)
     match /developer_tasks/{taskId} {
         allow read, write: if canManage();
     }
 
+    // Tasks (New Dev Board)
+    match /tasks/{taskId} {
+        allow read: if canManage(); // Only admins/creators see the board
+        allow create: if isAuthenticated(); // Anyone (logged in) can report
+        allow update, delete: if canManage();
+    }
+
     // Comments (Subcollection of Posts)
-    // Nested path match
+    // Nested path match for structure
     match /posts/{postId}/comments/{commentId} {
         allow read: if true;
         allow create: if isAuthenticated();
-        // allow update: if canManage() || isOwner(resource.data.userId); // Optional
         allow delete: if canManage() || isOwner(resource.data.userId);
+    }
+
+    // Collection Group for Comments
+    // Matches ANY document in a 'comments' collection
+    match /{path=**}/comments/{commentId} {
+        allow read: if true;
     }
   }
 }

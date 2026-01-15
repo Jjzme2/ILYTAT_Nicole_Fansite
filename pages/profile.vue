@@ -15,6 +15,34 @@
 
       <div class="space-y-8">
         
+        <!-- Personal Settings -->
+        <section class="bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm">
+            <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                <UserIcon class="w-5 h-5 text-primary" />
+                Personal Settings
+            </h2>
+            
+            <div class="max-w-md">
+                <label class="block text-sm font-bold text-muted mb-2">Display Name</label>
+                <div class="flex gap-2">
+                    <input 
+                        v-model="newDisplayName" 
+                        type="text" 
+                        placeholder="Enter your name"
+                        class="flex-1 bg-background border-2 border-border text-text rounded-xl p-3 outline-none focus:border-primary transition"
+                    />
+                    <button 
+                        @click="handleUpdateProfile" 
+                        :disabled="updating"
+                        class="px-6 bg-primary text-white font-bold rounded-xl hover:scale-105 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {{ updating ? '...' : 'Update' }}
+                    </button>
+                </div>
+                <p class="text-xs text-muted mt-2">This is how you will appear across the platform.</p>
+            </div>
+        </section>
+
         <!-- Theme Settings -->
         <section class="bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm">
             <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
@@ -86,6 +114,78 @@
                         <pre class="text-xs font-mono text-muted whitespace-pre-wrap">{{ JSON.stringify(safeUserData, null, 2) }}</pre>
                     </div>
                 </div>
+
+                <!-- Activity Data -->
+                <div class="mt-8 border-t border-border pt-8">
+                    <h3 class="font-bold text-lg mb-4">Your Activity</h3>
+                    
+                    <div v-if="contentLoading" class="text-sm text-muted animate-pulse">Loading activity...</div>
+                    <div v-else-if="errorMessage" class="text-sm text-red-500 bg-red-50 p-3 rounded-lg border border-red-100 mb-4">
+                        {{ errorMessage }}
+                    </div>
+                    <div v-else class="space-y-6">
+                        
+                        <!-- Suggestions -->
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <Lightbulb class="w-4 h-4 text-primary" />
+                                <span class="text-sm font-bold uppercase text-muted tracking-wider">Suggestions ({{ userSuggestions.length }})</span>
+                            </div>
+                            <div v-if="userSuggestions.length > 0" class="grid gap-2">
+                                <div v-for="item in userSuggestions" :key="item.id" class="bg-background border border-border p-3 rounded-lg text-sm">
+                                    <div class="flex justify-between mb-1">
+                                        <span class="font-bold text-[10px] uppercase bg-surface px-1.5 rounded border border-border">{{ item.type }}</span>
+                                        <span class="text-[10px] text-muted">{{ item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString() : 'Just now' }}</span>
+                                    </div>
+                                    <p>{{ item.content }}</p>
+                                </div>
+                            </div>
+                            <p v-else class="text-sm text-muted italic">No suggestions yet.</p>
+                        </div>
+
+                        <!-- Scores -->
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <Trophy class="w-4 h-4 text-primary" />
+                                <span class="text-sm font-bold uppercase text-muted tracking-wider">Game History ({{ userScores.length }})</span>
+                            </div>
+                            <div v-if="userScores.length > 0" class="flex flex-wrap gap-2">
+                                <div v-for="score in userScores" :key="score.id" class="bg-background border border-border px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+                                    <span class="font-bold capitalize">{{ score.gameId }}</span>
+                                    <span class="w-px h-3 bg-border"></span>
+                                    <span class="font-mono text-primary">{{ score.score }}</span>
+                                    <span class="text-[10px] text-muted">{{ score.timestamp?.toDate ? score.timestamp.toDate().toLocaleDateString() : '' }}</span>
+                                </div>
+                            </div>
+                            <p v-else class="text-sm text-muted italic">No games played yet.</p>
+                        </div>
+
+                        <!-- Comments -->
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <MessageSquare class="w-4 h-4 text-primary" />
+                                <span class="text-sm font-bold uppercase text-muted tracking-wider">Comments ({{ userComments.length }})</span>
+                            </div>
+                             <div v-if="userComments.length > 0" class="max-h-60 overflow-y-auto pr-2 space-y-2">
+                                <component 
+                                    :is="comment.postId ? 'NuxtLink' : 'div'"
+                                    v-for="comment in userComments" 
+                                    :key="comment.id"
+                                    :to="comment.postId ? `/feed?highlight=${comment.postId}` : undefined"
+                                    class="block bg-background border border-border p-3 rounded-lg text-sm hover:border-primary transition"
+                                >
+                                    <div v-if="comment.postId" class="text-[10px] text-primary font-bold mb-1 uppercase tracking-wider">
+                                        On Post
+                                    </div>
+                                    <p class="mb-1">{{ comment.text }}</p>
+                                    <p class="text-[10px] text-muted text-right">{{ comment.createdAt?.toDate ? comment.createdAt.toDate().toLocaleString() : 'Just now' }}</p>
+                                </component>
+                            </div>
+                            <p v-else class="text-sm text-muted italic">No comments yet.</p>
+                        </div>
+
+                    </div>
+                </div>
             </div>
             
             <div v-else class="text-center py-10">
@@ -107,15 +207,130 @@
 </template>
 
 <script setup>
-import { Palette, Database } from 'lucide-vue-next'
+import { Palette, Database, User as UserIcon, MessageSquare, Lightbulb, Trophy } from 'lucide-vue-next'
+import { updateProfile } from 'firebase/auth'
+import { doc, setDoc, collection, query, where, getDocs, orderBy, collectionGroup } from 'firebase/firestore'
+import { useAuth } from '#imports'
 
 const config = useAppConfig()
 const { user, loading, logout } = useAuth()
 const { activeTheme, themes } = useTheme()
+const toast = useToast()
+const { $auth, $db } = useNuxtApp()
 
 useHead({
-    title: 'User Profile - Data Transparency'
+    title: 'User Profile - Settings'
 })
+
+// Profile State
+const newDisplayName = ref('')
+const updating = ref(false)
+
+// Data Transparency State
+const contentLoading = ref(false)
+const errorMessage = ref('')
+const userComments = ref([])
+const userSuggestions = ref([])
+const userScores = ref([])
+
+const fetchUserContent = async () => {
+    if (!user.value) return
+    contentLoading.value = true
+    errorMessage.value = ''
+    
+    // 1. Fetch Comments
+    try {
+        const commentsQ = query(
+            collectionGroup($db, 'comments'), 
+            where('userId', '==', user.value.uid),
+            orderBy('createdAt', 'desc')
+        )
+        const commentsSnap = await getDocs(commentsQ)
+        userComments.value = commentsSnap.docs.map(doc => {
+            const data = doc.data()
+            // doc.ref.parent is 'comments' collection
+            // doc.ref.parent.parent is the 'posts' document
+            const postId = doc.ref.parent.parent?.id
+            return { id: doc.id, postId, ...data }
+        })
+    } catch (e) {
+        console.error("Comments fetch failed:", e)
+        errorMessage.value += `Comments: ${e.message} `
+    }
+
+    // 2. Fetch Suggestions
+    try {
+        const suggQ = query(
+            collection($db, 'suggestions'),
+            where('userId', '==', user.value.uid),
+            orderBy('createdAt', 'desc')
+        )
+        const suggSnap = await getDocs(suggQ)
+        userSuggestions.value = suggSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    } catch (e) {
+         console.error("Suggestions fetch failed:", e)
+         errorMessage.value += `Suggestions: ${e.message} `
+    }
+
+    // 3. Fetch Scores
+    try {
+        const scoresQ = query(
+            collection($db, 'users', user.value.uid, 'scores'),
+            orderBy('timestamp', 'desc')
+        )
+        const scoresSnap = await getDocs(scoresQ)
+        userScores.value = scoresSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    } catch (e) {
+         console.error("Scores fetch failed:", e)
+         errorMessage.value += `Scores: ${e.message} `
+    }
+    
+    contentLoading.value = false
+}
+
+watch(() => user.value, (newUser) => {
+    if (newUser) fetchUserContent()
+}, { immediate: true })
+
+// Sync user name to input on load
+watchEffect(() => {
+    if (user.value?.displayName) {
+        newDisplayName.value = user.value.displayName
+    }
+})
+
+const handleUpdateProfile = async () => {
+    if (!newDisplayName.value.trim()) return
+    updating.value = true
+    
+    try {
+
+
+        if ($auth.currentUser) {
+            // 1. Update Auth Profile
+            await updateProfile($auth.currentUser, {
+                displayName: newDisplayName.value
+            })
+            
+            // 2. Sync to Firestore 'users' collection
+            const { $db } = useNuxtApp()
+            await setDoc(doc($db, 'users', $auth.currentUser.uid), {
+                displayName: newDisplayName.value,
+                email: $auth.currentUser.email,
+                photoURL: $auth.currentUser.photoURL,
+                updatedAt: new Date()
+            }, { merge: true })
+
+            // Force refresh user state if needed, or rely on Firebase auth listener
+            toast.success("Profile updated successfully!")
+        }
+    } catch (e) {
+        console.error(e)
+        toast.error("Failed to update profile.")
+    } finally {
+        updating.value = false
+    }
+}
 
 // Sanitize user object for display
 const safeUserData = computed(() => {

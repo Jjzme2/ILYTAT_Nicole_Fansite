@@ -339,7 +339,7 @@
 
 <script setup>
 import { collection, query, orderBy, getDocs, deleteDoc, doc, addDoc, serverTimestamp, onSnapshot, limit, startAfter } from 'firebase/firestore'
-import { collection, query, orderBy, getDocs, deleteDoc, doc, addDoc, serverTimestamp, onSnapshot, limit } from 'firebase/firestore'
+
 import { Lock, FileImage, LayoutGrid, Zap, Star, Trash2, Edit2, Lightbulb, ChevronDown, MessageSquare, Send } from 'lucide-vue-next'
 
 definePageMeta({
@@ -567,7 +567,7 @@ const fetchPosts = async (isLoadMore = false) => {
             q = query(collection($db, 'posts'), orderBy('createdAt', 'desc'), limit(POSTS_PER_PAGE))
         }
 
-        const q = query(collection($db, 'posts'), orderBy('createdAt', 'desc'), limit(5))
+
         const querySnapshot = await getDocs(q)
         const newPosts = querySnapshot.docs.map(doc => ({
             id: doc.id,

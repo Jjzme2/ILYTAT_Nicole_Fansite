@@ -43,6 +43,7 @@ export const useTheme = () => {
             '--color-error': colors.error || '#EF4444',
             '--color-warning': colors.warning || '#EAB308',
             '--color-info': colors.info || '#3B82F6',
+            '--color-glow': colors.glow || colors.primary,
         }
     })
 

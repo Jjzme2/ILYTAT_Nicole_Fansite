@@ -161,14 +161,7 @@
                         <div v-for="post in posts" :key="post.id" class="break-inside-avoid relative group rounded-2xl overflow-hidden bg-black shadow-lg">
                             
                              <div v-if="canView(post)">
-                                 <video 
-                                    v-if="post.type === 'video'"
-                                    :src="post.mediaUrl" 
-                                    class="w-full object-cover" 
-                                    controls
-                                ></video>
                                 <img 
-                                    v-else 
                                     :src="post.mediaUrl || post.imageUrl" 
                                     class="w-full object-cover transition duration-700 group-hover:scale-105" 
                                     loading="lazy"
@@ -192,6 +185,57 @@
                                  {{ post.type }}
                              </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- ROOM: THE THEATER (Videos) -->
+                <div v-if="activeRoom === 'theater'" class="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto space-y-12">
+                     <div v-if="posts.length === 0" class="text-center py-20 text-muted">
+                        <Clapperboard class="w-12 h-12 mx-auto mb-4 opacity-20" />
+                        <p>No screenings scheduled.</p>
+                    </div>
+
+                    <div v-for="post in posts" :key="post.id" class="relative group rounded-3xl overflow-hidden bg-black shadow-2xl border border-white/5">
+                        
+                         <div v-if="canView(post)">
+                             <!-- Big Video Player -->
+                             <div class="aspect-video w-full bg-black relative">
+                                <iframe 
+                                    v-if="post.mediaUrl && (post.mediaUrl.includes('youtube.com') || post.mediaUrl.includes('youtu.be'))"
+                                    :src="getEmbedUrl(post.mediaUrl)" 
+                                    frameborder="0" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                    allowfullscreen
+                                    class="w-full h-full"
+                                ></iframe>
+                                <video 
+                                    v-else
+                                    :src="post.mediaUrl" 
+                                    class="w-full h-full object-contain" 
+                                    controls
+                                    :poster="post.thumbnailUrl"
+                                ></video>
+                             </div>
+                             
+                             <!-- Cinematic Info Strip -->
+                             <div class="p-6 bg-gradient-to-b from-zinc-900 to-black text-center md:text-left md:flex md:justify-between md:items-center gap-4">
+                                 <div>
+                                     <h3 class="text-2xl font-black text-white mb-2">{{ post.caption || 'Untitled Feature' }}</h3>
+                                     <p class="text-xs text-zinc-500 font-mono uppercase tracking-widest">Released {{ formatDate(post.createdAt) }}</p>
+                                 </div>
+                                 <div class="mt-4 md:mt-0 flex gap-2 justify-center">
+                                     <!-- Actions could go here (Like, Share) -->
+                                 </div>
+                             </div>
+                         </div>
+                         
+                         <!-- Locked Overlay -->
+                         <div v-else class="aspect-video flex flex-col items-center justify-center bg-zinc-900 p-6 text-center">
+                            <Lock class="w-12 h-12 text-muted mb-4" />
+                            <h3 class="text-xl font-bold text-white mb-2">Subscriber Exclusive</h3>
+                            <p class="text-muted text-sm mb-6">Join the Inner Circle to watch this feature.</p>
+                            <button @click="handleSubscribe" class="px-6 py-2.5 bg-primary text-white font-bold rounded-full hover:scale-105 transition">Subscribe</button>
+                         </div>
                     </div>
                 </div>
 
@@ -234,6 +278,113 @@
                     </div>
                 </div>
 
+                <!-- ROOM: THE RANDOM (Mixed) -->
+                <div v-if="activeRoom === 'random'" class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                     <div v-if="posts.length === 0" class="text-center py-20 text-muted">
+                        <Sparkles class="w-12 h-12 mx-auto mb-4 opacity-20" />
+                        <p>No random drops yet.</p>
+                    </div>
+                    
+                    <div class="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
+                        <div v-for="post in posts" :key="post.id" class="break-inside-avoid relative group rounded-2xl overflow-hidden bg-surface shadow-lg border border-border">
+                            
+                             <!-- Render based on FORMAT -->
+                             <div v-if="canView(post)">
+                                 <!-- Image/Video -->
+                                 <div v-if="['image', 'video'].includes(post.format) || (!post.format && ['image', 'video'].includes(post.type))">
+                                     <video 
+                                        v-if="post.format === 'video' || post.type === 'video'"
+                                        :src="post.mediaUrl" 
+                                        class="w-full object-cover" 
+                                        controls
+                                    ></video>
+                                    <img 
+                                        v-else 
+                                        :src="post.mediaUrl || post.imageUrl" 
+                                        class="w-full object-cover transition duration-700 group-hover:scale-105" 
+                                        loading="lazy"
+                                    >
+                                 </div>
+                                 
+                                 <!-- Audio -->
+                                 <div v-else-if="post.format === 'audio' || (!post.format && post.type === 'audio')" class="p-4 bg-gradient-to-br from-gray-900 to-black">
+                                     <div class="flex items-center gap-3 mb-2">
+                                         <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                                             <Mic class="w-5 h-5" />
+                                         </div>
+                                         <span class="text-xs font-bold text-muted">Audio Drop</span>
+                                     </div>
+                                     <audio :src="post.mediaUrl" controls class="w-full h-8 px-0"></audio>
+                                 </div>
+                                 
+                                 <!-- Text -->
+                                 <div v-else class="p-6">
+                                     <Quote class="w-8 h-8 text-primary/20 mb-2" />
+                                     <p class="font-serif text-lg leading-relaxed">{{ post.caption }}</p>
+                                 </div>
+                             </div>
+                             
+                             <!-- Locked -->
+                             <div v-else class="aspect-[3/4] flex flex-col items-center justify-center bg-surface p-6 text-center">
+                                <Lock class="w-8 h-8 text-muted mb-2" />
+                                <p class="text-xs font-bold uppercase tracking-widest text-muted">Locked Random</p>
+                             </div>
+
+                             <!-- Caption for Media (Text already showed it) -->
+                             <div v-if="canView(post) && (post.format === 'image' || post.format === 'video' || (!post.format && ['image', 'video'].includes(post.type)))" class="p-3 bg-surface border-t border-border">
+                                 <p class="text-sm line-clamp-2">{{ post.caption }}</p>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ROOM: THE GAMES -->
+                <div v-if="activeRoom === 'games'" class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div class="flex justify-center gap-2 mb-8 bg-surface inline-flex flex-wrap mx-auto p-1 rounded-xl border border-border">
+                        <button 
+                            v-for="game in posts"
+                            :key="game.id"
+                            @click="activeGame = game.id" 
+                            :class="['px-6 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2', activeGame === game.id ? 'bg-primary text-white shadow-lg' : 'text-muted hover:text-text']"
+                        >
+                             <!-- Simple Icon Map -->
+                            <component v-if="game.icon === 'Gamepad2'" :is="Gamepad2" class="w-4 h-4" />
+                            <component v-else-if="game.icon === 'MousePointerClick'" :is="MousePointerClick" class="w-4 h-4" />
+                            <component v-else-if="game.icon === 'X'" :is="X" class="w-4 h-4" />
+                            <component v-else-if="game.icon === 'Brain'" :is="Brain" class="w-4 h-4" />
+                            <component v-else-if="game.icon === 'Grid'" :is="Grid" class="w-4 h-4" />
+                            <component v-else :is="Gamepad2" class="w-4 h-4" />
+                            {{ game.title }}
+                        </button>
+                    </div>
+
+                    <div class="bg-surface border border-border rounded-3xl p-4 md:p-8 shadow-2xl relative overflow-hidden min-h-[400px]">
+                        <SnakeGame v-if="activeGame === 'snake'" />
+                        <ClickerGame v-if="activeGame === 'clicker'" />
+                        <TicTacToe v-if="activeGame === 'tictactoe'" />
+                        <MemoryGame v-if="activeGame === 'memory'" />
+                        <SudokuGame v-if="activeGame === 'sudoku'" />
+                        <!-- Fallback for generic games from API in future -->
+                        <div v-if="!['snake', 'clicker', 'tictactoe', 'memory', 'sudoku'].includes(activeGame)" class="text-center py-20">
+                            <p class="text-muted">Game loading...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ROOM: THE LAMES -->
+                <div v-if="activeRoom === 'lames'" class="animate-in fade-in slide-in-from-bottom-4 duration-500 text-center py-20">
+                    <div class="space-y-12 max-w-2xl mx-auto">
+                        <div v-for="lame in posts" :key="lame.id" class="text-left font-mono">
+                            <pre v-if="lame.type === 'ascii'" class="text-xs md:text-sm text-primary/80 leading-none whitespace-pre overflow-x-auto">{{ lame.content }}</pre>
+                            <div v-else class="bg-surface p-6 rounded-none border-l-2 border-primary shadow-sm">
+                                <p class="text-lg text-text">{{ lame.content }}</p>
+                                <span class="text-xs text-muted uppercase mt-2 block">// {{ lame.caption }}</span>
+                            </div>
+                        </div>
+                         <p class="mt-20 text-sm italic text-muted">"Why are you still here?" - The Devs</p>
+                    </div>
+                </div>
+
             </div>
         </main>
     </div>
@@ -257,7 +408,12 @@
 
 <script setup>
 import { collection, query, orderBy, getDocs, where, limit } from 'firebase/firestore'
-import { BookOpen, Image as ImageIcon, Mic, Loader, Lock, ArrowLeft, ArrowRight } from 'lucide-vue-next'
+import { BookOpen, Mic, ImageIcon, Sparkles, Ghost, Lock, Gamepad2, MousePointerClick, ArrowLeft, ArrowRight, Quote, Clapperboard, MonitorPlay, X, Brain, Grid } from 'lucide-vue-next'
+import SnakeGame from '~/components/games/SnakeGame.vue'
+import ClickerGame from '~/components/games/ClickerGame.vue'
+import TicTacToe from '~/components/games/TicTacToe.vue'
+import MemoryGame from '~/components/games/MemoryGame.vue'
+import SudokuGame from '~/components/games/SudokuGame.vue'
 
 const { $db } = useNuxtApp()
 const { user, isSubscriber } = useAuth()
@@ -265,6 +421,7 @@ const router = useRouter()
 
 // View State
 const currentView = ref('dashboard') // 'dashboard' | 'room'
+const activeGame = ref('snake') // NEW: For arcade tabs
 
 // Room Config
 const rooms = [
@@ -280,11 +437,35 @@ const rooms = [
         icon: ImageIcon,
         description: 'A visual archive of photos, videos, and behind-the-scenes moments.'
     },
+    {
+        id: 'theater',
+        label: 'The Theater',
+        icon: Clapperboard,
+        description: 'Watch exclusive videos and films.'
+    },
     { 
         id: 'audio', 
         label: 'The Sessions', 
         icon: Mic,
         description: 'Intimate audio recordings, voice notes, and conversations.'
+    },
+    { 
+        id: 'random', 
+        label: 'The Random', 
+        icon: Sparkles,
+        description: 'Random drops, experiments, and uncategorized gems.'
+    },
+    { 
+        id: 'games', 
+        label: 'The Games', 
+        icon: Gamepad2,
+        description: 'Kill some time. Set some records.'
+    },
+    { 
+        id: 'lames', 
+        label: 'The Lames', 
+        icon: Ghost,
+        description: 'We don\'t go here.'
     }
 ]
 const activeRoom = ref('text')
@@ -310,6 +491,8 @@ const enterRoomForPost = (post) => {
     // Map post type to room
     if (post.type === 'text') activeRoom.value = 'text'
     else if (post.type === 'audio') activeRoom.value = 'audio'
+    else if (post.type === 'random') activeRoom.value = 'random'
+    else if (post.type === 'video') activeRoom.value = 'theater'
     else activeRoom.value = 'media'
     
     currentView.value = 'room'
@@ -318,6 +501,8 @@ const enterRoomForPost = (post) => {
 const getIconForType = (type) => {
     if (type === 'text') return BookOpen
     if (type === 'audio') return Mic
+    if (type === 'random') return Sparkles
+    if (type === 'video') return Clapperboard
     return ImageIcon
 }
 
@@ -327,23 +512,66 @@ const fetchRoomContent = async () => {
     posts.value = [] // clear old
     
     try {
-        let constraints = [orderBy('createdAt', 'desc')]
-        
-        // Type Filtering
-        if (activeRoom.value === 'text') {
-            constraints.unshift(where('type', '==', 'text'))
-        } else if (activeRoom.value === 'audio') {
-            constraints.unshift(where('type', '==', 'audio'))
-        } else if (activeRoom.value === 'media') {
-            // Media = video OR image. Firestore 'in' query supports up to 10
-            constraints.unshift(where('type', 'in', ['image', 'video']))
+        console.log("Fetching content for:", activeRoom.value)
+        if (activeRoom.value === 'lames') {
+             const data = await $fetch('/api/lames')
+             console.log("Lames data:", data)
+             posts.value = data.lames || []
+             loading.value = false
+             return
         }
+
+        if (activeRoom.value === 'games') {
+             const data = await $fetch('/api/games')
+             console.log("Games data:", data)
+             posts.value = data.games || []
+             loading.value = false
+             return
+        }
+
+        // Initialize constraints with Sort
+        // NOTE: Firestore requires an index for 'type' ASC + 'created_at' DESC.
+        // To make it robust without custom indexes for every combo, we fetch then sort/filter client-side in fallback
+        
+        let constraints = []
+
+        // Type Filtering
+        // We push the WHERE clause first
+        if (activeRoom.value === 'text') {
+            constraints.push(where('type', '==', 'text'))
+        } else if (activeRoom.value === 'audio') {
+            constraints.push(where('type', '==', 'audio'))
+        } else if (activeRoom.value === 'random') {
+            constraints.push(where('type', '==', 'random'))
+        } else if (activeRoom.value === 'media') {
+            constraints.push(where('type', '==', 'image')) // Filter for images only
+        } else if (activeRoom.value === 'theater') {
+            constraints.push(where('type', '==', 'video')) // Filter for videos only
+        }
+        
+        // Add Sort
+        constraints.push(orderBy('createdAt', 'desc'))
 
         const q = query(collection($db, 'posts'), ...constraints)
         const snapshot = await getDocs(q)
         posts.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
     } catch (e) {
         console.error("Error fetching room content:", e)
+        // Fallback: If index error, try fetching without sort (just for availability)
+        if (e.code === 'failed-precondition') {
+             try {
+                let typeFilter = activeRoom.value
+                if (activeRoom.value === 'media') typeFilter = 'image'
+                if (activeRoom.value === 'theater') typeFilter = 'video'
+                
+                const qFallback = query(collection($db, 'posts'), where('type', '==', typeFilter))
+                // Simple query
+                const snap = await getDocs(qFallback)
+                posts.value = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => b.createdAt - a.createdAt)
+             } catch (err) {
+                 console.error("Fallback failed:", err)
+             }
+        }
     } finally {
         loading.value = false
     }
@@ -393,6 +621,16 @@ const formatDate = (timestamp) => {
 const handleSubscribe = async () => {
     // Reuse subscribe logic (import or redirect)
     router.push('/feed') // Feed has the CTA
+}
+const getEmbedUrl = (url) => {
+    if (!url) return ''
+    if (url.includes('youtube.com/watch')) {
+        return url.replace('watch?v=', 'embed/')
+    } else if (url.includes('youtu.be/')) {
+        const id = url.split('youtu.be/')[1]
+        return `https://www.youtube.com/embed/${id}`
+    }
+    return url
 }
 </script>
 

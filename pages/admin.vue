@@ -23,6 +23,20 @@
                 <Users class="w-5 h-5" />
                 Users
             </button>
+            <button 
+                @click="currentTab = 'giveaways'"
+                :class="['flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition', currentTab === 'giveaways' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-text']"
+            >
+                <div class="w-5 h-5 flex items-center justify-center"><component :is="activeCampaign ? Trophy : Gift" class="w-4 h-4" /></div>
+                Giveaways
+            </button>
+             <button 
+                @click="currentTab = 'dev'"
+                :class="['flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition', currentTab === 'dev' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-text']"
+            >
+                <Bug class="w-5 h-5" />
+                Dev Board
+            </button>
 
             <div class="pt-4 mt-4 border-t border-border space-y-2">
                  <a 
@@ -79,10 +93,10 @@
                 <table class="w-full text-left">
                     <thead class="bg-surface/50 border-b border-border">
                         <tr>
-                            <th class="p-4 text-xs font-bold text-muted uppercase tracking-wider">Email</th>
-                            <th class="p-4 text-xs font-bold text-muted uppercase tracking-wider">Role</th>
-                            <th class="p-4 text-xs font-bold text-muted uppercase tracking-wider">Subscriber</th>
-                            <th class="p-4 text-xs font-bold text-muted uppercase tracking-wider">Joined</th>
+                            <th class="p-4 text-xs font-bold text-text opacity-70 uppercase tracking-wider">Email</th>
+                            <th class="p-4 text-xs font-bold text-text opacity-70 uppercase tracking-wider">Role</th>
+                            <th class="p-4 text-xs font-bold text-text opacity-70 uppercase tracking-wider">Subscriber</th>
+                            <th class="p-4 text-xs font-bold text-text opacity-70 uppercase tracking-wider">Joined</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-border">
@@ -114,20 +128,20 @@
                 </table>
 
                 <!-- Pagination Footer -->
-                <div class="p-4 border-t border-gray-100 flex justify-between items-center bg-gray-50">
-                    <span class="text-xs text-gray-500 font-bold uppercase">Page {{ pageNumber }}</span>
+                <div class="p-4 border-t border-border flex justify-between items-center bg-surface">
+                    <span class="text-xs text-muted font-bold uppercase">Page {{ pageNumber }}</span>
                     <div class="flex gap-2">
                         <button
                             @click="fetchUsers('prev')"
                             :disabled="pageNumber === 1"
-                            class="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-3 py-1 bg-background border border-border rounded-lg text-xs font-bold hover:bg-surface/50 text-text disabled:opacity-50 disabled:cursor-not-allowed transition"
                         >
                             Previous
                         </button>
                         <button
                             @click="fetchUsers('next')"
                             :disabled="userList.length < pageSize"
-                            class="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-3 py-1 bg-background border border-border rounded-lg text-xs font-bold hover:bg-surface/50 text-text disabled:opacity-50 disabled:cursor-not-allowed transition"
                         >
                             Next
                         </button>
@@ -143,7 +157,7 @@
                      <h2 class="text-3xl font-serif text-text mb-2">Brand Deals</h2>
                     <p class="text-muted">Track and manage your sponsorships.</p>
                 </div>
-                <button @click="showDealForm = true" class="bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-primary/90 transition flex items-center gap-2">
+                <button @click="newDeal = { id: null, status: 'pending' }; showDealForm = true" class="bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-primary/90 transition flex items-center gap-2">
                     <Plus class="w-5 h-5" />
                     New Deal
                 </button>
@@ -151,7 +165,7 @@
 
             <!-- New Deal Modal/Form -->
             <div v-if="showDealForm" class="bg-surface rounded-2xl shadow-lg border border-border p-6 mb-8 animate-in fade-in slide-in-from-top-4">
-                <h3 class="font-bold text-lg mb-4 text-text">Add New Brand Deal</h3>
+                <h3 class="font-bold text-lg mb-4 text-text">{{ newDeal.id ? 'Edit Deal' : 'Add New Brand Deal' }}</h3>
                 <form @submit.prevent="saveBrandDeal" class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -191,7 +205,7 @@
                      <div class="flex justify-end gap-3 pt-4">
                         <button type="button" @click="showDealForm = false" class="text-muted hover:text-text">Cancel</button>
                          <button type="submit" :disabled="uploading" class="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-primary/90">
-                             {{ uploading ? 'Saving...' : 'Save Deal' }}
+                             {{ uploading ? 'Saving...' : (newDeal.id ? 'Update Deal' : 'Save Deal') }}
                          </button>
                      </div>
                 </form>
@@ -211,9 +225,14 @@
                             <span>{{ deal.contactEmail }}</span>
                         </div>
                     </div>
-                    <div class="text-right whitespace-nowrap">
-                        <p class="font-bold text-xl text-text">{{ deal.value }}</p>
-                        <p class="text-xs text-muted">{{ formatDate(deal.createdAt) }}</p>
+                    <div class="text-right whitespace-nowrap flex flex-col items-end gap-2">
+                        <button @click="editDeal(deal)" class="bg-surface border border-border p-2 rounded-lg hover:bg-background transition text-muted hover:text-primary">
+                            <Hammer class="w-4 h-4" />
+                        </button>
+                        <div>
+                            <p class="font-bold text-xl text-text">{{ deal.value }}</p>
+                            <p class="text-xs text-muted">{{ formatDate(deal.createdAt) }}</p>
+                        </div>
                     </div>
                 </div>
                  <div v-if="brandDeals.length === 0 && !showDealForm" class="text-center py-20 text-muted">
@@ -298,16 +317,135 @@
 
         </div>
 
-    </main>
+        <!-- GIVEAWAYS TAB -->
+        <div v-if="currentTab === 'giveaways'">
+             <header class="mb-10 flex justify-between items-center">
+                <div>
+                     <h2 class="text-3xl font-serif text-text mb-2">Giveaways</h2>
+                    <p class="text-muted">Manage generic campaigns and schedule drops.</p>
+                </div>
+                <button v-if="!activeCampaign" @click="showCampaignForm = true" class="bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-primary/90 transition flex items-center gap-2">
+                    <Plus class="w-5 h-5" />
+                    New Campaign
+                </button>
+                <button v-else @click="activeCampaign = null" class="bg-surface border border-border px-6 py-3 rounded-xl font-bold hover:bg-background transition text-muted">
+                    Back to Campaigns
+                </button>
+            </header>
 
+            <!-- CAMPAIGNS LIST (Level 1) -->
+            <div v-if="!activeCampaign">
+                <!-- New Campaign Form -->
+                <div v-if="showCampaignForm" class="bg-surface p-6 rounded-2xl border border-border mb-8 animate-in fade-in slide-in-from-top-4">
+                    <form @submit.prevent="saveCampaign" class="space-y-4">
+                        <input v-model="newCampaign.title" placeholder="Campaign Title (e.g. Monthly Merch)" required class="w-full bg-background border border-border rounded-xl p-3 focus:border-primary outline-none">
+                        <textarea v-model="newCampaign.description" placeholder="Description" rows="2" class="w-full bg-background border border-border rounded-xl p-3 focus:border-primary outline-none"></textarea>
+                        <input v-model="newCampaign.image" placeholder="Image URL" class="w-full bg-background border border-border rounded-xl p-3 focus:border-primary outline-none">
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-muted uppercase mb-1">Coming Soon (Go Live)</label>
+                                <input v-model="newCampaign.goLiveDate" type="datetime-local" class="w-full bg-background border border-border rounded-xl p-2 focus:border-primary outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-muted uppercase mb-1">Start Date</label>
+                                <input v-model="newCampaign.startDate" type="datetime-local" required class="w-full bg-background border border-border rounded-xl p-2 focus:border-primary outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-muted uppercase mb-1">End Date</label>
+                                <input v-model="newCampaign.endDate" type="datetime-local" required class="w-full bg-background border border-border rounded-xl p-2 focus:border-primary outline-none">
+                            </div>
+                        </div>
+                        <div class="flex justify-end gap-2 pt-2">
+                             <button type="button" @click="showCampaignForm = false" class="text-muted">Cancel</button>
+                            <button type="submit" class="bg-primary text-white px-6 py-2 rounded-lg font-bold">Create</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div v-for="cam in campaigns" :key="cam.id" class="bg-surface border border-border rounded-2xl overflow-hidden shadow-sm group cursor-pointer hover:border-primary transition" @click="viewCampaign(cam)">
+                        <div class="h-32 bg-gray-100 relative">
+                            <img v-if="cam.image" :src="cam.image" class="w-full h-full object-cover">
+                            <div v-else class="absolute inset-0 flex items-center justify-center text-muted"><Gift class="w-8 h-8 opacity-20"/></div>
+                            <!-- Status Badges -->
+                            <div class="absolute top-2 right-2 flex gap-1">
+                                <span v-if="new Date() < cam.goLiveDate?.toDate()" class="px-2 py-0.5 bg-black/50 backdrop-blur text-white text-[10px] font-bold uppercase rounded">Scheduled</span>
+                                <span v-else-if="new Date() > cam.endDate?.toDate()" class="px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold uppercase rounded">Ended</span>
+                                <span v-else class="px-2 py-0.5 bg-green-500 text-white text-[10px] font-bold uppercase rounded">Live</span>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="font-bold text-lg mb-1 group-hover:text-primary transition">{{ cam.title }}</h3>
+                            <p class="text-sm text-muted line-clamp-2">{{ cam.description }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROUNDS MANAGEMENT (Level 2) -->
+            <div v-else>
+                <div class="bg-surface border border-border rounded-2xl p-6 mb-8 flex justify-between items-center">
+                    <div>
+                         <h3 class="font-bold text-xl text-text mb-1">{{ activeCampaign.title }}</h3>
+                         <p class="text-sm text-muted">Manage Rounds & Schedule</p>
+                    </div>
+                    <button @click="showRoundForm = true" class="bg-primary text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
+                        <Calendar class="w-4 h-4" /> Schedule Round
+                    </button>
+                </div>
+
+                <!-- Schedule Logic -->
+                <div v-if="showRoundForm" class="bg-surface p-6 rounded-2xl border border-border mb-8 animate-in fade-in slide-in-from-top-4">
+                     <form @submit.prevent="saveRound" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-muted uppercase mb-1">Start Time</label>
+                                <input v-model="newRound.activationTime" type="datetime-local" required class="w-full bg-background border border-border rounded-xl p-3 focus:border-primary outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-muted uppercase mb-1">End Time</label>
+                                <input v-model="newRound.endTime" type="datetime-local" required class="w-full bg-background border border-border rounded-xl p-3 focus:border-primary outline-none">
+                            </div>
+                        </div>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" @click="showRoundForm = false" class="text-muted">Cancel</button>
+                            <button type="submit" class="bg-primary text-white px-6 py-2 rounded-lg font-bold">Schedule Drop</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="space-y-4">
+                    <div v-for="round in rounds" :key="round.id" class="bg-surface border border-border rounded-xl p-4 flex items-center justify-between">
+                        <div>
+                             <div class="flex items-center gap-2 mb-1">
+                                <span class="bg-gray-100 text-gray-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase">{{ round.status }}</span>
+                                <span class="text-sm font-mono">{{ formatDate(round.activationTime) }}</span>
+                             </div>
+                             <p class="text-xs text-muted">Ends: {{ formatDate(round.endTime) }}</p>
+                        </div>
+                        <div class="text-right">
+                             <div class="text-xs text-muted mb-1">Winner</div>
+                             <div v-if="round.winner" class="font-bold text-green-600">{{ round.winner }}</div>
+                             <div v-else class="text-muted italic">-</div>
+                        </div>
+                    </div>
+                     <div v-if="rounds.length === 0" class="text-center py-10 text-muted italic">
+                        No rounds scheduled yet.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
   </div>
 </template>
 
 <script setup>
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, setDoc, startAfter, endBefore, limit, limitToLast } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, setDoc, startAfter, endBefore, limit, limitToLast, deleteDoc } from 'firebase/firestore'
 import { 
     LayoutDashboard, ExternalLink, LogOut, Check,
-    Users, Briefcase, Plus, User 
+    Users, Briefcase, Plus, User, Zap, Bug, Hammer, Trash2
 } from 'lucide-vue-next'
 
 definePageMeta({
@@ -316,11 +454,148 @@ definePageMeta({
 
 const { $db } = useNuxtApp()
 const { logout, user, isAdmin, role } = useAuth()
+const toast = useToast()
+
+// --- GIFT/GIVEAWAY ICONS ---
+import { Gift, Calendar, Trophy } from 'lucide-vue-next'
+
+// ... existing imports ...
 
 // TABS
-const currentTab = ref('deals') // Default to management view
-
+const currentTab = ref('deals') 
 const uploading = ref(false)
+
+// --- DEV BOARD LOGIC ---
+const tasks = ref([])
+const newTask = ref({ title: '', type: 'feature', priority: 'med', status: 'todo' })
+
+const fetchTasks = async () => {
+    try {
+        const q = query(collection($db, 'tasks'), orderBy('createdAt', 'desc'))
+        const snapshot = await getDocs(q)
+        tasks.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+const submitTask = async () => {
+    if (!newTask.value.title) return
+    uploading.value = true
+    try {
+        await addDoc(collection($db, 'tasks'), {
+            ...newTask.value,
+            createdAt: serverTimestamp()
+        })
+        newTask.value = { title: '', type: 'feature', priority: 'med', status: 'todo' }
+        await fetchTasks()
+    } catch (e) {
+        console.error(e)
+    } finally {
+        uploading.value = false
+    }
+}
+
+const updateTaskStatus = async (taskId, status) => {
+    try {
+        await setDoc(doc($db, 'tasks', taskId), { status }, { merge: true })
+        await fetchTasks()
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+const deleteTask = async (taskId) => {
+    if(!confirm('Delete task?')) return
+    try {
+        await deleteDoc(doc($db, 'tasks', taskId))
+        tasks.value = tasks.value.filter(t => t.id !== taskId)
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+// --- GIVEAWAYS LOGIC ---
+const campaigns = ref([])
+const activeCampaign = ref(null) // Selected for viewing rounds
+const rounds = ref([])
+const showCampaignForm = ref(false)
+const showRoundForm = ref(false)
+
+const newCampaign = ref({ title: '', description: '', image: '', startDate: '', endDate: '', goLiveDate: '' })
+const newRound = ref({ activationTime: '', endTime: '', status: 'scheduled' })
+
+const fetchCampaigns = async () => {
+    try {
+        const q = query(collection($db, 'giveaways'))
+        const snapshot = await getDocs(q)
+        campaigns.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+const saveCampaign = async () => {
+    uploading.value = true
+    try {
+        await addDoc(collection($db, 'giveaways'), {
+            ...newCampaign.value,
+            startDate: newCampaign.value.startDate ? new Date(newCampaign.value.startDate) : null,
+            endDate: newCampaign.value.endDate ? new Date(newCampaign.value.endDate) : null,
+            goLiveDate: newCampaign.value.goLiveDate ? new Date(newCampaign.value.goLiveDate) : null,
+            createdAt: serverTimestamp()
+        })
+        showCampaignForm.value = false
+        newCampaign.value = { title: '', description: '', image: '', startDate: '', endDate: '', goLiveDate: '' }
+        await fetchCampaigns()
+    } catch (e) {
+        console.error(e)
+        toast.error('Error: ' + e.message)
+    } finally {
+        uploading.value = false
+    }
+}
+
+const viewCampaign = async (cam) => {
+    activeCampaign.value = cam
+    // Fetch Rounds for this campaign
+    try {
+        const q = query(collection($db, 'giveaways', cam.id, 'rounds'), orderBy('activationTime', 'desc'))
+        const snapshot = await getDocs(q)
+        rounds.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+const saveRound = async () => {
+    if (!activeCampaign.value) return
+    uploading.value = true
+    try {
+        // Convert datetime-local strings to Date objects if needed, or allow Firestore to handle timestamps
+        // Firestore prefers Date objects or Timestamp objects.
+        const start = new Date(newRound.value.activationTime)
+        const end = new Date(newRound.value.endTime)
+
+        await addDoc(collection($db, 'giveaways', activeCampaign.value.id, 'rounds'), {
+            activationTime: start,
+            endTime: end,
+            status: 'scheduled',
+            winner: null,
+            createdAt: serverTimestamp()
+        })
+        showRoundForm.value = false
+        newRound.value = { activationTime: '', endTime: '', status: 'scheduled' }
+        await viewCampaign(activeCampaign.value) // Refresh
+    } catch (e) {
+        console.error(e)
+        toast.error('Error: ' + e.message)
+    } finally {
+        uploading.value = false
+    }
+}
+
+
 
 // --- USERS LOGIC ---
 const userList = ref([])
@@ -370,10 +645,10 @@ const updateUserRole = async (userDoc) => {
     try {
         const userRef = doc($db, 'users', userDoc.id)
         await setDoc(userRef, { role: userDoc.role }, { merge: true })
-        alert(`User role updated to ${userDoc.role}`)
+        toast.success(`User role updated to ${userDoc.role}`)
     } catch (e) {
         console.error('Error updating role:', e)
-        alert('Failed to update role: ' + e.message)
+        toast.error('Failed to update role: ' + e.message)
     }
 }
 
@@ -381,6 +656,7 @@ const updateUserRole = async (userDoc) => {
 const brandDeals = ref([])
 const showDealForm = ref(false)
 const newDeal = ref({
+    id: null, // Add ID tracking
     brandName: '',
     value: '',
     contactName: '',
@@ -400,21 +676,38 @@ const fetchDeals = async () => {
     }
 }
 
+const editDeal = (deal) => {
+    newDeal.value = { ...deal } // Clone data
+    showDealForm.value = true
+}
+
 const saveBrandDeal = async () => {
     uploading.value = true
     try {
-        await addDoc(collection($db, 'brand_deals'), {
-            ...newDeal.value,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-        })
+        if (newDeal.value.id) {
+            // UPDATE
+            const dealRef = doc($db, 'brand_deals', newDeal.value.id)
+            const { id, ...data } = newDeal.value // Exclude ID from payload
+            await setDoc(dealRef, {
+                ...data,
+                updatedAt: serverTimestamp()
+            }, { merge: true })
+        } else {
+             // CREATE
+            await addDoc(collection($db, 'brand_deals'), {
+                ...newDeal.value,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            })
+        }
+       
         showDealForm.value = false
         // Reset
-        newDeal.value = { brandName: '', value: '', contactName: '', contactEmail: '', status: 'pending', deliverables: '', notes: '' }
+        newDeal.value = { id: null, brandName: '', value: '', contactName: '', contactEmail: '', status: 'pending', deliverables: '', notes: '' }
         await fetchDeals()
     } catch (e) {
         console.error(e)
-        alert('Error saving deal: ' + e.message)
+        toast.error('Error saving deal: ' + e.message)
     } finally {
         uploading.value = false
     }
@@ -440,6 +733,8 @@ const formatDate = (timestamp) => {
 watch(currentTab, (tab) => {
     if (tab === 'users') fetchUsers()
     if (tab === 'deals') fetchDeals()
+    if (tab === 'giveaways') fetchCampaigns()
+    if (tab === 'dev') fetchTasks()
 }, { immediate: true })
 </script>
 

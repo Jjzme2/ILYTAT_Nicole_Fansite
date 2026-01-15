@@ -9,7 +9,6 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "manage-users": "node .dev/scripts/manage-users.js",
-    "create-file": "node .dev/scripts/createFile.js",
     "create-task-list": "node .dev/scripts/createFile.js --name TaskList --path .dev/Tasks/"
   },
   "dependencies": {
@@ -22,8 +21,5 @@
     "stripe": "^20.1.2",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4"
-  },
-  "devDependencies": {
-    "nuxt-gtag": "^4.1.0"
   }
 }

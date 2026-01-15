@@ -36,6 +36,7 @@ export default defineEventHandler(async (event) => {
                 },
             ],
             mode: 'subscription',
+            allow_promotion_codes: true,
             success_url: (body.successUrl || `${origin}/feed?payment_success=true`) + '&session_id={CHECKOUT_SESSION_ID}',
             cancel_url: body.cancelUrl || `${origin}/feed`,
         })

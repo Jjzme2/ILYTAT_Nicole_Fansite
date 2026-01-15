@@ -22,6 +22,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const stripe = new Stripe(config.stripeSecretKey)
+    const origin = event.node.req.headers.origin || 'http://localhost:3000'
 
     try {
         logger.info('Creating Stripe Checkout Session', { userId: body.userId, priceId: body.priceId })
@@ -35,8 +36,8 @@ export default defineEventHandler(async (event) => {
                 },
             ],
             mode: 'subscription',
-            success_url: (body.successUrl || 'http://localhost:3000/feed?payment_success=true') + '&session_id={CHECKOUT_SESSION_ID}',
-            cancel_url: body.cancelUrl || 'http://localhost:3000/feed',
+            success_url: (body.successUrl || `${origin}/feed?payment_success=true`) + '&session_id={CHECKOUT_SESSION_ID}',
+            cancel_url: body.cancelUrl || `${origin}/feed`,
         })
 
         logger.info('Stripe Checkout Session Created Successfully', { sessionId: session.id, url: session.url })

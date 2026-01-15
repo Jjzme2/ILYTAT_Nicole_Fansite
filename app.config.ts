@@ -27,7 +27,7 @@ export default defineAppConfig({
         brandDealsEmail: 'hey.itsnicolechristine@gmail.com'
     },
     security: {
-        sessionTimeoutMinutes: 1440 // 24 Hours
+        sessionTimeoutMinutes: 360 // 6 hours
     },
     meta: {
         name: 'Nicole Christine',

@@ -20,7 +20,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
             new Promise(resolve => setTimeout(() => {
                 console.warn('[Middleware:Admin] Timeout waiting for auth')
                 resolve(false)
-            }, 2000)) // 2s timeout
+            }, 5000)) // 5s timeout
         ])
     }
 

@@ -63,12 +63,28 @@
     <!-- Main Content -->
     <main class="flex-1 p-6 md:p-10 overflow-y-auto">
         <!-- Mobile Header -->
-        <div class="md:hidden flex justify-between items-center mb-8">
+        <div class="md:hidden flex justify-between items-center mb-6">
             <h1 class="font-bold text-xl text-text">THE OFFICE</h1>
             <div class="flex gap-4">
                  <NuxtLink v-if="role === 'creator'" to="/creator" class="text-sm font-bold text-indigo-600">Studio</NuxtLink>
                 <button @click="logout" class="text-sm text-red-500">Log Out</button>
             </div>
+        </div>
+
+        <!-- Mobile Tab Navigation -->
+        <div class="md:hidden flex overflow-x-auto gap-2 mb-8 pb-2 -mx-6 px-6 scrollbar-hide">
+             <button @click="currentTab = 'deals'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'deals' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
+                Brand Deals
+            </button>
+             <button @click="currentTab = 'users'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'users' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
+                Users
+            </button>
+             <button @click="currentTab = 'giveaways'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'giveaways' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
+                Giveaways
+            </button>
+             <button @click="currentTab = 'dev'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'dev' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
+                Dev Board
+            </button>
         </div>
 
         <!-- USERS TAB -->
@@ -245,60 +261,95 @@
 
         <!-- DEV BOARD TAB -->
         <div v-if="currentTab === 'dev'">
-             <header class="mb-10 flex justify-between items-center">
+            <header class="mb-10 flex justify-between items-center">
                 <div>
                      <h2 class="text-3xl font-serif text-text mb-2">Dev Board</h2>
                     <p class="text-muted">Track features, bugs, and tasks for the developer.</p>
                 </div>
-                <button @click="fetchTasks" class="px-4 py-2 bg-surface border border-border rounded-lg hover:border-primary text-sm font-bold text-text">Refresh</button>
+                <div class="flex gap-3">
+                    <button @click="copyBoard" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 text-sm font-bold flex items-center gap-2 transition">
+                        <Clipboard class="w-4 h-4" />
+                        Copy Markdown
+                    </button>
+                    <button @click="fetchTasks" class="px-4 py-2 bg-surface border border-border rounded-lg hover:border-primary text-sm font-bold text-text">Refresh</button>
+                </div>
             </header>
 
             <!-- New Task Form -->
             <div class="bg-surface p-6 rounded-2xl border border-border shadow-sm mb-8">
-                <form @submit.prevent="submitTask" class="flex gap-4 items-end">
-                    <div class="flex-1">
-                        <label class="block text-xs font-bold text-muted mb-1 uppercase">Task Title</label>
-                         <input v-model="newTask.title" type="text" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none" placeholder="e.g. Fix login bug" required>
+                <form @submit.prevent="submitTask" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="md:col-span-2">
+                             <label class="block text-xs font-bold text-muted mb-1 uppercase">Task Title</label>
+                             <input v-model="newTask.title" type="text" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none" placeholder="e.g. Fix login bug" required>
+                        </div>
+                         <div>
+                            <label class="block text-xs font-bold text-muted mb-1 uppercase">Type</label>
+                             <select v-model="newTask.type" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
+                                <option value="feature">Feature</option>
+                                <option value="bug">Bug</option>
+                                <option value="design">Design</option>
+                                <option value="chore">Chore</option>
+                            </select>
+                        </div>
+                         <div>
+                            <label class="block text-xs font-bold text-muted mb-1 uppercase">Section</label>
+                             <select v-model="newTask.section" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
+                                <option value="Active Tasks (Engineering)">Active Tasks</option>
+                                <option value="Inbox / New Ideas">Inbox / Ideas</option>
+                            </select>
+                        </div>
                     </div>
-                     <div class="w-40">
-                        <label class="block text-xs font-bold text-muted mb-1 uppercase">Type</label>
-                         <select v-model="newTask.type" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
-                            <option value="feature">Feature</option>
-                            <option value="bug">Bug</option>
-                            <option value="chore">Chore</option>
-                        </select>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div>
+                            <label class="block text-xs font-bold text-muted mb-1 uppercase">Subsection / Component</label>
+                             <input v-model="newTask.subsection" type="text" list="subsections" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none" placeholder="e.g. Monetization">
+                             <datalist id="subsections">
+                                 <option value="Branding & Accessibility"></option>
+                                 <option value="Monetization & Design"></option>
+                                 <option value="Admin & Content"></option>
+                                 <option value="General"></option>
+                             </datalist>
+                        </div>
+                         <div>
+                             <label class="block text-xs font-bold text-muted mb-1 uppercase">Goal (Optional)</label>
+                             <input v-model="newTask.goals" type="text" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none" placeholder="e.g. 'Make it pop'">
+                        </div>
                     </div>
-                     <div class="w-40">
-                        <label class="block text-xs font-bold text-muted mb-1 uppercase">Priority</label>
-                         <select v-model="newTask.priority" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
-                            <option value="low">Low</option>
-                            <option value="med">Medium</option>
-                            <option value="high">High</option>
-                        </select>
+
+                    <div>
+                        <label class="block text-xs font-bold text-muted mb-1 uppercase">Description</label>
+                        <textarea v-model="newTask.description" rows="2" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none" placeholder="Details..."></textarea>
                     </div>
-                     <button type="submit" :disabled="uploading" class="bg-primary text-white font-bold px-6 py-3 rounded-xl hover:bg-primary/90 transition h-full">
-                        {{ uploading ? '...' : 'Add' }}
-                    </button>
+
+                     <div class="flex justify-end">
+                         <button type="submit" :disabled="uploading" class="bg-primary text-white font-bold px-8 py-3 rounded-xl hover:bg-primary/90 transition">
+                            {{ uploading ? 'Adding...' : 'Add Task' }}
+                        </button>
+                    </div>
                 </form>
             </div>
 
             <!-- Task List -->
             <div class="space-y-4">
-                 <div v-for="task in tasks" :key="task.id" class="bg-surface p-4 rounded-xl border border-border shadow-sm flex items-center justify-between">
-                    <div class="flex items-center gap-4">
+                 <div v-for="task in tasks" :key="task.id" class="bg-surface p-4 rounded-xl border border-border shadow-sm flex items-center justify-between group">
+                    <div class="flex items-center gap-4 flex-1">
                         <div :class="{
                             'bg-blue-100 text-blue-700': task.type === 'feature',
                             'bg-red-100 text-red-700': task.type === 'bug',
-                            'bg-gray-100 text-gray-700': task.type === 'chore'
-                        }" class="p-2 rounded-lg">
+                            'bg-gray-100 text-gray-700': task.type === 'chore',
+                             'bg-purple-100 text-purple-700': task.type === 'design'
+                        }" class="p-2 rounded-lg shrink-0">
                             <Zap v-if="task.type === 'feature'" class="w-5 h-5" />
                             <Bug v-else-if="task.type === 'bug'" class="w-5 h-5" />
                             <Hammer v-else class="w-5 h-5" />
                         </div>
                         <div>
                             <h4 class="font-bold text-lg text-text">{{ task.title }}</h4>
+                            <p v-if="task.description" class="text-sm text-text/80 mb-1 leading-snug max-w-2xl">{{ task.description }}</p>
                              <div class="flex items-center gap-2 text-xs text-muted">
-                                <span class="capitalize">{{ task.priority }} Priority</span>
+                                <span :class="getPriorityColor(task.priority)" class="capitalize">{{ task.priority }} Priority</span>
                                 <span>•</span>
                                 <span class="capitalize">{{ task.status }}</span>
                             </div>
@@ -307,6 +358,9 @@
                     <div class="flex gap-2">
                         <button v-if="task.status !== 'done'" @click="updateTaskStatus(task.id, 'done')" class="p-2 hover:bg-green-50 text-green-600 rounded-lg transition" title="Mark Done">
                             <Check class="w-5 h-5" />
+                        </button>
+                        <button v-if="task.status === 'done'" @click="archiveTask(task)" class="p-2 hover:bg-purple-50 text-purple-600 rounded-lg transition" title="Archive">
+                            <Archive class="w-5 h-5" />
                         </button>
                          <button @click="deleteTask(task.id)" class="p-2 hover:bg-red-50 text-red-500 rounded-lg transition" title="Delete">
                             <Trash2 class="w-5 h-5" />
@@ -445,8 +499,9 @@
 import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, setDoc, startAfter, endBefore, limit, limitToLast, deleteDoc } from 'firebase/firestore'
 import { 
     LayoutDashboard, ExternalLink, LogOut, Check,
-    Users, Briefcase, Plus, User, Zap, Bug, Hammer, Trash2
+    Users, Briefcase, Plus, User, Zap, Bug, Hammer, Trash2, Clipboard, Archive
 } from 'lucide-vue-next'
+import { generateMarkdown } from '~/utils/taskMarkdown'
 
 definePageMeta({
     middleware: 'admin'
@@ -467,7 +522,28 @@ const uploading = ref(false)
 
 // --- DEV BOARD LOGIC ---
 const tasks = ref([])
-const newTask = ref({ title: '', type: 'feature', priority: 'med', status: 'todo' })
+const newTask = ref({ 
+    title: '', 
+    type: 'feature', 
+    priority: 'med', 
+    status: 'todo',
+    description: '',
+    goals: '',
+    section: 'Active Tasks (Engineering)',
+    subsection: 'General'
+})
+
+const copyBoard = async () => {
+    try {
+        const md = generateMarkdown(tasks.value)
+        await navigator.clipboard.writeText(md)
+        toast.success('Tasks copied to clipboard!')
+    } catch (e) {
+        console.error(e)
+        // Fallback or error
+        toast.error('Failed to copy')
+    }
+}
 
 const fetchTasks = async () => {
     try {
@@ -487,7 +563,16 @@ const submitTask = async () => {
             ...newTask.value,
             createdAt: serverTimestamp()
         })
-        newTask.value = { title: '', type: 'feature', priority: 'med', status: 'todo' }
+        newTask.value = { 
+            title: '', 
+            type: 'feature', 
+            priority: 'med', 
+            status: 'todo',
+            description: '',
+            goals: '',
+            section: 'Active Tasks (Engineering)',
+            subsection: 'General'
+        }
         await fetchTasks()
     } catch (e) {
         console.error(e)
@@ -505,6 +590,21 @@ const updateTaskStatus = async (taskId, status) => {
     }
 }
 
+const archiveTask = async (task) => {
+    try {
+        await setDoc(doc($db, 'archived_tasks', task.id), { 
+            ...task, 
+            archivedAt: serverTimestamp() 
+        })
+        await deleteDoc(doc($db, 'tasks', task.id))
+        tasks.value = tasks.value.filter(t => t.id !== task.id)
+        toast.success('Task archived')
+    } catch (e) {
+        console.error(e)
+        toast.error('Failed to archive task')
+    }
+}
+
 const deleteTask = async (taskId) => {
     if(!confirm('Delete task?')) return
     try {
@@ -514,6 +614,16 @@ const deleteTask = async (taskId) => {
         console.error(e)
     }
 }
+
+const getPriorityColor = (priority) => {
+    switch(priority) {
+        case 'high': return 'text-red-600 font-bold'
+        case 'med': return 'text-orange-500 font-bold'
+        case 'low': return 'text-blue-500 font-medium'
+        default: return 'text-muted'
+    }
+}
+
 
 // --- GIVEAWAYS LOGIC ---
 const campaigns = ref([])

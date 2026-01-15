@@ -88,11 +88,16 @@ definePageMeta({
 
 const { login, loginWithGoogle } = useAuth()
 const router = useRouter()
+const route = useRoute()
 
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
+
+if (route.query.expired) {
+    error.value = 'Your session has expired. Please log in again.'
+}
 
 const handleLogin = async () => {
     loading.value = true

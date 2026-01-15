@@ -27,7 +27,7 @@
     <!-- Mixed Feed -->
     <div class="max-w-2xl mx-auto p-4 space-y-8 mt-6">
         <!-- Public Welcome / CTA for Non-Subs -->
-        <div v-if="!isSubscriber" class="bg-surface text-text border border-border p-6 rounded-2xl shadow-xl text-center mb-8 relative overflow-hidden">
+        <div v-if="!loading && !isSubscriber" class="bg-surface text-text border border-border p-6 rounded-2xl shadow-xl text-center mb-8 relative overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 opacity-20"></div>
             <h2 class="text-2xl font-bold mb-2 relative z-10">Welcome to The Circle</h2>
             <p class="text-gray-200 mb-6 max-w-lg mx-auto relative z-10">

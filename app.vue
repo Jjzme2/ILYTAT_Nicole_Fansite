@@ -42,6 +42,20 @@
 
     <!-- Global Theme Styles -->
     <Head>
+        <!-- SEO Meta Tags from Config -->
+        <Title>{{ config.metaDom?.title || 'Nicole Circle' }}</Title>
+        <Meta name="description" :content="config.metaDom?.description || ''" />
+        <Meta name="keywords" :content="config.metaDom?.keywords || ''" />
+        <Meta property="og:title" :content="config.metaDom?.title || 'Nicole Circle'" />
+        <Meta property="og:description" :content="config.metaDom?.description || ''" />
+        <Meta property="og:image" :content="config.metaDom?.ogImage || '/og-image.png'" />
+        <Meta property="og:type" content="website" />
+        <Meta name="twitter:card" content="summary_large_image" />
+        <Meta name="twitter:site" :content="config.metaDom?.twitterHandle || ''" />
+        <Meta name="twitter:title" :content="config.metaDom?.title || 'Nicole Circle'" />
+        <Meta name="twitter:description" :content="config.metaDom?.description || ''" />
+        <Meta name="twitter:image" :content="config.metaDom?.ogImage || '/og-image.png'" />
+        
         <component :is="'style'">
             :root {
                 --color-primary: {{ themeStyles['--color-primary'] }};
@@ -59,8 +73,19 @@
             }
         </component>
     </Head>
+    
     <!-- Toast Notifications -->
     <ToastNotification />
+
+    <!-- Floating Navigation Button -->
+    <NuxtLink 
+        v-if="showFloatingNav"
+        :to="user ? '/hub' : '/'"
+        class="fixed bottom-6 right-6 z-40 p-4 bg-primary text-white rounded-full shadow-xl shadow-primary/30 hover:scale-110 hover:shadow-2xl transition-all duration-300 group"
+        title="Go Home"
+    >
+        <Home class="w-5 h-5 group-hover:rotate-12 transition-transform" />
+    </NuxtLink>
 
     <!-- Auth State Glow -->
     <div 
@@ -72,7 +97,7 @@
 </template>
 
 <script setup>
-import { Loader as LucideLoader } from 'lucide-vue-next'
+import { Loader as LucideLoader, Home } from 'lucide-vue-next'
 const config = useAppConfig()
 const { themeStyles, activeTheme } = useTheme()
 
@@ -81,6 +106,12 @@ const { socialLinks } = useSocials()
 const { loading, user } = useAuth()
 const router = useRouter()
 const route = useRoute()
+
+// Pages where we hide the floating nav (already have navigation)
+const hiddenNavPages = ['/', '/hub', '/login', '/register', '/admin', '/creator']
+const showFloatingNav = computed(() => {
+    return !hiddenNavPages.includes(route.path) && !loading.value
+})
 
 // --- Glow Configuration ---
 const glowActive = ref(false)

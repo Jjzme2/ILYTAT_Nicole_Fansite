@@ -109,6 +109,45 @@ service cloud.firestore {
         allow update, delete: if canManage();
     }
 
+    // Notifications (Admin System)
+    match /notifications/{notifId} {
+        allow read, write: if canManage();
+    }
+
+    // Messages (User-to-Creator DMs)
+    match /messages/{messageId} {
+        // Users can read their own messages, creators/admins can read all
+        allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || canManage());
+        
+        // Only authenticated users can create messages (to themselves)
+        allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+        
+        // Users can update their own messages (for readAt), creators can update any (for hasReply)
+        allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || canManage());
+        
+        // Only creators/admins can delete messages
+        allow delete: if canManage();
+
+        // Replies subcollection
+        match /replies/{replyId} {
+            // Users can read replies on their messages, creators can read all
+            allow read: if isAuthenticated() && (
+                get(/databases/$(database)/documents/messages/$(messageId)).data.userId == request.auth.uid 
+                || canManage()
+            );
+            
+            // Users can create replies on their own messages (follow-ups)
+            // Creators can create replies on any message
+            allow create: if isAuthenticated() && (
+                (get(/databases/$(database)/documents/messages/$(messageId)).data.userId == request.auth.uid && request.resource.data.fromCreator == false)
+                || (canManage() && request.resource.data.fromCreator == true)
+            );
+            
+            // Only creators can update/delete replies
+            allow update, delete: if canManage();
+        }
+    }
+
     // Comments (Subcollection of Posts)
     // Nested path match for structure
     match /posts/{postId}/comments/{commentId} {

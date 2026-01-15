@@ -43,6 +43,49 @@
             </div>
         </section>
 
+        <!-- Account Security -->
+        <section class="bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
+            <h2 class="text-xl font-bold mb-2 flex items-center gap-2">
+                <ShieldCheck class="w-5 h-5 text-primary" />
+                Account Security
+            </h2>
+
+            <!-- Email Verification -->
+            <div v-if="user && !user.emailVerified">
+                <div class="p-4 bg-orange-500/10 border border-orange-500/20 rounded-xl flex items-start gap-4">
+                    <div class="p-2 bg-orange-500/20 rounded-lg text-orange-600">
+                        <MailWarning class="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-orange-700 dark:text-orange-400">Verify your Email</h3>
+                        <p class="text-sm text-text/80 mb-3">Your email address <strong>{{ user.email }}</strong> is not verified. Please verify it to secure your account.</p>
+                        <button 
+                            @click="handleSendVerification" 
+                            :disabled="verificationSent" 
+                            class="px-4 py-2 bg-orange-500 text-white text-sm font-bold rounded-lg hover:bg-orange-600 disabled:opacity-50 transition"
+                        >
+                            {{ verificationSent ? 'Verification Sent!' : 'Send Verification Email' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password Reset -->
+            <div>
+                <label class="block text-sm font-bold text-muted mb-2">Password Reset</label>
+                <div class="flex items-center gap-4">
+                    <button 
+                        @click="handlePasswordReset" 
+                        :disabled="resetSent"
+                        class="px-6 py-3 bg-background border-2 border-border text-text font-bold rounded-xl hover:border-primary hover:text-primary transition disabled:opacity-50"
+                    >
+                        {{ resetSent ? 'Reset Email Sent' : 'Change Password' }}
+                    </button>
+                    <p class="text-xs text-muted">We will send you an email to reset your password securely.</p>
+                </div>
+            </div>
+        </section>
+
         <!-- Theme Settings -->
         <section class="bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm">
             <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
@@ -72,6 +115,11 @@
                     </div>
                 </div>
             </div>
+        </section>
+
+        <!-- Message Nicole -->
+        <section class="bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm">
+            <MessageNicole />
         </section>
 
         <!-- User Data Transparency -->
@@ -207,8 +255,8 @@
 </template>
 
 <script setup>
-import { Palette, Database, User as UserIcon, MessageSquare, Lightbulb, Trophy } from 'lucide-vue-next'
-import { updateProfile } from 'firebase/auth'
+import { Palette, Database, User as UserIcon, MessageSquare, Lightbulb, Trophy, ShieldCheck, MailWarning, Mail } from 'lucide-vue-next'
+import { updateProfile, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth'
 import { doc, setDoc, collection, query, where, getDocs, orderBy, collectionGroup } from 'firebase/firestore'
 import { useAuth } from '#imports'
 
@@ -225,6 +273,39 @@ useHead({
 // Profile State
 const newDisplayName = ref('')
 const updating = ref(false)
+
+// Security State
+const verificationSent = ref(false)
+const resetSent = ref(false)
+
+const handleSendVerification = async () => {
+    if (!$auth.currentUser) return
+    try {
+        await sendEmailVerification($auth.currentUser)
+        verificationSent.value = true
+        toast.success('Verification email sent! Check your inbox.')
+    } catch (e) {
+        console.error(e)
+        // Handle "too many requests" gracefully
+        if(e.code === 'auth/too-many-requests') {
+            toast.error('Too many requests. Please check your email or try again later.')
+        } else {
+            toast.error('Error sending verification.')
+        }
+    }
+}
+
+const handlePasswordReset = async () => {
+    if (!$auth.currentUser || !$auth.currentUser.email) return
+    try {
+        await sendPasswordResetEmail($auth, $auth.currentUser.email)
+        resetSent.value = true
+        toast.success(`Password reset link sent to ${$auth.currentUser.email}`)
+    } catch (e) {
+        console.error(e)
+        toast.error('Error sending reset email.')
+    }
+}
 
 // Data Transparency State
 const contentLoading = ref(false)

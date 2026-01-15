@@ -1,4 +1,4 @@
-export const quickLaunch = [
+export const adminLinks = [
     {
         label: 'Firebase Console',
         url: 'https://console.firebase.google.com/project/nicole-circle/',
@@ -26,15 +26,27 @@ export const quickLaunch = [
         bgColor: 'bg-indigo-500/10',
         borderColor: 'border-indigo-500/20'
     },
-    // {
-    //     label: 'Google Analytics',
-    //     url: 'https://analytics.google.com/',
-    //     icon: 'BarChart3',
-    //     description: 'Traffic & User Stats',
-    //     color: 'text-orange-500',
-    //     bgColor: 'bg-orange-500/10',
-    //     borderColor: 'border-orange-500/20'
-    // },
+    {
+        label: 'Live Site',
+        url: 'https://nicole.ilytat.com',
+        icon: 'Globe',
+        description: 'View Production App',
+        color: 'text-green-600',
+        bgColor: 'bg-green-600/10',
+        borderColor: 'border-green-600/20'
+    },
+    {
+        label: 'SendGrid',
+        url: 'https://dashboard.sendgrid.com/',
+        icon: 'Mail',
+        description: 'Email & Notifications',
+        color: 'text-blue-500',
+        bgColor: 'bg-blue-500/10',
+        borderColor: 'border-blue-500/20'
+    }
+]
+
+export const creatorLinks = [
     {
         label: 'Live Site',
         url: 'https://nicole.ilytat.com',

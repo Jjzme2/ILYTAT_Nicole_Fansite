@@ -23,12 +23,19 @@
                 <Briefcase class="w-5 h-5" />
                 Brand Deals
             </button>
-             <button 
+            <button 
                 @click="currentTab = 'users'"
                 :class="['flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition', currentTab === 'users' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-text']"
             >
                 <Users class="w-5 h-5" />
                 Users
+            </button>
+            <button 
+                @click="currentTab = 'messages'"
+                :class="['flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition relative', currentTab === 'messages' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-text']"
+            >
+                <MessageCircle class="w-5 h-5" />
+                Messages
             </button>
             <button 
                 @click="currentTab = 'giveaways'"
@@ -43,6 +50,14 @@
             >
                 <Bug class="w-5 h-5" />
                 Dev Board
+            </button>
+            <button 
+                v-if="isDev"
+                @click="currentTab = 'tools'"
+                :class="['flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition', currentTab === 'tools' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-text']"
+            >
+                <Wrench class="w-5 h-5" />
+                Dev Tools
             </button>
 
             <div class="pt-4 mt-4 border-t border-border space-y-2">
@@ -61,7 +76,12 @@
             </div>
         </nav>
 
-        <button @click="logout" class="flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 transition text-sm font-medium mt-auto">
+        <div class="flex items-center gap-3 mt-auto mb-2">
+            <NotificationBell />
+            <span class="text-xs text-muted font-medium">Alerts</span>
+        </div>
+
+        <button @click="logout" class="flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 transition text-sm font-medium">
             <LogOut class="w-5 h-5" />
             Log Out
         </button>
@@ -78,6 +98,7 @@
                 <h1 class="font-bold text-xl text-text">THE OFFICE</h1>
             </div>
             <div class="flex gap-4 items-center">
+                 <NotificationBell />
                  <NuxtLink v-if="role === 'creator'" to="/creator" class="text-xs font-bold text-indigo-600 border border-indigo-200 px-2 py-1 rounded-full">Studio</NuxtLink>
                 <button @click="logout" class="text-xs text-red-500 font-medium">Log Out</button>
             </div>
@@ -94,11 +115,17 @@
              <button @click="currentTab = 'users'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'users' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
                 Users
             </button>
+             <button @click="currentTab = 'messages'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'messages' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
+                Messages
+            </button>
              <button @click="currentTab = 'giveaways'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'giveaways' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
                 Giveaways
             </button>
              <button @click="currentTab = 'dev'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'dev' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
                 Dev Board
+            </button>
+             <button v-if="isDev" @click="currentTab = 'tools'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'tools' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
+                🛠️ Dev Tools
             </button>
         </div>
 
@@ -111,7 +138,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <a 
-                    v-for="(link, i) in appConfig.quickLaunch" 
+                    v-for="(link, i) in (role === 'creator' ? appConfig.creatorLinks : appConfig.adminLinks)" 
                     :key="i"
                     :href="link.url"
                     target="_blank"
@@ -538,6 +565,176 @@
 
         </div>
 
+        <!-- MESSAGES TAB -->
+        <div v-if="currentTab === 'messages'" class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <MessageInbox />
+        </div>
+
+        <!-- DEV TOOLS TAB (Development Only) -->
+        <div v-if="currentTab === 'tools' && isDev" class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <header class="mb-10">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="p-2 bg-amber-100 rounded-lg">
+                        <Wrench class="w-6 h-6 text-amber-600" />
+                    </div>
+                    <h2 class="text-3xl font-serif text-text">Dev Tools</h2>
+                </div>
+                <p class="text-muted">Development testing utilities. <span class="text-amber-500 font-bold">Only visible in dev mode.</span></p>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- Daily Reports Section -->
+                <div class="bg-surface border border-border rounded-2xl p-6 shadow-sm">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="p-2 bg-indigo-100 rounded-lg">
+                            <FileText class="w-5 h-5 text-indigo-600" />
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-text">Daily Reports</h3>
+                            <p class="text-xs text-muted">Send platform statistics to configured recipients</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-background rounded-xl p-4 mb-4 text-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-muted">Recipients:</span>
+                            <span class="font-mono text-xs text-text">{{ reportEmails || 'Not configured' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-muted">Schedule:</span>
+                            <span class="text-text font-medium">Daily @ 8:00 AM CST</span>
+                        </div>
+                    </div>
+
+                    <button 
+                        @click="sendDailyReport" 
+                        :disabled="devToolsLoading.report"
+                        class="w-full bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                        <Loader2 v-if="devToolsLoading.report" class="w-5 h-5 animate-spin" />
+                        <Mail v-else class="w-5 h-5" />
+                        {{ devToolsLoading.report ? 'Sending...' : 'Send Report Now' }}
+                    </button>
+
+                    <div v-if="devToolsResults.report" class="mt-4 p-4 rounded-xl text-sm" :class="devToolsResults.report.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'">
+                        <div class="flex items-center gap-2 mb-2">
+                            <CheckCircle v-if="devToolsResults.report.success" class="w-4 h-4 text-green-600" />
+                            <XCircle v-else class="w-4 h-4 text-red-600" />
+                            <span :class="devToolsResults.report.success ? 'text-green-700 font-bold' : 'text-red-700 font-bold'">
+                                {{ devToolsResults.report.message }}
+                            </span>
+                        </div>
+                        <div v-if="devToolsResults.report.results" class="space-y-1">
+                            <div v-for="r in devToolsResults.report.results" :key="r.email" class="flex items-center gap-2 text-xs">
+                                <CheckCircle v-if="r.success" class="w-3 h-3 text-green-500" />
+                                <XCircle v-else class="w-3 h-3 text-red-500" />
+                                <span class="font-mono">{{ r.email }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Test Section -->
+                <div class="bg-surface border border-border rounded-2xl p-6 shadow-sm">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="p-2 bg-emerald-100 rounded-lg">
+                            <Mail class="w-5 h-5 text-emerald-600" />
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-text">Test Email</h3>
+                            <p class="text-xs text-muted">Send a test email to verify SMTP/SendGrid configuration</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 mb-4">
+                        <input 
+                            v-model="testEmail.to" 
+                            type="email" 
+                            placeholder="Recipient email"
+                            class="w-full bg-background border border-border rounded-xl p-3 focus:border-primary outline-none text-text"
+                        >
+                        <input 
+                            v-model="testEmail.subject" 
+                            type="text" 
+                            placeholder="Subject"
+                            class="w-full bg-background border border-border rounded-xl p-3 focus:border-primary outline-none text-text"
+                        >
+                        <textarea 
+                            v-model="testEmail.message" 
+                            placeholder="Message content..."
+                            rows="3"
+                            class="w-full bg-background border border-border rounded-xl p-3 focus:border-primary outline-none text-text resize-none"
+                        ></textarea>
+                    </div>
+
+                    <button 
+                        @click="sendTestEmail" 
+                        :disabled="devToolsLoading.email || !testEmail.to"
+                        class="w-full bg-emerald-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-emerald-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                        <Loader2 v-if="devToolsLoading.email" class="w-5 h-5 animate-spin" />
+                        <Mail v-else class="w-5 h-5" />
+                        {{ devToolsLoading.email ? 'Sending...' : 'Send Test Email' }}
+                    </button>
+
+                    <div v-if="devToolsResults.email" class="mt-4 p-4 rounded-xl text-sm" :class="devToolsResults.email.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'">
+                        <div class="flex items-center gap-2">
+                            <CheckCircle v-if="devToolsResults.email.success" class="w-4 h-4 text-green-600" />
+                            <XCircle v-else class="w-4 h-4 text-red-600" />
+                            <span :class="devToolsResults.email.success ? 'text-green-700' : 'text-red-700'">
+                                {{ devToolsResults.email.message }}
+                            </span>
+                        </div>
+                        <p v-if="devToolsResults.email.provider" class="text-xs text-muted mt-1">
+                            Provider: <span class="font-mono">{{ devToolsResults.email.provider }}</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- System Status Section -->
+                <div class="bg-surface border border-border rounded-2xl p-6 shadow-sm lg:col-span-2">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="p-2 bg-purple-100 rounded-lg">
+                            <Server class="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-text">System Status</h3>
+                            <p class="text-xs text-muted">Current environment and configuration overview</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-background rounded-xl p-4 text-center">
+                            <div class="text-2xl font-bold text-primary">{{ systemStats.users }}</div>
+                            <div class="text-xs text-muted uppercase mt-1">Users</div>
+                        </div>
+                        <div class="bg-background rounded-xl p-4 text-center">
+                            <div class="text-2xl font-bold text-emerald-500">{{ systemStats.posts }}</div>
+                            <div class="text-xs text-muted uppercase mt-1">Posts</div>
+                        </div>
+                        <div class="bg-background rounded-xl p-4 text-center">
+                            <div class="text-2xl font-bold text-amber-500">{{ systemStats.deals }}</div>
+                            <div class="text-xs text-muted uppercase mt-1">Brand Deals</div>
+                        </div>
+                        <div class="bg-background rounded-xl p-4 text-center">
+                            <div class="text-2xl font-bold text-purple-500">{{ systemStats.tasks }}</div>
+                            <div class="text-xs text-muted uppercase mt-1">Dev Tasks</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-between text-xs text-muted">
+                        <span>Environment: <span class="font-mono text-amber-500 font-bold">DEVELOPMENT</span></span>
+                        <button @click="refreshSystemStats" class="flex items-center gap-1 hover:text-primary transition">
+                            <RefreshCw class="w-3 h-3" :class="{ 'animate-spin': devToolsLoading.stats }" />
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
     </main>
   </div>
 </template>
@@ -547,7 +744,8 @@ import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, setD
 import { 
     LayoutDashboard, ExternalLink, LogOut, Check,
     Users, Briefcase, Plus, User, Zap, Bug, Hammer, Trash2, Clipboard, Archive,
-    Rocket, Flame, Github, CreditCard, BarChart3, Triangle, Globe, ArrowLeft
+    Rocket, Flame, Github, CreditCard, BarChart3, Triangle, Globe, ArrowLeft,
+    Wrench, Mail, FileText, Server, RefreshCw, CheckCircle, XCircle, Loader2, MessageCircle
 } from 'lucide-vue-next'
 import { generateMarkdown } from '~/utils/taskMarkdown'
 
@@ -580,6 +778,117 @@ const getIcon = (iconName) => {
         default: return Rocket
     }
 }
+
+// --- DEV TOOLS LOGIC ---
+const isDev = process.dev // Only true in development mode
+const reportEmails = ref('')
+
+const devToolsLoading = reactive({
+    report: false,
+    email: false,
+    stats: false
+})
+
+const devToolsResults = reactive({
+    report: null,
+    email: null
+})
+
+const testEmail = reactive({
+    to: '',
+    subject: 'Test Email from ILYTAT Dev Tools',
+    message: 'This is a test email sent from the Dev Tools panel.'
+})
+
+const systemStats = reactive({
+    users: 0,
+    posts: 0,
+    deals: 0,
+    tasks: 0
+})
+
+const sendDailyReport = async () => {
+    devToolsLoading.report = true
+    devToolsResults.report = null
+    try {
+        const response = await $fetch('/api/reports/daily', { method: 'POST' })
+        devToolsResults.report = {
+            success: true,
+            message: response.message || 'Daily report sent successfully!',
+            results: response.results
+        }
+        toast.success('Daily report sent!')
+    } catch (error) {
+        devToolsResults.report = {
+            success: false,
+            message: error.data?.message || error.message || 'Failed to send report'
+        }
+        toast.error('Failed to send report')
+    } finally {
+        devToolsLoading.report = false
+    }
+}
+
+const sendTestEmail = async () => {
+    if (!testEmail.to) return
+    devToolsLoading.email = true
+    devToolsResults.email = null
+    try {
+        const response = await $fetch('/api/email/send', {
+            method: 'POST',
+            body: {
+                to: testEmail.to,
+                subject: testEmail.subject,
+                text: testEmail.message,
+                html: `<div style="font-family: sans-serif; padding: 20px;"><h2>Test Email</h2><p>${testEmail.message}</p><hr><p style="color: #888; font-size: 12px;">Sent from ILYTAT Dev Tools</p></div>`
+            }
+        })
+        devToolsResults.email = {
+            success: true,
+            message: 'Test email sent successfully!',
+            provider: response.provider
+        }
+        toast.success('Test email sent!')
+    } catch (error) {
+        devToolsResults.email = {
+            success: false,
+            message: error.data?.message || error.message || 'Failed to send email'
+        }
+        toast.error('Failed to send email')
+    } finally {
+        devToolsLoading.email = false
+    }
+}
+
+const refreshSystemStats = async () => {
+    devToolsLoading.stats = true
+    try {
+        const [usersSnap, postsSnap, dealsSnap, tasksSnap] = await Promise.all([
+            getDocs(collection($db, 'users')),
+            getDocs(collection($db, 'posts')),
+            getDocs(collection($db, 'brand_deals')),
+            getDocs(collection($db, 'tasks'))
+        ])
+        systemStats.users = usersSnap.size
+        systemStats.posts = postsSnap.size
+        systemStats.deals = dealsSnap.size
+        systemStats.tasks = tasksSnap.size
+    } catch (e) {
+        console.error('Failed to fetch system stats:', e)
+    } finally {
+        devToolsLoading.stats = false
+    }
+}
+
+// Fetch report emails info on mount (if in dev mode)
+onMounted(() => {
+    if (isDev) {
+        // We'll just show a placeholder since env vars aren't accessible client-side
+        // The actual emails are handled server-side
+        reportEmails.value = '(configured in .env)'
+        refreshSystemStats()
+    }
+})
 
 // --- DEV BOARD LOGIC ---
 const tasks = ref([])
@@ -865,17 +1174,49 @@ const saveBrandDeal = async () => {
             }, { merge: true })
         } else {
              // CREATE
-            await addDoc(collection($db, 'brand_deals'), {
+            const dealRef = await addDoc(collection($db, 'brand_deals'), {
                 ...newDeal.value,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             })
+
+            // Create a notification for admins/creators
+            await addDoc(collection($db, 'notifications'), {
+                type: 'brand_deal',
+                title: `New Brand Deal: ${newDeal.value.brandName}`,
+                message: `A new deal worth ${newDeal.value.value} has been added. Contact: ${newDeal.value.contactName}`,
+                read: false,
+                actionUrl: '/admin?tab=deals',
+                createdAt: serverTimestamp()
+            })
+
+            // Send email notification (optional, requires SMTP config)
+            try {
+                await $fetch('/api/email/send', {
+                    method: 'POST',
+                    body: {
+                        to: 'nicole@ilytat.com', // TODO: Use config
+                        subject: `New Brand Deal: ${newDeal.value.brandName}`,
+                        text: `A new brand deal has been added!\n\nBrand: ${newDeal.value.brandName}\nValue: ${newDeal.value.value}\nContact: ${newDeal.value.contactName} (${newDeal.value.contactEmail})\n\nDeliverables: ${newDeal.value.deliverables}`,
+                        html: `
+                            <h2>New Brand Deal Added</h2>
+                            <p><strong>Brand:</strong> ${newDeal.value.brandName}</p>
+                            <p><strong>Value:</strong> ${newDeal.value.value}</p>
+                            <p><strong>Contact:</strong> ${newDeal.value.contactName} (${newDeal.value.contactEmail})</p>
+                            <p><strong>Deliverables:</strong> ${newDeal.value.deliverables}</p>
+                        `
+                    }
+                })
+            } catch (emailErr) {
+                console.warn('[BrandDeal] Email notification failed (SMTP may not be configured):', emailErr)
+            }
         }
        
         showDealForm.value = false
         // Reset
         newDeal.value = { id: null, brandName: '', value: '', contactName: '', contactEmail: '', status: 'pending', deliverables: '', notes: '' }
         await fetchDeals()
+        toast.success('Brand deal saved!')
     } catch (e) {
         console.error(e)
         toast.error('Error saving deal: ' + e.message)

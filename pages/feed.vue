@@ -114,7 +114,7 @@
                 </div>
                 <!-- Badge for Type -->
                 <div class="ml-2 px-2 py-0.5 bg-background rounded text-[10px] font-bold uppercase tracking-wider text-muted">
-                    {{ post.type || 'image' }}
+                    {{ post.subtype || post.type || 'image' }}
                 </div>
                 <div class="ml-auto flex items-center gap-2">
                      <button 
@@ -210,8 +210,75 @@
 
             <!-- TEXT CONTENT -->
             <div v-else class="p-8 bg-surface min-h-[200px] flex items-center justify-center relative">
-                <div v-if="isSubscriber || post.isFree" class="text-center">
-                     <p class="text-xl md:text-2xl font-serif text-text whitespace-pre-wrap leading-relaxed">{{ post.caption }}</p>
+                <div v-if="isSubscriber || post.isFree" class="text-center w-full max-w-2xl px-4">
+                     <!-- Quote -->
+                    <div v-if="post.subtype === 'quote'" class="relative py-4">
+                        <Quote 
+                            class="absolute -top-4 -left-0 w-8 h-8 opacity-20" 
+                             :class="{
+                                'text-primary': !post.theme || post.theme === 'sunset',
+                                'text-cyan-500': post.theme === 'ocean',
+                                'text-emerald-500': post.theme === 'forest',
+                                'text-red-500': post.theme === 'love',
+                                'text-indigo-500': post.theme === 'midnight'
+                            }"
+                        />
+                        <p class="text-xl md:text-3xl font-serif italic text-text whitespace-pre-wrap leading-loose">"{{ post.caption }}"</p>
+                        <p v-if="post.citation" class="mt-4 text-base font-medium text-muted text-right">— {{ post.citation }}</p>
+                        <Quote 
+                            class="absolute -bottom-4 -right-0 w-8 h-8 opacity-20 rotate-180"
+                            :class="{
+                                'text-primary': !post.theme || post.theme === 'sunset',
+                                'text-cyan-500': post.theme === 'ocean',
+                                'text-emerald-500': post.theme === 'forest',
+                                'text-red-500': post.theme === 'love',
+                                'text-indigo-500': post.theme === 'midnight'
+                            }"
+                         />
+                    </div>
+
+                    <!-- Blog (was Story) -->
+                    <div v-else-if="post.subtype === 'blog'" class="text-left">
+                        <div class="mb-6 text-center">
+                            <h3 class="font-bold text-muted uppercase tracking-widest text-xs border-b border-border pb-2 w-20 mx-auto mb-3">Blog</h3>
+                            <h2 v-if="post.title" class="font-serif font-bold text-2xl md:text-3xl text-text">{{ post.title }}</h2>
+                        </div>
+                        <p class="text-lg font-serif text-text whitespace-pre-wrap leading-loose px-2">{{ post.caption }}</p>
+                    </div>
+
+                    <!-- Motivation -->
+                    <div v-else-if="post.subtype === 'motivation'">
+                        <p 
+                            class="text-2xl md:text-4xl font-extrabold uppercase tracking-tight text-transparent bg-clip-text leading-tight py-4"
+                            :class="{
+                                'bg-gradient-to-r from-pink-500 to-violet-500': !post.theme || post.theme === 'sunset',
+                                'bg-gradient-to-r from-cyan-500 to-blue-500': post.theme === 'ocean',
+                                'bg-gradient-to-r from-emerald-500 to-teal-500': post.theme === 'forest',
+                                'bg-gradient-to-r from-red-500 to-rose-500': post.theme === 'love',
+                                'bg-gradient-to-r from-indigo-900 to-slate-900': post.theme === 'midnight'
+                            }"
+                        >
+                            {{ post.caption }}
+                        </p>
+                    </div>
+
+                    <!-- Default/Status -->
+                    <div v-else>
+                         <div 
+                            v-if="post.subtype === 'status' && post.mood" 
+                            class="mb-4 inline-block px-3 py-1 bg-surface border rounded-full text-xs font-bold text-muted"
+                            :class="{
+                                'border-pink-200 bg-pink-50': (!post.theme || post.theme === 'sunset'),
+                                'border-cyan-200 bg-cyan-50': post.theme === 'ocean',
+                                'border-emerald-200 bg-emerald-50': post.theme === 'forest',
+                                'border-rose-200 bg-rose-50': post.theme === 'love',
+                                'border-indigo-200 bg-indigo-50': post.theme === 'midnight'
+                            }"
+                        >
+                            Currently: {{ post.mood }}
+                        </div>
+                        <p class="text-xl md:text-2xl font-serif text-text whitespace-pre-wrap leading-relaxed">{{ post.caption }}</p>
+                    </div>
                 </div>
                 
                 <!-- Locked Content (Text) -->
@@ -340,7 +407,7 @@
 <script setup>
 import { collection, query, orderBy, getDocs, deleteDoc, doc, addDoc, serverTimestamp, onSnapshot, limit, startAfter } from 'firebase/firestore'
 
-import { Lock, FileImage, LayoutGrid, Zap, Star, Trash2, Edit2, Lightbulb, ChevronDown, MessageSquare, Send } from 'lucide-vue-next'
+import { Lock, FileImage, LayoutGrid, Zap, Star, Trash2, Edit2, Lightbulb, ChevronDown, MessageSquare, Send, Quote } from 'lucide-vue-next'
 
 definePageMeta({
     middleware: 'auth'

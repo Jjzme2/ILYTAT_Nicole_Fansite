@@ -1,16 +1,6 @@
-interface Task {
-    id?: string;
-    title: string;
-    description?: string;
-    goals?: string;
-    status?: string;
-    type?: string;
-    section?: string;
-    subsection?: string;
-    [key: string]: any;
-}
+import type { DeveloperTask } from '~/composables/useTaskBoard'
 
-export const generateMarkdown = (tasks: Task[]): string => {
+export const generateMarkdown = (tasks: DeveloperTask[]): string => {
     let md = '';
 
     // Group tasks by section
@@ -46,7 +36,7 @@ export const generateMarkdown = (tasks: Task[]): string => {
     // Sort subsections alphabetically or fixed order if needed
     Object.keys(activeSubs).forEach(sub => {
         md += `### ${sub}\n`;
-        activeSubs[sub].forEach((task: Task) => {
+        activeSubs[sub].forEach((task: DeveloperTask) => {
             const check = task.status === 'done' ? '[x]' : '[ ]';
             const type = task.type ? `[${task.type.toUpperCase()}]` : '';
 
@@ -72,7 +62,7 @@ export const generateMarkdown = (tasks: Task[]): string => {
     if (inbox.length === 0) {
         md += `*   (Add new requests here)\n`;
     } else {
-        inbox.forEach((task: Task) => {
+        inbox.forEach((task: DeveloperTask) => {
             md += `*   ${task.title}`;
             if (task.description) md += ` - ${task.description}`;
             md += `\n`;

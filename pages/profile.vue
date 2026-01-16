@@ -295,6 +295,9 @@
 </template>
 
 <script setup>
+definePageMeta({
+    middleware: 'auth'
+})
 import { Palette, Database, User as UserIcon, MessageSquare, Lightbulb, Trophy, ShieldCheck, MailWarning, Mail, Info, ArrowRight } from 'lucide-vue-next'
 import { updateProfile, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth'
 import { doc, setDoc, collection, query, where, getDocs, orderBy, collectionGroup } from 'firebase/firestore'

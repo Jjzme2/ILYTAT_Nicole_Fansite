@@ -8,7 +8,7 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    // Helper: Role Checks (Safe)
+    // Helper: Role Checks (Safe & Multi-role)
     function getUserData() {
         return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
@@ -17,24 +17,36 @@ service cloud.firestore {
         return exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
     
+    function hasRole(roleName) {
+        let data = getUserData();
+        // Check 'roles' array (new) OR 'role' string (legacy)
+        return (data.keys().hasAny(['roles']) && roleName in data.roles) 
+            || (data.keys().hasAny(['role']) && data.role == roleName);
+    }
+    
     // Management Access (Admin OR Creator)
     function canManage() {
-      return isAuthenticated() && userDocExists() && (getUserData().role == 'admin' || getUserData().role == 'creator');
+      return isAuthenticated() && userDocExists() && (hasRole('admin') || hasRole('creator'));
     }
     
     // Content Access (Creator ONLY)
     function canUpload() {
-      return isAuthenticated() && userDocExists() && getUserData().role == 'creator';
+      return isAuthenticated() && userDocExists() && hasRole('creator');
     }
 
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+    // Developer Access
+    function isDeveloper() {
+      return isAuthenticated() && userDocExists() && hasRole('developer');
+    }
+
+    function canDevelop() {
+      return canManage() || isDeveloper();
     }
 
     // Users Collection
     match /users/{userId} {
-      allow read: if isOwner(userId) || canManage();
-      allow write: if isOwner(userId) || canManage();
+      allow read: if isOwner(userId) || canDevelop(); // devs can read users
+      allow write: if isOwner(userId) || canManage(); // only admins/creators can manage
 
       // Scores Subcollection
       match /scores/{scoreId} {
@@ -89,7 +101,7 @@ service cloud.firestore {
 
     // Archived Tasks (Admin Archive)
     match /archived_tasks/{taskId} {
-        allow read, write: if canManage();
+        allow read, write: if canDevelop();
     }
 
     // Giveaways & Campaigns
@@ -111,9 +123,9 @@ service cloud.firestore {
 
     // Tasks (New Dev Board)
     match /tasks/{taskId} {
-        allow read: if canManage(); // Only admins/creators see the board
-        allow create: if isAuthenticated(); // Anyone (logged in) can report
-        allow update, delete: if canManage();
+        allow read: if canDevelop(); // Admins/Creators/Devs see the board
+        allow create: if canDevelop(); // Devs can create tasks directly too
+        allow update, delete: if canDevelop();
     }
 
     // Notifications (Admin System)
@@ -152,7 +164,7 @@ service cloud.firestore {
     // System Messages (Global Banners/Toasts)
     match /system_messages/{msgId} {
         allow read: if true;
-        allow write: if canManage();
+        allow write: if canDevelop();
     }
 
     // Comments (Subcollection of Posts)

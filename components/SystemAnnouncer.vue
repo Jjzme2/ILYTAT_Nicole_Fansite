@@ -31,9 +31,9 @@
                     :key="msg.id"
                     class="pointer-events-auto w-full bg-surface border rounded-xl shadow-xl p-4 flex items-start gap-3 backdrop-blur-md"
                     :class="[
-                        msg.type === 'error' ? 'border-red-500/50 bg-red-500/10 text-red-100' :
-                        msg.type === 'success' ? 'border-green-500/50 bg-green-500/10 text-green-100' :
-                        'border-border text-text'
+                        msg.type === 'error' ? 'border-red-500/50 bg-red-100 dark:bg-red-500/10 text-red-800 dark:text-red-200' :
+                        msg.type === 'success' ? 'border-green-500/50 bg-green-100 dark:bg-green-500/10 text-green-800 dark:text-green-200' :
+                        'border-border text-text bg-surface'
                     ]"
                 >
                      <div class="shrink-0 mt-0.5">

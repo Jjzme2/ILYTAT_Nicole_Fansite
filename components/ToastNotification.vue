@@ -5,23 +5,24 @@
         v-for="toast in toasts" 
         :key="toast.id"
         class="pointer-events-auto bg-surface border border-border/50 text-text px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 w-80 backdrop-blur-md"
-        :class="{
-            'border-green-500/50 shadow-green-500/10': toast.type === 'success',
-            'border-red-500/50 shadow-red-500/10': toast.type === 'error',
-            'border-blue-500/50 shadow-blue-500/10': toast.type === 'info',
-        }"
+        :class="[
+            toast.type === 'success' ? 'border-green-500/50 shadow-green-500/10 bg-green-100 dark:bg-surface text-green-800 dark:text-green-400' :
+            toast.type === 'error' ? 'border-red-500/50 shadow-red-500/10 bg-red-100 dark:bg-surface text-red-800 dark:text-red-400' :
+            toast.type === 'info' ? 'border-blue-500/50 shadow-blue-500/10 bg-blue-100 dark:bg-surface text-blue-800 dark:text-blue-400' :
+            'bg-surface border-border/50 text-text'
+        ]"
       >
         <div class="shrink-0">
-            <CheckCircle v-if="toast.type === 'success'" class="w-5 h-5 text-green-500" />
-            <AlertCircle v-else-if="toast.type === 'error'" class="w-5 h-5 text-red-500" />
-            <Info v-else class="w-5 h-5 text-blue-500" />
+            <CheckCircle v-if="toast.type === 'success'" class="w-5 h-5 text-green-600 dark:text-green-400" />
+            <AlertCircle v-else-if="toast.type === 'error'" class="w-5 h-5 text-red-600 dark:text-red-400" />
+            <Info v-else class="w-5 h-5 text-blue-600 dark:text-blue-400" />
         </div>
         <div class="flex-1 text-sm font-medium">
             <div>{{ toast.message }}</div>
             <button 
                 v-if="toast.action" 
                 @click="toast.action.onClick"
-                class="mt-2 text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded transition inline-block pointer-events-auto"
+                class="mt-2 text-xs font-bold bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 px-3 py-1.5 rounded transition inline-block pointer-events-auto"
             >
                 {{ toast.action.label }}
             </button>

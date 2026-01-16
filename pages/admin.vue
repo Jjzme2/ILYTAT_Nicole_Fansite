@@ -205,8 +205,16 @@
                                     </button>
                                 </td>
                             </tr>
-                            <tr v-if="userList.length === 0">
-                                <td colspan="5" class="p-8 text-center text-muted">Loading users...</td>
+                            <tr v-if="loadingUsers">
+                                <td colspan="5" class="p-8 text-center text-muted">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <Loader2 class="w-5 h-5 animate-spin" />
+                                        <span>Loading users...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr v-else-if="userList.length === 0">
+                                <td colspan="5" class="p-8 text-center text-muted">No users found.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1518,6 +1526,7 @@ const saveRound = async () => {
 
 // --- USERS LOGIC ---
 const userList = ref([])
+const loadingUsers = ref(false)
 // Pagination State
 const pageSize = ref(10)
 const lastVisible = ref(null)
@@ -1528,6 +1537,7 @@ const fetchUsers = async (direction = 'first') => {
     // Handle Event object from click listeners
     if (typeof direction !== 'string') direction = 'first'
 
+    loadingUsers.value = true
     try {
         let q = query(collection($db, 'users'), orderBy('createdAt', 'desc'))
 
@@ -1557,6 +1567,9 @@ const fetchUsers = async (direction = 'first') => {
         }
     } catch (e) {
         console.error('Error fetching users:', e)
+        toast.error('Failed to load users: ' + e.message)
+    } finally {
+        loadingUsers.value = false
     }
 }
 

@@ -19,8 +19,8 @@ export const useAuth = () => {
     const role = useState<'admin' | 'user' | 'creator'>('role', () => 'user')
     const loading = useState<boolean>('authLoading', () => true)
 
-    const isAdmin = computed(() => role.value === 'admin')
-    const isCreator = computed(() => role.value === 'creator' || role.value === 'admin') // Creators function like admins for content
+    const isAdmin = computed(() => role.value === 'admin' || role.value === 'creator')
+    const isCreator = computed(() => role.value === 'creator')
 
     // Sync auth state
     const initAuth = () => {
@@ -97,23 +97,25 @@ export const useAuth = () => {
         }
     }
 
-    const register = async (email: string, pass: string, name: string) => {
+    const register = async (email: string, pass: string, fullName: string, displayName: string, birthday: string) => {
         const cred = await createUserWithEmailAndPassword($auth, email, pass)
 
         if (cred.user) {
-            // Update Auth Profile
+            // Update Auth Profile with Display Name (public)
             await updateProfile(cred.user, {
-                displayName: name
+                displayName: displayName
             })
 
             // Set login time
             localStorage.setItem('lastLogin_' + cred.user.uid, Date.now().toString())
 
-            // Create Firestore Profile immediately with name
+            // Create Firestore Profile
             const userDocRef = doc($db, 'users', cred.user.uid)
             await setDoc(userDocRef, {
                 email: email,
-                displayName: name,
+                displayName: displayName,
+                fullName: fullName, // Private/Personalization
+                birthday: birthday, // Age verification
                 isSubscriber: false,
                 isVerified: false,
                 stripeCustomerId: null,
@@ -121,8 +123,8 @@ export const useAuth = () => {
                 createdAt: new Date()
             })
 
-            // Force local update if needed, though onAuthStateChanged should catch it
-            user.value = { ...cred.user, displayName: name }
+            // Force local update
+            user.value = { ...cred.user, displayName: displayName }
         }
     }
 
@@ -131,6 +133,8 @@ export const useAuth = () => {
         const cred = await signInWithPopup($auth, provider)
         if (cred.user) {
             localStorage.setItem('lastLogin_' + cred.user.uid, Date.now().toString())
+            // Note: Google auth users might bypass the specific birthday check if we don't enforce it elsewhere, 
+            // but for now we are focusing on the registration form.
         }
     }
 

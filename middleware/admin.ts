@@ -1,7 +1,7 @@
 export default defineNuxtRouteMiddleware(async (to, from) => {
     if (process.server) return
 
-    const { user, isCreator, role, loading } = useAuth()
+    const { user, isCreator, isAdmin, role, loading } = useAuth()
 
     console.log('[Middleware:Admin] Start', { path: to.path, loading: loading.value })
 
@@ -36,7 +36,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         return navigateTo('/login')
     }
 
-    if (!isCreator.value) {
+    if (!isAdmin.value && !isCreator.value) {
         console.log('[Middleware:Admin] Not admin/creator, redirecting to feed')
         return navigateTo('/feed')
     }

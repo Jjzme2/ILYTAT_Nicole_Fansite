@@ -8,6 +8,9 @@
 
     <!-- Main App -->
     <div v-show="!loading" class="flex flex-col min-h-screen">
+      <!-- System Messages (Top Banners Push Content) -->
+      <SystemAnnouncer />
+      
       <NuxtLayout>
         <NuxtPage />
       </NuxtLayout>
@@ -86,6 +89,8 @@
     >
         <Home class="w-5 h-5 group-hover:rotate-12 transition-transform" />
     </NuxtLink>
+
+
 
     <!-- Auth State Glow -->
     <div 

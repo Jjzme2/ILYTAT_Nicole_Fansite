@@ -9,7 +9,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "manage-users": "node .dev/scripts/manage-users.js",
-    "create-task-list": "node .dev/scripts/createFile.js --name TaskList --path .dev/Tasks/"
+    "create-task-list": "node .dev/scripts/createFile.js --name TaskList --path .dev/Tasks/",
+    "migrate": "curl -X POST http://localhost:3000/api/migrations/run-all"
   },
   "dependencies": {
     "@nuxtjs/tailwindcss": "^6.14.0",

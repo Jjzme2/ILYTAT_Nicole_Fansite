@@ -6,9 +6,14 @@
         <p class="text-muted tracking-widest uppercase text-sm">{{ config.meta.tagline }}</p>
         
         <!-- Last Updated Badge -->
-        <div v-if="displayData.updatedAt" class="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-surface border border-border rounded-full text-xs text-muted">
-            <RefreshCw class="w-3 h-3" />
-            <span>Updated {{ formatUpdatedAt(displayData.updatedAt) }}</span>
+        <div class="mt-4 flex flex-col items-center gap-2">
+            <div v-if="displayData.updatedAt" class="inline-flex items-center gap-2 px-3 py-1.5 bg-surface border border-border rounded-full text-xs text-muted">
+                <RefreshCw class="w-3 h-3" />
+                <span>Updated {{ formatUpdatedAt(displayData.updatedAt) }}</span>
+            </div>
+            <div v-if="displayData.createdAt" class="text-[10px] text-muted opacity-60 uppercase tracking-widest font-bold">
+                Last updated {{ formatDate(displayData.createdAt) }}
+            </div>
         </div>
     </header>
 
@@ -159,6 +164,12 @@ const defaultData = {
 const formatStatLabel = (key) => {
     // Convert snake_case to Title Case
     return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+}
+
+const formatDate = (ts) => {
+    if (!ts) return ''
+    const date = ts.toDate ? ts.toDate() : new Date(ts)
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 // Format updated at for badge (relative)

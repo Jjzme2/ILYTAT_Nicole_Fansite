@@ -29,11 +29,10 @@
                 ref="panelRef"
                 class="
                     notification-panel
-                    fixed md:absolute z-50
-                    inset-x-4 bottom-4 md:inset-auto
-                    md:right-0 md:top-full md:mt-2
-                    w-auto md:w-96 
-                    max-h-[70vh] md:max-h-[28rem] 
+                    fixed z-50
+                    inset-x-4 bottom-4 
+                    md:left-1/2 md:-translate-x-1/2 md:w-[500px] md:bottom-8
+                    max-h-[60vh]
                     bg-white dark:bg-gray-900 
                     border border-gray-200 dark:border-gray-700 
                     rounded-2xl shadow-2xl overflow-hidden
@@ -174,7 +173,7 @@ import { collection, query, orderBy, getDocs, doc, updateDoc, where, writeBatch,
 import { onClickOutside } from '@vueuse/core'
 
 const { $db } = useNuxtApp()
-const { isAdmin, isCreator } = useAuth()
+const { isAdmin, isCreator, user } = useAuth() // Ensure 'user' is destructured
 
 const isOpen = ref(false)
 const loading = ref(false)
@@ -198,59 +197,51 @@ const unreadCount = computed(() => notifications.value.filter(n => !n.read).leng
 const togglePanel = () => {
     isOpen.value = !isOpen.value
     debugLog('Panel toggled', { isOpen: isOpen.value, notificationCount: notifications.value.length })
-    if (isOpen.value && notifications.value.length === 0) {
-        fetchNotifications()
-    }
-}
-
-const fetchNotifications = async () => {
-    debugLog('Fetch attempt', { isAdmin: isAdmin.value, isCreator: isCreator.value })
-    
-    if (!isAdmin.value && !isCreator.value) {
-        debugLog('Fetch blocked', 'User is not admin or creator')
-        return
-    }
-    
-    loading.value = true
-    try {
-        debugLog('Querying Firestore', 'notifications collection')
-        const q = query(
-            collection($db, 'notifications'),
-            orderBy('createdAt', 'desc')
-        )
-        const snap = await getDocs(q)
-        notifications.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-        debugLog('Fetch success', { count: notifications.value.length, notifications: notifications.value })
-    } catch (e) {
-        console.error('[NotificationBell] Fetch error:', e)
-        debugLog('Fetch error', { error: e.message, code: e.code })
-    } finally {
-        loading.value = false
-    }
 }
 
 // Real-time listener
 const setupListener = () => {
-    debugLog('Setting up listener', { isAdmin: isAdmin.value, isCreator: isCreator.value })
+    debugLog('Setting up listeners', { isAdmin: isAdmin.value, isCreator: isCreator.value, uid: user.value?.uid })
     
-    if (!isAdmin.value && !isCreator.value) {
-        debugLog('Listener not set', 'User is not admin or creator')
-        return
+    // 1. Personal Notifications (Everyone)
+    if (user.value?.uid) {
+        const userQ = query(
+            collection($db, 'users', user.value.uid, 'notifications'),
+            orderBy('createdAt', 'desc')
+        )
+        onSnapshot(userQ, (snap) => {
+            const personalNotifs = snap.docs.map(d => ({ id: d.id, ...d.data(), _source: 'personal' }))
+            mergeNotifications(personalNotifs, 'personal')
+        })
     }
 
-    const q = query(
-        collection($db, 'notifications'),
-        orderBy('createdAt', 'desc')
-    )
+    // 2. Admin/Creator Global Notifications
+    if (isAdmin.value || isCreator.value) {
+        const adminQ = query(
+            collection($db, 'notifications'),
+            orderBy('createdAt', 'desc')
+        )
+        onSnapshot(adminQ, (snap) => {
+            const adminNotifs = snap.docs.map(d => ({ id: d.id, ...d.data(), _source: 'admin' }))
+            mergeNotifications(adminNotifs, 'admin')
+        })
+    }
+}
 
-    onSnapshot(q, (snap) => {
-        const newNotifications = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-        debugLog('Snapshot received', { count: newNotifications.length })
-        notifications.value = newNotifications
-    }, (error) => {
-        console.error('[NotificationBell] Listener error:', error)
-        debugLog('Listener error', { error: error.message, code: error.code })
-    })
+const notifState = reactive({
+    personal: [],
+    admin: []
+})
+
+const mergeNotifications = (newItems, source) => {
+    notifState[source] = newItems
+    // Combine and sort by date descending
+    notifications.value = [...notifState.personal, ...notifState.admin]
+        .sort((a, b) => {
+            const tA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0)
+            const tB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0)
+            return tB - tA
+        })
 }
 
 onMounted(() => {
@@ -265,12 +256,18 @@ const markAllAsRead = async () => {
     debugLog('Marking all as read', { count: unread.length })
     
     const batch = writeBatch($db)
+    
     unread.forEach(n => {
-        batch.update(doc($db, 'notifications', n.id), { read: true })
+        if (n._source === 'personal') {
+            batch.update(doc($db, 'users', user.value.uid, 'notifications', n.id), { read: true })
+        } else {
+             // Only admins can mark global admin alerts as read efficiently, 
+             // though technically this marks it read for EVERYONE which might be intended for "tasks" but bad for "alerts".
+             // For now, assuming admin alerts are shared state.
+            batch.update(doc($db, 'notifications', n.id), { read: true })
+        }
     })
     await batch.commit()
-
-    notifications.value = notifications.value.map(n => ({ ...n, read: true }))
     debugLog('All marked as read', 'Success')
 }
 
@@ -279,9 +276,11 @@ const handleNotificationClick = async (notif) => {
     
     // Mark as read
     if (!notif.read) {
-        await updateDoc(doc($db, 'notifications', notif.id), { read: true })
-        const idx = notifications.value.findIndex(n => n.id === notif.id)
-        if (idx !== -1) notifications.value[idx].read = true
+        const collectionPath = notif._source === 'personal' 
+            ? `users/${user.value.uid}/notifications` 
+            : 'notifications'
+            
+        await updateDoc(doc($db, collectionPath, notif.id), { read: true })
         debugLog('Marked as read', { id: notif.id })
     }
 
@@ -347,20 +346,18 @@ const formatTime = (timestamp) => {
 
 .fade-slide-enter-active,
 .fade-slide-leave-active {
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .fade-slide-enter-from,
 .fade-slide-leave-to {
     opacity: 0;
-    transform: translateY(-12px);
+    transform: translateY(20px) translateX(0); /* On mobile */
 }
 
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
+@media (min-width: 768px) {
+    .fade-slide-enter-from,
+    .fade-slide-leave-to {
+        transform: translateY(20px) translateX(-50%); /* Preserve centering on desktop */
+    }
 }
 </style>

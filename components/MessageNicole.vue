@@ -233,6 +233,7 @@ const { $db } = useNuxtApp()
 const { user } = useAuth()
 const toast = useToast()
 const config = useAppConfig()
+const route = useRoute()
 
 // Daily cap from config
 const dailyCap = config.messaging?.dailyMessageCap || 3
@@ -465,6 +466,19 @@ watch(() => user.value?.uid, (uid) => {
     if (uid) {
         fetchMessages()
         fetchQuota()
+    }
+}, { immediate: true })
+
+// Deep link to specific message
+watch([() => route.query.messageId, messages], ([msgId, msgs]) => {
+    if (msgId && msgs.length > 0) {
+        const found = msgs.find(m => m.id === msgId)
+        if (found && (!viewingConversation.value || viewingConversation.value.id !== msgId)) {
+            openConversation(found)
+            // Scroll to the component if needed
+            const el = document.querySelector('.message-nicole-container')
+            if (el) el.scrollIntoView({ behavior: 'smooth' })
+        }
     }
 }, { immediate: true })
 

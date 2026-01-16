@@ -233,8 +233,7 @@
                                 <span class="text-sm font-bold uppercase text-muted tracking-wider">Comments ({{ userComments.length }})</span>
                             </div>
                              <div v-if="userComments.length > 0" class="max-h-60 overflow-y-auto pr-2 space-y-2">
-                                <component 
-                                    :is="comment.postId ? 'NuxtLink' : 'div'"
+                                <NuxtLink 
                                     v-for="comment in userComments" 
                                     :key="comment.id"
                                     :to="comment.postId ? `/feed?highlight=${comment.postId}` : undefined"
@@ -245,9 +244,32 @@
                                     </div>
                                     <p class="mb-1">{{ comment.text }}</p>
                                     <p class="text-[10px] text-muted text-right">{{ comment.createdAt?.toDate ? comment.createdAt.toDate().toLocaleString() : 'Just now' }}</p>
-                                </component>
+                                </NuxtLink>
                             </div>
                             <p v-else class="text-sm text-muted italic">No comments yet.</p>
+                        </div>
+
+                        <!-- Messages -->
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <Mail class="w-4 h-4 text-primary" />
+                                <span class="text-sm font-bold uppercase text-muted tracking-wider">Messages ({{ userMessages.length }})</span>
+                            </div>
+                             <div v-if="userMessages.length > 0" class="max-h-60 overflow-y-auto pr-2 space-y-2">
+                                <NuxtLink 
+                                    v-for="msg in userMessages" 
+                                    :key="msg.id"
+                                    :to="`/profile?messageId=${msg.id}`"
+                                    class="block bg-background border border-border p-3 rounded-lg text-sm hover:border-primary transition"
+                                >
+                                    <div class="flex justify-between mb-1 items-center">
+                                        <span class="font-bold text-[10px] uppercase text-primary tracking-widest">{{ msg.subject || 'Direct Message' }}</span>
+                                        <span class="text-[10px] text-muted">{{ msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleDateString() : 'Just now' }}</span>
+                                    </div>
+                                    <p class="truncate opacity-70">{{ msg.content }}</p>
+                                </NuxtLink>
+                            </div>
+                            <p v-else class="text-sm text-muted italic">No messages sent yet.</p>
                         </div>
 
                     </div>
@@ -331,6 +353,7 @@ const errorMessage = ref('')
 const userComments = ref([])
 const userSuggestions = ref([])
 const userScores = ref([])
+const userMessages = ref([])
 
 const fetchUserContent = async () => {
     if (!user.value) return
@@ -382,6 +405,20 @@ const fetchUserContent = async () => {
     } catch (e) {
          console.error("Scores fetch failed:", e)
          errorMessage.value += `Scores: ${e.message} `
+    }
+
+    // 4. Fetch Messages
+    try {
+        const messagesQ = query(
+            collection($db, 'messages'),
+            where('userId', '==', user.value.uid),
+            orderBy('createdAt', 'desc')
+        )
+        const messagesSnap = await getDocs(messagesQ)
+        userMessages.value = messagesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    } catch (e) {
+         console.error("Messages fetch failed:", e)
+         errorMessage.value += `Messages: ${e.message} `
     }
     
     contentLoading.value = false

@@ -41,9 +41,12 @@
                 v-for="msg in filteredMessages" 
                 :key="msg.id"
                 @click="openMessage(msg)"
-                class="bg-surface rounded-xl border border-border p-5 cursor-pointer hover:border-primary transition-all duration-200 group"
+                class="bg-surface rounded-2xl border border-border p-5 cursor-pointer hover:border-primary hover:shadow-md transition-all duration-300 relative overflow-hidden group"
                 :class="{ 'border-l-4 border-l-pink-500': !msg.hasReply }"
             >
+                <div v-if="!msg.userVerified" class="absolute top-0 right-0 bg-amber-500 text-white text-[8px] font-black px-2 py-0.5 rounded-bl uppercase tracking-tighter">
+                    Non-Verified
+                </div>
                 <div class="flex items-start justify-between gap-4">
                     <div class="flex items-start gap-4 flex-1 min-w-0">
                         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center shrink-0">
@@ -78,7 +81,7 @@
 
         <!-- View/Reply to Message -->
         <div v-if="viewingMessage" class="animate-in fade-in slide-in-from-bottom-4">
-            <button @click="viewingMessage = null" class="flex items-center gap-2 text-muted hover:text-text mb-6 transition">
+            <button @click="closeMessage" class="flex items-center gap-2 text-muted hover:text-text mb-6 transition">
                 <ArrowLeft class="w-4 h-4" />
                 Back to inbox
             </button>
@@ -90,12 +93,17 @@
                         <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
                             <User class="w-6 h-6 text-primary" />
                         </div>
-                        <div>
-                            <p class="font-bold text-text">{{ viewingMessage.userEmail }}</p>
-                            <p class="text-xs text-muted">{{ formatTime(viewingMessage.createdAt) }}</p>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-text mb-1 flex items-center gap-3">
+                                {{ viewingMessage.subject }}
+                                <span v-if="!viewingMessage.userVerified" class="text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full uppercase font-bold flex items-center gap-1">
+                                    <ShieldAlert class="w-3 h-3" />
+                                    Non-Verified Account
+                                </span>
+                            </h3>
+                            <p class="text-xs text-muted">From: <span class="font-bold text-text">{{ viewingMessage.userEmail }}</span> • {{ formatTime(viewingMessage.createdAt) }}</p>
                         </div>
                     </div>
-                    <h3 class="font-bold text-xl text-text mb-3">{{ viewingMessage.subject }}</h3>
                     <p class="text-text/80 whitespace-pre-wrap leading-relaxed">{{ viewingMessage.content }}</p>
                 </div>
 
@@ -119,6 +127,7 @@
                                 <p class="font-bold text-text flex items-center gap-2">
                                     {{ reply.fromCreator ? 'You (Nicole)' : viewingMessage.userEmail }}
                                     <span v-if="reply.fromCreator" class="text-[10px] bg-pink-500 text-white px-2 py-0.5 rounded-full uppercase font-bold">Creator</span>
+                                    <span v-else-if="!reply.userVerified" class="text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full uppercase font-bold">Non-Verified</span>
                                 </p>
                                 <p class="text-xs text-muted">{{ formatTime(reply.createdAt) }}</p>
                             </div>
@@ -186,7 +195,7 @@
 </template>
 
 <script setup>
-import { Send, ArrowLeft, User, Sparkles, MessageCircle, Inbox, RefreshCw, Check, Loader2, RotateCcw } from 'lucide-vue-next'
+import { Send, ArrowLeft, User, Sparkles, MessageCircle, Inbox, RefreshCw, Check, Loader2, RotateCcw, ShieldAlert } from 'lucide-vue-next'
 import { collection, addDoc, query, orderBy, getDocs, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 
 const { $db } = useNuxtApp()
@@ -202,6 +211,41 @@ const viewingMessage = ref(null)
 const replyContent = ref('')
 const filterStatus = ref('all')
 
+// Real-time listeners
+let inboxListener = null
+let repliesListener = null
+
+const startInboxListener = () => {
+    if (inboxListener) inboxListener()
+    
+    loading.value = true
+    const q = query(
+        collection($db, 'messages'),
+        orderBy('createdAt', 'desc')
+    )
+    
+    inboxListener = onSnapshot(q, (snap) => {
+        messages.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        loading.value = false
+    }, (e) => {
+        console.error('[MessageInbox] Inbox error:', e)
+        loading.value = false
+    })
+}
+
+const startRepliesListener = (messageId) => {
+    if (repliesListener) repliesListener()
+    
+    const q = query(
+        collection($db, 'messages', messageId, 'replies'),
+        orderBy('createdAt', 'asc')
+    )
+    
+    repliesListener = onSnapshot(q, (snap) => {
+        replies.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    })
+}
+
 // Computed
 const unrepliedCount = computed(() => messages.value.filter(m => !m.hasReply).length)
 const filteredMessages = computed(() => {
@@ -212,42 +256,22 @@ const filteredMessages = computed(() => {
 })
 
 // Fetch all messages (for creator/admin)
-const fetchMessages = async () => {
-    loading.value = true
-    try {
-        const q = query(
-            collection($db, 'messages'),
-            orderBy('createdAt', 'desc')
-        )
-        const snap = await getDocs(q)
-        messages.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-    } catch (e) {
-        console.error('[MessageInbox] Fetch error:', e)
-        toast.show('Failed to load messages', 'error')
-    } finally {
-        loading.value = false
-    }
-}
-
-// Fetch replies for a message
-const fetchReplies = async (messageId) => {
-    try {
-        const q = query(
-            collection($db, 'messages', messageId, 'replies'),
-            orderBy('createdAt', 'asc')
-        )
-        const snap = await getDocs(q)
-        replies.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-    } catch (e) {
-        console.error('[MessageInbox] Fetch replies error:', e)
-        replies.value = []
-    }
+const fetchMessages = () => {
+    startInboxListener()
 }
 
 // Open a message
-const openMessage = async (msg) => {
+const openMessage = (msg) => {
     viewingMessage.value = msg
-    await fetchReplies(msg.id)
+    startRepliesListener(msg.id)
+}
+
+const closeMessage = () => {
+    viewingMessage.value = null
+    if (repliesListener) {
+        repliesListener()
+        repliesListener = null
+    }
 }
 
 // Send reply as creator
@@ -269,13 +293,9 @@ const sendReply = async () => {
             repliedAt: serverTimestamp()
         })
         
-        // Update local state
-        const idx = messages.value.findIndex(m => m.id === viewingMessage.value.id)
-        if (idx !== -1) messages.value[idx].hasReply = true
         viewingMessage.value.hasReply = true
         
         replyContent.value = ''
-        await fetchReplies(viewingMessage.value.id)
         toast.show('Reply sent!', 'success')
     } catch (e) {
         console.error('[MessageInbox] Reply error:', e)
@@ -368,6 +388,11 @@ const triggerGlobalReset = async () => {
         globalResetting.value = false
     }
 }
+
+onUnmounted(() => {
+    if (inboxListener) inboxListener()
+    if (repliesListener) repliesListener()
+})
 </script>
 
 <style scoped>

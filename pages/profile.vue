@@ -14,6 +14,24 @@
       </header>
 
       <div class="space-y-8">
+
+        <!-- Global Verification Alert -->
+        <div v-if="user && !user.emailVerified" class="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 flex items-start gap-4">
+            <div class="p-3 bg-amber-500/20 rounded-xl text-amber-600">
+                <Info class="w-6 h-6" />
+            </div>
+            <div class="flex-1">
+                <h2 class="font-bold text-amber-900 dark:text-amber-400">Account Not Verified</h2>
+                <p class="text-sm text-amber-800/80 dark:text-amber-400/80 mt-1 leading-relaxed">
+                    Your messages to Nicole currently carry a <span class="font-black uppercase text-[10px] bg-amber-500 text-white px-1.5 py-0.5 rounded ml-1">Non-Verified</span> badge. 
+                    Please verify your email address to establish full trust and remove this flag.
+                </p>
+                <button @click="handleSendVerification" :disabled="verificationSent" class="mt-4 text-sm font-bold text-amber-700 dark:text-amber-300 hover:underline flex items-center gap-1">
+                    {{ verificationSent ? 'Check your inbox' : 'Resend verification email' }}
+                    <ArrowRight class="w-4 h-4" />
+                </button>
+            </div>
+        </div>
         
         <!-- Personal Settings -->
         <section class="bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm">
@@ -255,7 +273,7 @@
 </template>
 
 <script setup>
-import { Palette, Database, User as UserIcon, MessageSquare, Lightbulb, Trophy, ShieldCheck, MailWarning, Mail } from 'lucide-vue-next'
+import { Palette, Database, User as UserIcon, MessageSquare, Lightbulb, Trophy, ShieldCheck, MailWarning, Mail, Info, ArrowRight } from 'lucide-vue-next'
 import { updateProfile, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth'
 import { doc, setDoc, collection, query, where, getDocs, orderBy, collectionGroup } from 'firebase/firestore'
 import { useAuth } from '#imports'

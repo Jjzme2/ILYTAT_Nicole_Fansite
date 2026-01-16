@@ -1,11 +1,7 @@
 <template>
     <div class="message-inbox-container">
         <!-- Header -->
-        <div class="flex justify-between items-center mb-8">
-            <div>
-                <h2 class="text-2xl font-serif text-text mb-1">Fan Messages</h2>
-                <p class="text-muted text-sm">Messages from your fans — read and reply!</p>
-            </div>
+        <div class="flex justify-end items-center mb-4">
             <div class="flex gap-3">
                 <button 
                     @click="triggerGlobalReset"
@@ -29,6 +25,14 @@
                     Unreplied
                     <span v-if="unrepliedCount > 0" class="w-5 h-5 bg-pink-500 text-white text-[10px] flex items-center justify-center rounded-full">{{ unrepliedCount }}</span>
                 </button>
+                <button 
+                    @click="filterStatus = 'flagged'"
+                    :class="['px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2', filterStatus === 'flagged' ? 'bg-primary text-white' : 'bg-surface border border-border text-muted hover:text-text']"
+                >
+                    Flagged
+                    <span v-if="flaggedCount > 0" class="w-5 h-5 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full">{{ flaggedCount }}</span>
+                </button>
+                <div class="w-px h-8 bg-border mx-1"></div>
                 <button @click="fetchMessages" class="p-2 bg-surface border border-border rounded-lg hover:border-primary transition">
                     <RefreshCw class="w-4 h-4 text-muted" :class="{ 'animate-spin': loading }" />
                 </button>
@@ -42,11 +46,15 @@
                 :key="msg.id"
                 @click="openMessage(msg)"
                 class="bg-surface rounded-2xl border border-border p-5 cursor-pointer hover:border-primary hover:shadow-md transition-all duration-300 relative overflow-hidden group"
-                :class="{ 'border-l-4 border-l-pink-500': !msg.hasReply }"
+                :class="{ 'border-l-4 border-l-pink-500': !msg.hasReply, 'opacity-70 bg-red-50/50': msg.isFlagged }"
             >
-                <div v-if="!msg.userVerified" class="absolute top-0 right-0 bg-amber-500 text-white text-[8px] font-black px-2 py-0.5 rounded-bl uppercase tracking-tighter">
+                <div v-if="msg.isFlagged" class="absolute top-0 right-0 bg-red-500 text-white text-[8px] font-black px-2 py-0.5 rounded-bl uppercase tracking-tighter z-10">
+                    Flagged
+                </div>
+                <div v-else-if="!msg.userVerified" class="absolute top-0 right-0 bg-amber-500 text-white text-[8px] font-black px-2 py-0.5 rounded-bl uppercase tracking-tighter">
                     Non-Verified
                 </div>
+                
                 <div class="flex items-start justify-between gap-4">
                     <div class="flex items-start gap-4 flex-1 min-w-0">
                         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center shrink-0">
@@ -54,11 +62,16 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 mb-1">
-                                <p class="font-bold text-text truncate group-hover:text-primary transition">{{ msg.subject }}</p>
+                                <p class="font-bold text-text truncate group-hover:text-primary transition">
+                                    {{ msg.isFlagged ? 'Sensitive Message' : msg.subject }}
+                                </p>
                                 <span v-if="!msg.hasReply" class="text-[10px] bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full font-bold uppercase">New</span>
                             </div>
                             <p class="text-sm text-muted mb-2 truncate">{{ msg.userEmail }}</p>
-                            <p class="text-sm text-text/70 line-clamp-2">{{ msg.content }}</p>
+                            <p v-if="msg.isFlagged" class="text-sm text-red-500/70 italic flex items-center gap-1">
+                                <Flag class="w-3 h-3" /> Flagged for review
+                            </p>
+                            <p v-else class="text-sm text-text/70 line-clamp-2">{{ msg.content }}</p>
                         </div>
                     </div>
                     <div class="text-right shrink-0">
@@ -70,21 +83,33 @@
                     </div>
                 </div>
             </div>
-
+            
             <!-- Empty State -->
             <div v-if="filteredMessages.length === 0 && !loading" class="text-center py-16 text-muted">
                 <Inbox class="w-16 h-16 mx-auto mb-4 opacity-20" />
-                <p class="font-medium text-lg">{{ filterStatus === 'unread' ? 'All caught up!' : 'No messages yet' }}</p>
-                <p class="text-sm mt-1">{{ filterStatus === 'unread' ? 'You\'ve replied to all messages.' : 'Fan messages will appear here.' }}</p>
+                <p class="font-medium text-lg">
+                    {{ filterStatus === 'unread' ? 'All caught up!' : filterStatus === 'flagged' ? 'No flagged messages.' : 'No messages yet' }}
+                </p>
             </div>
         </div>
-
+        
+        <!-- View/Reply -->
         <!-- View/Reply to Message -->
         <div v-if="viewingMessage" class="animate-in fade-in slide-in-from-bottom-4">
-            <button @click="closeMessage" class="flex items-center gap-2 text-muted hover:text-text mb-6 transition">
-                <ArrowLeft class="w-4 h-4" />
-                Back to inbox
-            </button>
+            <div class="flex justify-between items-center mb-6">
+                <button @click="closeMessage" class="flex items-center gap-2 text-muted hover:text-text transition">
+                    <ArrowLeft class="w-4 h-4" />
+                    Back to inbox
+                </button>
+                <button 
+                    @click="toggleFlag(viewingMessage)"
+                    class="flex items-center gap-2 text-xs font-bold border px-3 py-1.5 rounded-lg transition"
+                    :class="viewingMessage.isFlagged ? 'border-red-500 text-red-500 hover:bg-red-50' : 'border-border text-muted hover:text-text hover:border-primary'"
+                >
+                    <Flag class="w-3 h-3" />
+                    {{ viewingMessage.isFlagged ? 'Unflag Message' : 'Flag as Inappropriate' }}
+                </button>
+            </div>
 
             <div class="bg-surface rounded-2xl border border-border overflow-hidden">
                 <!-- Original Message -->
@@ -96,7 +121,10 @@
                         <div class="flex-1">
                             <h3 class="text-xl font-bold text-text mb-1 flex items-center gap-3">
                                 {{ viewingMessage.subject }}
-                                <span v-if="!viewingMessage.userVerified" class="text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full uppercase font-bold flex items-center gap-1">
+                                <span v-if="viewingMessage.isFlagged" class="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded-full uppercase font-bold flex items-center gap-1">
+                                    <Flag class="w-3 h-3" /> Flagged
+                                </span>
+                                <span v-else-if="!viewingMessage.userVerified" class="text-[10px] bg-amber-500 text-white px-2 py-0.5 rounded-full uppercase font-bold flex items-center gap-1">
                                     <ShieldAlert class="w-3 h-3" />
                                     Non-Verified Account
                                 </span>
@@ -104,10 +132,17 @@
                             <p class="text-xs text-muted">From: <span class="font-bold text-text">{{ viewingMessage.userEmail }}</span> • {{ formatTime(viewingMessage.createdAt) }}</p>
                         </div>
                     </div>
-                    <p class="text-text/80 whitespace-pre-wrap leading-relaxed">{{ viewingMessage.content }}</p>
+                    <p class="text-text/80 whitespace-pre-wrap leading-relaxed">
+                        <span v-if="viewingMessage.isFlagged" class="block p-4 bg-red-50 border border-red-100 rounded text-red-800 italic mb-2">
+                            This message has been flagged as inappropriate.
+                        </span>
+                        {{ viewingMessage.content }}
+                    </p>
                 </div>
 
-                <!-- Replies Thread -->
+                <!-- ... existing replies ... -->
+
+                                 <!-- Replies Thread -->
                 <div v-if="replies.length > 0" class="divide-y divide-border">
                     <div 
                         v-for="reply in replies" 
@@ -195,65 +230,45 @@
 </template>
 
 <script setup>
-import { Send, ArrowLeft, User, Sparkles, MessageCircle, Inbox, RefreshCw, Check, Loader2, RotateCcw, ShieldAlert } from 'lucide-vue-next'
-import { collection, addDoc, query, orderBy, getDocs, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { Send, ArrowLeft, User, Sparkles, MessageCircle, Inbox, RefreshCw, Check, Loader2, RotateCcw, ShieldAlert, Flag } from 'lucide-vue-next'
+// ... (imports)
 
-const { $db } = useNuxtApp()
-const toast = useToast()
-
-const loading = ref(true)
-const sending = ref(false)
-const resetting = ref(false)
-const globalResetting = ref(false)
-const messages = ref([])
-const replies = ref([])
-const viewingMessage = ref(null)
-const replyContent = ref('')
-const filterStatus = ref('all')
-
-// Real-time listeners
-let inboxListener = null
-let repliesListener = null
-
-const startInboxListener = () => {
-    if (inboxListener) inboxListener()
-    
-    loading.value = true
-    const q = query(
-        collection($db, 'messages'),
-        orderBy('createdAt', 'desc')
-    )
-    
-    inboxListener = onSnapshot(q, (snap) => {
-        messages.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-        loading.value = false
-    }, (e) => {
-        console.error('[MessageInbox] Inbox error:', e)
-        loading.value = false
-    })
-}
-
-const startRepliesListener = (messageId) => {
-    if (repliesListener) repliesListener()
-    
-    const q = query(
-        collection($db, 'messages', messageId, 'replies'),
-        orderBy('createdAt', 'asc')
-    )
-    
-    repliesListener = onSnapshot(q, (snap) => {
-        replies.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-    })
-}
+// ...
 
 // Computed
 const unrepliedCount = computed(() => messages.value.filter(m => !m.hasReply).length)
+const flaggedCount = computed(() => messages.value.filter(m => m.isFlagged).length)
 const filteredMessages = computed(() => {
     if (filterStatus.value === 'unread') {
         return messages.value.filter(m => !m.hasReply)
     }
+    if (filterStatus.value === 'flagged') {
+        return messages.value.filter(m => m.isFlagged)
+    }
     return messages.value
 })
+
+// Toggle Flag Status
+const toggleFlag = async (msg) => {
+    if (!msg) return
+    const newStatus = !msg.isFlagged
+    
+    try {
+        await updateDoc(doc($db, 'messages', msg.id), {
+            isFlagged: newStatus
+        })
+        
+        // Update local
+        msg.isFlagged = newStatus
+        const idx = messages.value.findIndex(m => m.id === msg.id)
+        if (idx !== -1) messages.value[idx].isFlagged = newStatus
+        
+        toast.show(newStatus ? 'Message flagged' : 'Flag removed', 'success')
+    } catch (e) {
+        console.error('Flag error:', e)
+        toast.show('Failed to update flag', 'error')
+    }
+}
 
 // Fetch all messages (for creator/admin)
 const fetchMessages = () => {
@@ -368,6 +383,17 @@ const formatTime = (timestamp) => {
 onMounted(() => {
     fetchMessages()
 })
+
+// Deep link to specific message
+watch([() => route.query.messageId, messages], ([msgId, msgs]) => {
+    if (msgId && msgs.length > 0) {
+        const found = msgs.find(m => m.id === msgId)
+        if (found && (!viewingMessage.value || viewingMessage.value.id !== msgId)) {
+            openMessage(found)
+        }
+    }
+}, { immediate: true })
+
 // Reset all users' messaging quotas
 const triggerGlobalReset = async () => {
     if (!confirm('Are you sure you want to reset the messaging quota for ALL users? This cannot be undone.')) return

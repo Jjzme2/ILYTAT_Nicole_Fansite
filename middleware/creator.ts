@@ -18,7 +18,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     if (!user.value) return navigateTo('/login')
 
     // Strict Creator Check
-    if (!isCreator.value) {
+    if (user.value.role !== 'creator') {
         console.log('[Middleware:Creator] Access Denied. Role is not creator.')
         return navigateTo('/feed')
     }

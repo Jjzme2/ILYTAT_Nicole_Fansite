@@ -5,7 +5,9 @@ interface DailyStats {
     users: {
         total: number
         newToday: number
+        newUsersDetails: { displayName: string, email: string }[]
         subscribers: number
+        subscribersDetails: { displayName: string, email: string }[]
         creators: number
         admins: number
     }
@@ -43,10 +45,13 @@ async function gatherDailyStats(): Promise<DailyStats> {
     // Users stats
     const usersSnap = await db.collection('users').get()
     const users = usersSnap.docs.map(doc => doc.data())
-    const newUsersToday = users.filter(u => {
+
+    const newUsers = users.filter(u => {
         const createdAt = u.createdAt?.toDate?.() || new Date(u.createdAt)
         return createdAt >= todayStart
     })
+
+    const subscribers = users.filter(u => u.isSubscriber)
 
     // Posts stats
     const postsSnap = await db.collection('posts').get()
@@ -73,8 +78,12 @@ async function gatherDailyStats(): Promise<DailyStats> {
     })
 
     // Developer Tasks stats
-    const tasksSnap = await db.collection('developer_tasks').get()
+    const tasksSnap = await db.collection('tasks').get()
     const tasks = tasksSnap.docs.map(doc => doc.data())
+    const newTasksToday = tasks.filter(t => {
+        const createdAt = t.createdAt?.toDate?.() || new Date(t.createdAt)
+        return createdAt >= todayStart
+    })
 
     // Quota Resets stats
     const resetsSnap = await db.collection('quota_resets')
@@ -85,8 +94,10 @@ async function gatherDailyStats(): Promise<DailyStats> {
         date: now.toISOString().split('T')[0],
         users: {
             total: users.length,
-            newToday: newUsersToday.length,
-            subscribers: users.filter(u => u.isSubscriber).length,
+            newToday: newUsers.length,
+            newUsersDetails: newUsers.map(u => ({ displayName: u.displayName || 'Unknown', email: u.email })),
+            subscribers: subscribers.length,
+            subscribersDetails: subscribers.map(u => ({ displayName: u.displayName || 'Unknown', email: u.email })),
             creators: users.filter(u => u.role === 'creator').length,
             admins: users.filter(u => u.role === 'admin').length
         },
@@ -105,7 +116,9 @@ async function gatherDailyStats(): Promise<DailyStats> {
             newToday: newSuggestionsToday.length
         },
         developerTasks: {
-            open: tasks.filter(t => t.status === 'open').length,
+            total: tasks.length,
+            newToday: newTasksToday.length,
+            open: tasks.filter(t => t.status === 'todo' || t.status === 'open').length,
             inProgress: tasks.filter(t => t.status === 'in_progress').length,
             done: tasks.filter(t => t.status === 'done').length
         },
@@ -134,6 +147,9 @@ function formatReportEmail(stats: DailyStats): { subject: string; html: string; 
         .stat-label { font-size: 12px; color: #aaa; text-transform: uppercase; margin-top: 5px; }
         .highlight { color: #4ecca3; font-weight: bold; }
         .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #333; text-align: center; color: #666; font-size: 12px; }
+        .list-group { margin-top: 15px; background: #0f3460; border-radius: 8px; padding: 10px; }
+        .list-item { border-bottom: 1px solid #1a1a2e; padding: 8px 0; font-size: 13px; }
+        .list-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -151,15 +167,33 @@ function formatReportEmail(stats: DailyStats): { subject: string; html: string; 
                 <div class="stat-value highlight">+${stats.users.newToday}</div>
                 <div class="stat-label">New Today</div>
             </div>
-            <div class="stat-card">
+        </div>
+
+        ${stats.users.newUsersDetails.length > 0 ? `
+            <div class="list-group">
+                <div style="font-weight:bold; margin-bottom:5px; color:#4ecca3;">🆕 New Arrivals:</div>
+                ${stats.users.newUsersDetails.map(u => `<div class="list-item"><b>${u.displayName}</b> (${u.email})</div>`).join('')}
+            </div>
+        ` : ''}
+
+        <div class="stat-grid" style="margin-top:15px;">
+             <div class="stat-card">
                 <div class="stat-value">${stats.users.subscribers}</div>
                 <div class="stat-label">Subscribers</div>
             </div>
-            <div class="stat-card">
+             <div class="stat-card">
                 <div class="stat-value">${stats.users.creators + stats.users.admins}</div>
-                <div class="stat-label">Team Members</div>
+                <div class="stat-label">Team</div>
             </div>
         </div>
+
+        ${stats.users.subscribersDetails.length > 0 ? `
+             <div class="list-group">
+                <div style="font-weight:bold; margin-bottom:5px; color:#ffd700;">🌟 Current Subscribers:</div>
+                ${stats.users.subscribersDetails.map(u => `<div class="list-item"><b>${u.displayName}</b> (${u.email})</div>`).join('')}
+            </div>
+        ` : ''}
+
 
         <h2>📝 Content</h2>
         <div class="stat-grid">
@@ -200,16 +234,19 @@ function formatReportEmail(stats: DailyStats): { subject: string; html: string; 
             </div>
         </div>
 
-        <h2>🛠️ Dev Tasks</h2>
+        <h2>🛠️ Dev Tasks & Issues</h2>
         <div class="stat-grid">
             <div class="stat-card">
-                <div class="stat-value" style="color: #ff6b6b;">${stats.developerTasks.open}</div>
-                <div class="stat-label">Open</div>
+                <div class="stat-value highlight text-red-400">+${stats.developerTasks.newToday}</div>
+                <div class="stat-label">New Reports Today</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" style="color: #ffc107;">${stats.developerTasks.inProgress}</div>
-                <div class="stat-label">In Progress</div>
+                <div class="stat-value" style="color: #ff6b6b;">${stats.developerTasks.open}</div>
+                <div class="stat-label">Open / Todo</div>
             </div>
+        </div>
+        <div style="text-align: center; margin-top: 10px;">
+             <span style="font-size: 12px; color: #888;">In Progress: ${stats.developerTasks.inProgress} • Done: ${stats.developerTasks.done}</span>
         </div>
 
         <h2>🔄 Admin Actions</h2>
@@ -239,7 +276,11 @@ function formatReportEmail(stats: DailyStats): { subject: string; html: string; 
 👥 USERS
 - Total: ${stats.users.total}
 - New Today: +${stats.users.newToday}
+${stats.users.newUsersDetails.map(u => `  - ${u.displayName} (${u.email})`).join('\n')}
+
 - Subscribers: ${stats.users.subscribers}
+${stats.users.subscribersDetails.map(u => `  - ${u.displayName} (${u.email})`).join('\n')}
+
 - Team Members: ${stats.users.creators + stats.users.admins}
 
 📝 CONTENT
@@ -256,8 +297,9 @@ function formatReportEmail(stats: DailyStats): { subject: string; html: string; 
 - Total: ${stats.suggestions.total}
 - New Today: +${stats.suggestions.newToday}
 
-🛠️ DEV TASKS
-- Open: ${stats.developerTasks.open}
+🛠️ DEV TASKS & ISSUES
+- New Reports Today: +${stats.developerTasks.newToday}
+- Open/Todo: ${stats.developerTasks.open}
 - In Progress: ${stats.developerTasks.inProgress}
 - Done: ${stats.developerTasks.done}
 

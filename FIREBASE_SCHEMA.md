@@ -11,6 +11,8 @@ Stores user profiles and subscription status.
 - **Fields**:
   - `email` (string): User's email address.
   - `displayName` (string|null): User's display name.
+  - `fullName` (string|null): User's full name (private).
+  - `birthday` (string|null): User's birthday (YYYY-MM-DD).
   - `photoURL` (string|null): Profile photo URL.
   - `role` (string): `'admin'`, `'creator'`, or `'user'`. Defaults to `'user'`.
   - `isSubscriber` (boolean): Whether the user has an active Stripe subscription.
@@ -21,9 +23,17 @@ Stores user profiles and subscription status.
     - `emailNotifications` (boolean): Email notification preference.
   - `createdAt` (timestamp): Profile creation time.
   - `lastUpdated` (timestamp|null): Last profile update.
-  - `lastVerifiedAt` (timestamp|null): Last manual verification check.
-  - `migratedAt` (timestamp|null): When user was last migrated.
-  - `migrationVersion` (number|null): Migration version applied.
+
+#### Subcollection: `users/{userId}/notifications`
+Stores direct notifications for the user.
+- **Document ID**: Auto-generated
+- **Fields**:
+  - `title` (string): Notification title.
+  - `message` (string): Notification body.
+  - `type` (string): `'alert'`, `'brand_deal'`, `'success'`, `'giveaway'`.
+  - `actionUrl` (string|null): Optional link.
+  - `read` (boolean): Read status.
+  - `createdAt` (timestamp): Creation time.
 
 ### `posts`
 Stores the content feed (media items).
@@ -57,10 +67,100 @@ Stores replies in a conversation thread.
   - `userId` (string|null): User's ID if not from creator.
   - `createdAt` (timestamp): When the reply was sent.
 
+### `system_messages`
+Stores global broadcasts (banners, toasts) sent by admins.
+- **Document ID**: Auto-generated
+- **Fields**:
+  - `content` (string): The message text.
+  - `type` (string): `'info'`, `'success'`, `'warning'`, `'error'`, `'announcement'`.
+  - `style` (string): `'toast'` or `'banner'`.
+  - `dismissible` (boolean): If users can close it.
+  - `durationHours` (number): How long it remains active if not dismissible.
+  - `isActive` (boolean): Control flag.
+  - `createdBy` (string): User ID of admin sender.
+  - `createdAt` (timestamp): Creation time.
+  - `expiresAt` (timestamp|null): Auto-expiration time.
+
+### `brand_deals`
+Stores managed sponsorship deals.
+- **Document ID**: Auto-generated
+- **Fields**:
+  - `brandName` (string): Name of the sponsor.
+  - `value` (string): Monetary value (e.g. "$500").
+  - `contactName` (string): Point of contact.
+  - `contactEmail` (string): Contact email.
+  - `status` (string): `'pending'`, `'active'`, `'completed'`, `'cancelled'`.
+  - `deliverables` (string): Required output description.
+  - `notes` (string): Internal notes.
+  - `createdAt` (timestamp): Creation time.
+  - `updatedAt` (timestamp): Last update time.
+
+### `giveaways` (Campaigns)
+Stores generic campaigns and scheduled drops.
+The broadcasted- **Document ID**: Auto-generated
+- **Fields**:
+  - `title` (string): Campaign title.
+  - `description` (string): Campaign details.
+  - `image` (string): Banner image URL.
+  - `goLiveDate` (timestamp|null): "Coming soon" teaser date.
+  - `startDate` (timestamp): Campaign start.
+  - `endDate` (timestamp): Campaign end.
+  - `createdAt` (timestamp): Creation time.
+
+#### Subcollection: `giveaways/{campaignId}/rounds`
+Stores individual drops or selection rounds within a campaign.
+- **Document ID**: Auto-generated
+- **Fields**:
+  - `activationTime` (timestamp): When the round starts.
+  - `endTime` (timestamp): When the round ends.
+  - `status` (string): `'scheduled'`, `'live'`, `'ended'`.
+  - `winner` (string|null): Winner name/ID.
+
+### `tasks`
+Stores developer tasks (Dev Board).
+- **Document ID**: Auto-generated
+- **Fields**:
+  - `title` (string): Task summary.
+  - `type` (string): `'feature'`, `'bug'`, `'design'`, `'chore'`.
+  - `section` (string): Board section/column.
+  - `subsection` (string): Category tag.
+  - `priority` (string): `'high'`, `'med'`, `'low'`.
+  - `status` (string): `'todo'`, `'in_progress'`, `'done'`.
+  - `description` (string): Detailed notes.
+  - `goals` (string): Outcome definition.
+  - `createdAt` (timestamp): Creation time.
+
+### `notifications`
+Stores system alerts for admins/creators.
+- **Document ID**: Auto-generated
+- **Fields**:
+  - `type` (string): Event type (e.g., `'brand_deal'`).
+  - `title` (string): Notification title.
+  - `message` (string): Notification body.
+  - `read` (boolean): Read status.
+  - `actionUrl` (string): Link to relevant admin section.
+  - `createdAt` (timestamp): Event time.
+
+### `suggestions`
+Stores user feedback or feature requests.
+- **Document ID**: Auto-generated
+- **Fields**:
+  - `content` (string): The suggestion text.
+  - `userId` (string): Suggester's UID.
+  - `createdAt` (timestamp): Submission time.
+
+### `quota_resets`
+Logs automated or manual quota reset actions.
+- **Document ID**: Auto-generated
+- **Fields**:
+  - `timestamp` (timestamp): Log time.
+  - `isGlobal` (boolean): `true` if system-wide, `false` if individual user.
+
 ## Storage Buckets
 - `posts/`: Stores all uploaded media files using timestamp-based filenames.
 
 ## Security Model (RBAC)
-- **Admins**: Full read/write access to `posts` and `users`.
+- **Admins**: Full read/write access to all collections.
+- **Creators**: Read/write access to `posts`, `messages`, `brand_deals`, `giveaways`.
 - **Subscribers**: Read access to all `posts`. Read/Write access to own `users` doc.
 - **Public/Free Users**: Read access to `posts` where `isFree == true`. Read/Write access to own `users` doc.

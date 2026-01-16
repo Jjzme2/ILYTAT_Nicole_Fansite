@@ -30,6 +30,13 @@
                 <Lightbulb class="w-5 h-5" />
                 Suggestions
             </button>
+            <NuxtLink 
+                to="/merch"
+                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full text-muted hover:text-text transition"
+            >
+                <ShoppingBag class="w-5 h-5" />
+                Merch Store
+            </NuxtLink>
 
             <div class="pt-4 mt-4 border-t border-border space-y-2">
                 <a href="/admin" class="flex items-center gap-3 px-4 py-3 text-muted hover:text-text rounded-xl text-sm font-medium transition">
@@ -461,7 +468,8 @@ import {
     MapPin,
     Sparkles,
     Bug,
-    ArrowLeft
+    ArrowLeft,
+    ShoppingBag
 } from 'lucide-vue-next'
 // ... (imports)
 
@@ -508,6 +516,7 @@ const currentTab = ref('content') // 'content', 'media-kit'
 // Watch tab for fetch
 watch(currentTab, (val) => {
     if (val === 'suggestions') fetchSuggestions()
+    if (val === 'media-kit') fetchMediaKit()
 })
 
 // --- CONTENT LOGIC ---
@@ -820,8 +829,11 @@ const fetchMediaKit = async () => {
                 bio: data.bio || '',
                 location: data.location || '',
                 photoUrl: data.photoUrl || '',
-                platforms: data.platforms || { ...mediaKit.value.platforms }, // Ensure default structure if missing
-                updatedAt: data.updatedAt || data.createdAt // Store for display
+                platforms: {
+                    ...mediaKit.value.platforms,
+                    ...(data.platforms || {})
+                },
+                updatedAt: data.updatedAt || data.createdAt
             }
         }
     } catch (e) {

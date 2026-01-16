@@ -42,6 +42,13 @@ service cloud.firestore {
         allow create: if request.auth != null && request.auth.uid == userId;
         allow update, delete: if request.auth != null && request.auth.uid == userId;
       }
+
+      // Notifications Subcollection
+      match /notifications/{notifId} {
+        allow read: if isOwner(userId) || canManage();
+        allow create, delete: if canManage();
+        allow update: if isOwner(userId) || canManage();
+      }
     }
 
     // Posts Collection
@@ -116,36 +123,36 @@ service cloud.firestore {
 
     // Messages (User-to-Creator DMs)
     match /messages/{messageId} {
-        // Users can read their own messages, creators/admins can read all
-        allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || canManage());
+        // Users can read their own messages. Creators (and only creators) can read all messages they received.
+        allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || canUpload());
         
         // Only authenticated users can create messages (to themselves)
         allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
         
-        // Users can update their own messages (for readAt), creators can update any (for hasReply)
-        allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || canManage());
+        // Users can update their own messages (for readAt). Creators can update (for hasReply or isFlagged).
+        allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || canUpload());
         
-        // Only creators/admins can delete messages
-        allow delete: if canManage();
+        // Only creators can delete messages
+        allow delete: if canUpload();
 
         // Replies subcollection
         match /replies/{replyId} {
-            // Users can read replies on their messages, creators can read all
             allow read: if isAuthenticated() && (
                 get(/databases/$(database)/documents/messages/$(messageId)).data.userId == request.auth.uid 
-                || canManage()
+                || canUpload()
             );
-            
-            // Users can create replies on their own messages (follow-ups)
-            // Creators can create replies on any message
             allow create: if isAuthenticated() && (
                 (get(/databases/$(database)/documents/messages/$(messageId)).data.userId == request.auth.uid && request.resource.data.fromCreator == false)
-                || (canManage() && request.resource.data.fromCreator == true)
+                || (canUpload() && request.resource.data.fromCreator == true)
             );
-            
-            // Only creators can update/delete replies
-            allow update, delete: if canManage();
+            allow update, delete: if canUpload();
         }
+    }
+
+    // System Messages (Global Banners/Toasts)
+    match /system_messages/{msgId} {
+        allow read: if true;
+        allow write: if canManage();
     }
 
     // Comments (Subcollection of Posts)

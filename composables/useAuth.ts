@@ -16,19 +16,32 @@ export const useAuth = () => {
     // State
     const user = useState<User | null>('user', () => null)
     const isSubscriber = useState<boolean>('isSubscriber', () => false)
-    const role = useState<'admin' | 'user' | 'creator'>('role', () => 'user')
+    const roles = useState<string[]>('roles', () => [])
     const loading = useState<boolean>('authLoading', () => true)
 
-    const isAdmin = computed(() => role.value === 'admin' || role.value === 'creator')
-    const isCreator = computed(() => role.value === 'creator')
+    // Helper to safely check roles
+    const hasRole = (r: string) => roles.value && roles.value.includes(r)
+
+    const isAdmin = computed(() => hasRole('admin') || hasRole('creator'))
+    const isCreator = computed(() => hasRole('creator'))
+    const isDeveloper = computed(() => hasRole('developer'))
 
     // Sync auth state
     const initAuth = () => {
         if (process.server) return
         console.log('[useAuth] Init: Starting listener')
+        const startTime = performance.now()
+
+        // Set a tailored timeout check to see if we are stuck
+        const loadTimer = setTimeout(() => {
+            if (loading.value) console.warn('[useAuth] Auth still loading after 3s...')
+        }, 3000)
 
         onAuthStateChanged($auth, async (currentUser) => {
-            console.log('[useAuth] Auth State Changed:', currentUser?.uid)
+            clearTimeout(loadTimer)
+            const authTime = performance.now()
+            console.log(`[useAuth] Auth State Changed after ${(authTime - startTime).toFixed(2)}ms. UID: ${currentUser?.uid}`)
+
             user.value = currentUser
 
             if (currentUser) {
@@ -49,43 +62,58 @@ export const useAuth = () => {
                         return
                     }
                 } else {
-                    // First time seeing this session in this browser instance, mark safe check?
-                    // Or set it now.
                     localStorage.setItem(lastLoginKey, now.toString())
                 }
 
                 // Check Firestore for profile
+                const fsStartTime = performance.now()
                 const userDocRef = doc($db, 'users', currentUser.uid)
-                const userDoc = await getDoc(userDocRef)
+                try {
+                    const userDoc = await getDoc(userDocRef)
+                    const fsEndTime = performance.now()
+                    console.log(`[useAuth] Firestore Profile Fetch took ${(fsEndTime - fsStartTime).toFixed(2)}ms`)
 
-                if (userDoc.exists()) {
-                    const data = userDoc.data()
-                    console.log('[useAuth] Firestore Data:', data)
-                    isSubscriber.value = data?.isSubscriber || false
-                    role.value = data?.role || 'user'
-                } else {
-                    console.log('[useAuth] No Firestore doc, creating default')
-                    // Create basic user profile if not exists
-                    // Note: If registering, the register function might create this first, but this handles Google Auth or direct path
-                    await setDoc(userDocRef, {
-                        email: currentUser.email,
-                        displayName: currentUser.displayName || '',
-                        isSubscriber: false,
-                        isVerified: currentUser.emailVerified || false,
-                        stripeCustomerId: null,
-                        role: 'user',
-                        createdAt: new Date()
-                    }, { merge: true })
-                    isSubscriber.value = false
-                    role.value = 'user'
+                    if (userDoc.exists()) {
+                        const data = userDoc.data()
+                        isSubscriber.value = data?.isSubscriber || false
+
+                        // Role Migration Logic: Prefer 'roles' array, fallback to 'role' string
+                        if (data?.roles && Array.isArray(data.roles)) {
+                            roles.value = data.roles
+                        } else if (data?.role) {
+                            roles.value = [data.role]
+                        } else {
+                            roles.value = ['user']
+                        }
+                    } else {
+                        console.log('[useAuth] No Firestore doc, creating default')
+                        await setDoc(userDocRef, {
+                            email: currentUser.email,
+                            displayName: currentUser.displayName || '',
+                            isSubscriber: false,
+                            isVerified: currentUser.emailVerified || false,
+                            stripeCustomerId: null,
+                            role: 'user', // Legacy support
+                            roles: ['user'],
+                            createdAt: new Date()
+                        }, { merge: true })
+                        isSubscriber.value = false
+                        roles.value = ['user']
+                    }
+                } catch (e) {
+                    console.error('[useAuth] Firestore Error:', e)
+                    // In case of error, ensuring we don't hang indefinitely?
+                    // But we might not want to grant access. 
+                    // Let's at least clear loading so middleware fails gracefully or continues as 'user'
                 }
             } else {
                 isSubscriber.value = false
-                role.value = 'user'
+                roles.value = []
             }
 
             loading.value = false
-            console.log('[useAuth] Init: Complete', { role: role.value, loading: loading.value })
+            const endTime = performance.now()
+            console.log(`[useAuth] Init: Complete after ${(endTime - startTime).toFixed(2)}ms`, { roles: roles.value, loading: loading.value })
         })
     }
 
@@ -120,6 +148,7 @@ export const useAuth = () => {
                 isVerified: false,
                 stripeCustomerId: null,
                 role: 'user',
+                roles: ['user'],
                 createdAt: new Date()
             })
 
@@ -151,7 +180,14 @@ export const useAuth = () => {
         if (userDoc.exists()) {
             const data = userDoc.data()
             isSubscriber.value = data?.isSubscriber || false
-            role.value = data?.role || 'user'
+
+            if (data?.roles && Array.isArray(data.roles)) {
+                roles.value = data.roles
+            } else if (data?.role) {
+                roles.value = [data.role]
+            } else {
+                roles.value = ['user']
+            }
         }
         loading.value = false
     }
@@ -159,9 +195,10 @@ export const useAuth = () => {
     return {
         user,
         isSubscriber,
-        role,
+        roles,
         isAdmin,
         isCreator,
+        isDeveloper,
         loading,
         initAuth,
         login,
@@ -171,3 +208,4 @@ export const useAuth = () => {
         refreshUser
     }
 }
+

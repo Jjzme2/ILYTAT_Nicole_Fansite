@@ -216,6 +216,17 @@
 
                     <!-- Form -->
                     <form @submit.prevent="handleUpload" class="space-y-6">
+                        <!-- Subtype Selector for Text -->
+                        <div v-if="postType === 'text'">
+                            <label class="block text-sm font-bold text-muted mb-2">Post Category</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button type="button" @click="postSubtype = 'status'" :class="['p-3 rounded-xl border-2 text-sm font-bold transition', postSubtype === 'status' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted hover:border-text']">Status Update</button>
+                                <button type="button" @click="postSubtype = 'quote'" :class="['p-3 rounded-xl border-2 text-sm font-bold transition', postSubtype === 'quote' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted hover:border-text']">Quote</button>
+                                <button type="button" @click="postSubtype = 'motivation'" :class="['p-3 rounded-xl border-2 text-sm font-bold transition', postSubtype === 'motivation' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted hover:border-text']">Motivational</button>
+                                <button type="button" @click="postSubtype = 'blog'" :class="['p-3 rounded-xl border-2 text-sm font-bold transition', postSubtype === 'blog' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted hover:border-text']">Blog Post</button>
+                            </div>
+                        </div>
+
                         <div>
                             <label class="block text-sm font-bold text-muted mb-2">
                                  {{ postType === 'text' ? 'Message' : 'Caption' }}
@@ -226,6 +237,54 @@
                                 class="w-full border-2 border-border bg-background text-text rounded-xl p-4 focus:border-primary focus:ring-0 outline-none transition resize-none text-lg"
                                 :placeholder="postType === 'text' ? 'What\'s on your mind?' : 'Add a caption...'"
                             ></textarea>
+                        </div>
+
+                         <!-- Citation Input (Quotes Only) -->
+                        <div v-if="postType === 'text' && postSubtype === 'quote'" class="animate-in fade-in slide-in-from-top-2">
+                            <label class="block text-sm font-bold text-muted mb-2">Author / Citation</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-serif italic">—</span>
+                                <input 
+                                    v-model="citation" 
+                                    type="text" 
+                                    placeholder="e.g. Maya Angelou" 
+                                    class="w-full border-2 border-border bg-background text-text rounded-xl pl-10 p-4 focus:border-primary focus:ring-0 outline-none transition"
+                                >
+                            </div>
+                        </div>
+
+                         <!-- Title Input (Blog Only) -->
+                        <div v-if="postType === 'text' && postSubtype === 'blog'" class="animate-in fade-in slide-in-from-top-2">
+                            <label class="block text-sm font-bold text-muted mb-2">Title</label>
+                            <input 
+                                v-model="title" 
+                                type="text" 
+                                placeholder="Chapter 1: The Beginning" 
+                                class="w-full border-2 border-border bg-background text-text rounded-xl p-4 focus:border-primary focus:ring-0 outline-none transition font-serif font-bold"
+                            >
+                        </div>
+
+                        <!-- Mood Input (Status Only) -->
+                        <div v-if="postType === 'text' && postSubtype === 'status'" class="animate-in fade-in slide-in-from-top-2">
+                             <label class="block text-sm font-bold text-muted mb-2">Current Mood</label>
+                            <input 
+                                v-model="mood" 
+                                type="text" 
+                                placeholder="Feelin' Great 🚀" 
+                                class="w-full border-2 border-border bg-background text-text rounded-xl p-4 focus:border-primary focus:ring-0 outline-none transition"
+                            >
+                        </div>
+
+                         <!-- Theme Selector (Motivation, Quote, Status) -->
+                        <div v-if="postType === 'text' && ['motivation', 'quote', 'status'].includes(postSubtype)" class="animate-in fade-in slide-in-from-top-2">
+                            <label class="block text-sm font-bold text-muted mb-2">Visual Theme</label>
+                            <div class="grid grid-cols-5 gap-2">
+                                <button type="button" @click="theme = 'sunset'" :class="['h-12 rounded-lg bg-gradient-to-r from-pink-500 to-violet-500 hover:scale-105 transition', theme === 'sunset' ? 'ring-2 ring-offset-2 ring-primary' : 'opacity-70']" title="Sunset"></button>
+                                <button type="button" @click="theme = 'ocean'" :class="['h-12 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 hover:scale-105 transition', theme === 'ocean' ? 'ring-2 ring-offset-2 ring-cyan-500' : 'opacity-70']" title="Ocean"></button>
+                                <button type="button" @click="theme = 'forest'" :class="['h-12 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:scale-105 transition', theme === 'forest' ? 'ring-2 ring-offset-2 ring-emerald-500' : 'opacity-70']" title="Forest"></button>
+                                <button type="button" @click="theme = 'love'" :class="['h-12 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 hover:scale-105 transition', theme === 'love' ? 'ring-2 ring-offset-2 ring-red-500' : 'opacity-70']" title="Love"></button>
+                                <button type="button" @click="theme = 'midnight'" :class="['h-12 rounded-lg bg-gradient-to-r from-indigo-900 to-slate-900 hover:scale-105 transition', theme === 'midnight' ? 'ring-2 ring-offset-2 ring-indigo-500' : 'opacity-70']" title="Midnight"></button>
+                            </div>
                         </div>
 
                         <!-- Options -->
@@ -522,10 +581,15 @@ watch(currentTab, (val) => {
 // --- CONTENT LOGIC ---
 const captureMode = ref(null)
 const postType = ref(null)
+const postSubtype = ref('status') // Default subtype for text
 const postFormat = ref(null) // 'image', 'video', 'audio', 'text' (subtype for random)
 const file = ref(null)
 const previewUrl = ref(null)
 const caption = ref('')
+const citation = ref('') // For quotes
+const title = ref('') // For stories
+const mood = ref('') // For status
+const theme = ref('sunset') // For motivation (sunset, ocean, forest, love, midnight)
 
 // Embed State
 const embedUrl = ref('')
@@ -547,8 +611,13 @@ onMounted(async () => {
             if (docSnap.exists()) {
                 const data = docSnap.data()
                 postType.value = data.type
+                postSubtype.value = data.subtype || 'status'
                 postFormat.value = data.format || data.type // Backwards compat
                 caption.value = data.caption || ''
+                citation.value = data.citation || ''
+                title.value = data.title || ''
+                mood.value = data.mood || ''
+                theme.value = data.theme || 'sunset'
                 isFree.value = data.isFree || false
                 
                 // Handle Previews based on type
@@ -656,8 +725,13 @@ const resetForm = () => {
     file.value = null
     previewUrl.value = null
     postType.value = null
+    postSubtype.value = 'status'
     postFormat.value = null
     caption.value = ''
+    citation.value = ''
+    title.value = ''
+    mood.value = ''
+    theme.value = 'sunset'
     embedUrl.value = ''
     embedInput.value = ''
     isFree.value = false
@@ -696,6 +770,11 @@ const handleUpload = async () => {
         const payload = {
             mediaUrl: downloadURL,
             type: postType.value,
+            subtype: postType.value === 'text' ? postSubtype.value : null,
+            citation: postType.value === 'text' && postSubtype.value === 'quote' ? citation.value : null,
+            title: postType.value === 'text' && postSubtype.value === 'blog' ? title.value : null,
+            mood: postType.value === 'text' && postSubtype.value === 'status' ? mood.value : null,
+            theme: postType.value === 'text' && ['motivation', 'quote', 'status'].includes(postSubtype) ? theme.value : null,
             format: postType.value === 'random' ? (embedUrl.value ? 'video' : postFormat.value) : null,
             caption: postType.value === 'text' ? validateText(caption.value) : caption.value,
             isFree: isFree.value,

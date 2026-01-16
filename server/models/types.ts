@@ -4,7 +4,8 @@ export interface UserProfile {
     email: string | null;
     isSubscriber: boolean;
     stripeCustomerId: string | null;
-    role: 'admin' | 'user' | 'creator';
+    role?: 'admin' | 'user' | 'creator' | 'developer'; // Deprecated in favor of roles
+    roles?: ('admin' | 'user' | 'creator' | 'developer')[];
     createdAt?: Date;
     lastUpdated?: Date;
 }
@@ -41,6 +42,11 @@ export interface Post {
     caption: string;
     mediaUrl: string;
     type: 'image' | 'video' | 'text' | 'audio';
+    subtype?: 'quote' | 'motivation' | 'blog' | 'status' | string;
+    citation?: string;
+    title?: string;
+    mood?: string;
+    theme?: string;
     isFree: boolean;
     createdAt: any; // Firestore Timestamp
 }
@@ -55,16 +61,9 @@ export interface Suggestion {
     createdAt: any;
 }
 
-// Collection: developer_tasks
-export interface DeveloperTask {
-    id?: string;
-    title: string;
-    type: 'feature' | 'bug' | 'chore';
-    priority: 'low' | 'med' | 'high';
-    status: 'open' | 'in_progress' | 'done';
-    createdBy: string;
-    createdAt: any;
-}
+
+
+
 
 // Subcollection: posts/{id}/comments
 export interface Comment {

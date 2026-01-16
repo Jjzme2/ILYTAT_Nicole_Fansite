@@ -17,6 +17,7 @@
                 Launchpad
             </button>
             <button 
+                v-if="isAdmin || role === 'creator'"
                 @click="switchSection('community')"
                 :class="['flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition', activeSection === 'community' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-text']"
             >
@@ -24,6 +25,7 @@
                 Community
             </button>
             <button 
+                v-if="isAdmin || role === 'creator'"
                 @click="switchSection('business')"
                 :class="['flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition', activeSection === 'business' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-text']"
             >
@@ -87,10 +89,10 @@
              <button @click="switchSection('launchpad')" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition snap-start', activeSection === 'launchpad' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
                 Launchpad
             </button>
-             <button @click="switchSection('community')" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition snap-start', activeSection === 'community' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
+             <button v-if="isAdmin || role === 'creator'" @click="switchSection('community')" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition snap-start', activeSection === 'community' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
                 Community
             </button>
-             <button @click="switchSection('business')" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition snap-start', activeSection === 'business' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
+             <button v-if="isAdmin || role === 'creator'" @click="switchSection('business')" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition snap-start', activeSection === 'business' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
                 Business
             </button>
              <button @click="switchSection('engineering')" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition snap-start', activeSection === 'engineering' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
@@ -105,28 +107,68 @@
                 <p class="text-muted">Quick access to all essential external tools.</p>
             </header>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <a 
-                    v-for="(link, i) in (role === 'creator' ? appConfig.creatorLinks : appConfig.adminLinks)" 
-                    :key="i"
-                    :href="link.url"
-                    target="_blank"
-                    class="group relative overflow-hidden bg-surface border rounded-2xl p-6 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-xl"
-                    :class="[link.borderColor || 'border-border']"
-                >
-                     <!-- Background Splash -->
-                     <div class="absolute right-0 top-0 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-40 transition duration-700" :class="link.color.replace('text', 'bg')"></div>
+            <div class="space-y-12">
+                <!-- Admins Links -->
+                <div>
+                     <h3 class="font-bold text-xl text-text mb-4 flex items-center gap-2">
+                        <Wrench class="w-5 h-5 text-muted" />
+                        Administration
+                     </h3>
+                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <a 
+                            v-for="(link, i) in appConfig.adminLinks" 
+                            :key="i"
+                            :href="link.url"
+                            target="_blank"
+                            class="group relative overflow-hidden bg-surface border rounded-2xl p-6 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-xl"
+                            :class="[link.borderColor || 'border-border']"
+                        >
+                            <!-- Background Splash -->
+                            <div class="absolute right-0 top-0 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-40 transition duration-700" :class="link.color.replace('text', 'bg')"></div>
 
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="p-3 rounded-xl transition-colors duration-300" :class="link.bgColor || 'bg-background'">
-                            <component :is="getIcon(link.icon)" class="w-6 h-6" :class="link.color" />
-                        </div>
-                        <ExternalLink class="w-4 h-4 text-muted group-hover:text-primary transition" />
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="p-3 rounded-xl transition-colors duration-300" :class="link.bgColor || 'bg-background'">
+                                    <component :is="getIcon(link.icon)" class="w-6 h-6" :class="link.color" />
+                                </div>
+                                <ExternalLink class="w-4 h-4 text-muted group-hover:text-primary transition" />
+                            </div>
+
+                            <h3 class="font-bold text-lg text-text mb-1 group-hover:text-primary transition">{{ link.label }}</h3>
+                            <p class="text-sm text-muted leading-relaxed group-hover:text-text/70 transition">{{ link.description }}</p>
+                        </a>
                     </div>
+                </div>
 
-                    <h3 class="font-bold text-lg text-text mb-1 group-hover:text-primary transition">{{ link.label }}</h3>
-                    <p class="text-sm text-muted leading-relaxed group-hover:text-text/70 transition">{{ link.description }}</p>
-                </a>
+                <!-- Creator Links -->
+                <div>
+                     <h3 class="font-bold text-xl text-text mb-4 flex items-center gap-2">
+                        <Palette class="w-5 h-5 text-muted" />
+                        Creative Suite
+                     </h3>
+                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <a 
+                            v-for="(link, i) in appConfig.creatorLinks" 
+                            :key="i"
+                            :href="link.url"
+                            target="_blank"
+                            class="group relative overflow-hidden bg-surface border rounded-2xl p-6 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-xl"
+                            :class="[link.borderColor || 'border-border']"
+                        >
+                            <!-- Background Splash -->
+                            <div class="absolute right-0 top-0 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-40 transition duration-700" :class="link.color.replace('text', 'bg')"></div>
+
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="p-3 rounded-xl transition-colors duration-300" :class="link.bgColor || 'bg-background'">
+                                    <component :is="getIcon(link.icon)" class="w-6 h-6" :class="link.color" />
+                                </div>
+                                <ExternalLink class="w-4 h-4 text-muted group-hover:text-primary transition" />
+                            </div>
+
+                            <h3 class="font-bold text-lg text-text mb-1 group-hover:text-primary transition">{{ link.label }}</h3>
+                            <p class="text-sm text-muted leading-relaxed group-hover:text-text/70 transition">{{ link.description }}</p>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -178,15 +220,34 @@
                                     </div>
                                 </td>
                                 <td class="p-4">
-                                    <select 
-                                        v-model="u.role" 
-                                        @change="updateUserRole(u)"
-                                        class="bg-background border border-border text-text text-xs rounded-lg focus:ring-primary focus:border-primary block w-auto p-2.5 font-bold uppercase"
-                                    >
-                                        <option value="user">User</option>
-                                        <option value="admin">Admin</option>
-                                        <option value="creator">Creator</option>
-                                    </select>
+                                    <div class="flex flex-wrap gap-1 items-center">
+                                        <span 
+                                            v-for="r in (u.roles && u.roles.length ? u.roles : [u.role || 'user'])" 
+                                            :key="r" 
+                                            class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border flex items-center gap-1 transition"
+                                            :class="getRoleBadgeClass(r)"
+                                        >
+                                            {{ r }}
+                                            <button @click="removeUserRole(u, r)" class="hover:text-red-600 rounded-full p-0.5 transition"><XCircle class="w-3 h-3"/></button>
+                                        </span>
+                                        
+                                        <!-- Quick Add Dropdown -->
+                                        <div class="relative group">
+                                            <button class="px-2 py-0.5 rounded-full border border-dashed border-muted text-muted hover:border-primary hover:text-primary transition flex items-center justify-center">
+                                                <Plus class="w-3 h-3" />
+                                            </button>
+                                            <div class="absolute top-full left-0 mt-1 bg-surface border border-border shadow-xl rounded-xl p-1 hidden group-hover:grid z-50 w-32 animate-in fade-in slide-in-from-top-1">
+                                                <button 
+                                                    v-for="opt in ['admin', 'creator', 'developer', 'user']" 
+                                                    :key="opt" 
+                                                    @click="addUserRole(u, opt)" 
+                                                    class="text-left px-3 py-2 text-xs font-medium hover:bg-background rounded-lg transition"
+                                                >
+                                                    {{ opt }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td class="p-4">
                                     <span v-if="u.isSubscriber" class="text-green-500 font-bold flex items-center gap-1">
@@ -311,10 +372,21 @@
                             </div>
                             
                             <div class="p-4 bg-background rounded-xl border border-border space-y-3">
-                                <label class="flex items-center gap-3 cursor-pointer">
-                                    <input type="checkbox" v-model="newBroadcast.dismissible" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary">
-                                    <span class="text-sm font-medium">User Can Dismiss</span>
-                                </label>
+                                <div class="flex items-center justify-between">
+                                    <label class="flex items-center gap-3 cursor-pointer">
+                                        <input type="checkbox" v-model="newBroadcast.dismissible" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary">
+                                        <span class="text-sm font-medium">User Can Dismiss</span>
+                                    </label>
+                                    
+                                    <!-- Card Options (New) -->
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-xs font-bold text-muted uppercase">Theme:</label>
+                                        <select v-model="newBroadcast.cardTheme" class="bg-surface border border-border rounded-lg text-xs p-1 focus:border-primary outline-none">
+                                            <option value="standard">Standard (Colored)</option>
+                                            <option value="neutral">Neutral (B&W)</option>
+                                        </select>
+                                    </div>
+                                </div>
 
                                 <div v-if="!newBroadcast.dismissible" class="flex items-center gap-3 animate-in slide-in-from-top-2">
                                     <label class="text-xs font-bold text-muted uppercase whitespace-nowrap">Duration (Hours)</label>
@@ -698,181 +770,63 @@
                 <button v-if="isDev" @click="activeSubTab = 'tools'" :class="['px-6 py-2 rounded-lg text-sm font-bold transition', activeSubTab === 'tools' ? 'bg-background shadow-sm text-text' : 'text-muted hover:text-text hover:bg-background/50']">Dev Tools</button>
             </div>
 
-            <!-- DEV BOARD TAB -->
             <div v-if="activeSubTab === 'tasks'">
-                <header class="mb-10 flex justify-between items-center">
-                    <div>
-                         <h2 class="text-3xl font-serif text-text mb-2">Dev Board</h2>
-                        <p class="text-muted">Track features, bugs, and tasks for the developer.</p>
-                    </div>
-                    <div class="flex gap-3">
-                        <button @click="copyBoard" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 text-sm font-bold flex items-center gap-2 transition">
-                            <Clipboard class="w-4 h-4" />
-                            Copy Markdown
-                        </button>
-                        <button @click="fetchTasks" class="px-4 py-2 bg-surface border border-border rounded-lg hover:border-primary text-sm font-bold text-text">Refresh</button>
-                    </div>
-                </header>
-
-                <!-- New Task Form -->
-                <div class="bg-surface p-6 rounded-2xl border border-border shadow-sm mb-8">
-                    <form @submit.prevent="submitTask" class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div class="md:col-span-2">
-                                 <label class="block text-xs font-bold text-muted mb-1 uppercase">Task Title</label>
-                                 <input v-model="newTask.title" type="text" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none" placeholder="e.g. Fix login bug" required>
-                            </div>
-                             <div>
-                                <label class="block text-xs font-bold text-muted mb-1 uppercase">Type</label>
-                                 <select v-model="newTask.type" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
-                                    <option value="feature">Feature</option>
-                                    <option value="bug">Bug</option>
-                                    <option value="design">Design</option>
-                                    <option value="chore">Chore</option>
-                                </select>
-                            </div>
-                             <div>
-                                <label class="block text-xs font-bold text-muted mb-1 uppercase">Section</label>
-                                 <select v-model="newTask.section" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
-                                    <option value="Active Tasks (Engineering)">Active Tasks</option>
-                                    <option value="Inbox / New Ideas">Inbox / Ideas</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div>
-                                <label class="block text-xs font-bold text-muted mb-1 uppercase">Subsection / Component</label>
-                                 <input v-model="newTask.subsection" type="text" list="subsections" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none" placeholder="e.g. Monetization">
-                                 <datalist id="subsections">
-                                     <option value="Branding & Accessibility"></option>
-                                     <option value="Monetization & Design"></option>
-                                     <option value="Admin & Content"></option>
-                                     <option value="General"></option>
-                                 </datalist>
-                            </div>
-                             <div>
-                                 <label class="block text-xs font-bold text-muted mb-1 uppercase">Goal (Optional)</label>
-                                 <input v-model="newTask.goals" type="text" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none" placeholder="e.g. 'Make it pop'">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold text-muted mb-1 uppercase">Description</label>
-                            <textarea v-model="newTask.description" rows="2" class="w-full bg-background border-2 border-border text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none" placeholder="Details..."></textarea>
-                        </div>
-
-                         <div class="flex justify-end">
-                             <button type="submit" :disabled="uploading" class="bg-primary text-white font-bold px-8 py-3 rounded-xl hover:bg-primary/90 transition">
-                                {{ uploading ? 'Adding...' : 'Add Task' }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Task List -->
-                <div class="space-y-4">
-                     <div v-for="task in tasks" :key="task.id" class="bg-surface p-4 rounded-xl border border-border shadow-sm flex items-center justify-between group">
-                        <div class="flex items-center gap-4 flex-1">
-                            <div :class="{
-                                'bg-blue-100 text-blue-700': task.type === 'feature',
-                                'bg-red-100 text-red-700': task.type === 'bug',
-                                'bg-gray-100 text-gray-700': task.type === 'chore',
-                                 'bg-purple-100 text-purple-700': task.type === 'design'
-                            }" class="p-2 rounded-lg shrink-0">
-                                <Zap v-if="task.type === 'feature'" class="w-5 h-5" />
-                                <Bug v-else-if="task.type === 'bug'" class="w-5 h-5" />
-                                <Hammer v-else class="w-5 h-5" />
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-lg text-text">{{ task.title }}</h4>
-                                <p v-if="task.description" class="text-sm text-text/80 mb-1 leading-snug max-w-2xl">{{ task.description }}</p>
-                                 <div class="flex items-center gap-2 text-xs text-muted">
-                                    <span :class="getPriorityColor(task.priority)" class="capitalize">{{ task.priority }} Priority</span>
-                                    <span>•</span>
-                                    <span class="capitalize">{{ task.status }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex gap-2">
-                            <button v-if="task.status !== 'done'" @click="updateTaskStatus(task.id, 'done')" class="p-2 hover:bg-green-50 text-green-600 rounded-lg transition" title="Mark Done">
-                                <Check class="w-5 h-5" />
-                            </button>
-                            <button v-if="task.status === 'done'" @click="archiveTask(task)" class="p-2 hover:bg-purple-50 text-purple-600 rounded-lg transition" title="Archive">
-                                <Archive class="w-5 h-5" />
-                            </button>
-                             <button @click="deleteTask(task.id)" class="p-2 hover:bg-red-50 text-red-500 rounded-lg transition" title="Delete">
-                                <Trash2 class="w-5 h-5" />
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <AdminTaskBoard />
             </div>
 
             <!-- DEV TOOLS TAB -->
-            <div v-if="activeSubTab === 'tools' && isDev">
-                 <header class="mb-10">
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="p-2 bg-amber-100 rounded-lg">
-                            <Wrench class="w-6 h-6 text-amber-600" />
+            <div v-if="isDev && activeSubTab === 'tools'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- Daily Report Section -->
+                <div class="bg-surface border border-border rounded-2xl p-6 shadow-sm">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="p-2 bg-indigo-100 rounded-lg">
+                            <BarChart3 class="w-5 h-5 text-indigo-600" />
                         </div>
-                        <h2 class="text-3xl font-serif text-text">Dev Tools</h2>
+                        <div>
+                            <h3 class="font-bold text-lg text-text">Daily Report</h3>
+                            <p class="text-xs text-muted">Manually trigger the daily analytics email.</p>
+                        </div>
                     </div>
-                    <p class="text-muted">Development testing utilities. <span class="text-amber-500 font-bold">Only visible in dev mode.</span></p>
-                </header>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    
-                    <!-- Daily Reports Section -->
-                    <div class="bg-surface border border-border rounded-2xl p-6 shadow-sm">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="p-2 bg-indigo-100 rounded-lg">
-                                <FileText class="w-5 h-5 text-indigo-600" />
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-lg text-text">Daily Reports</h3>
-                                <p class="text-xs text-muted">Send platform statistics to configured recipients</p>
-                            </div>
+                    <div class="bg-background rounded-xl p-4 mb-4 text-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-muted">Recipients:</span>
+                            <span class="font-mono text-xs text-text">{{ reportEmails || 'Not configured' }}</span>
                         </div>
-                        
-                        <div class="bg-background rounded-xl p-4 mb-4 text-sm">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-muted">Recipients:</span>
-                                <span class="font-mono text-xs text-text">{{ reportEmails || 'Not configured' }}</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-muted">Schedule:</span>
-                                <span class="text-text font-medium">Daily @ 8:00 AM CST</span>
-                            </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-muted">Schedule:</span>
+                            <span class="text-text font-medium">Daily @ 8:00 AM CST</span>
                         </div>
+                    </div>
 
-                        <button 
-                            @click="sendDailyReport" 
-                            :disabled="devToolsLoading.report"
-                            class="w-full bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
-                        >
-                            <Loader2 v-if="devToolsLoading.report" class="w-5 h-5 animate-spin" />
-                            <Mail v-else class="w-5 h-5" />
-                            {{ devToolsLoading.report ? 'Sending...' : 'Send Report Now' }}
-                        </button>
+                    <button 
+                        @click="sendDailyReport" 
+                        :disabled="devToolsLoading.report"
+                        class="w-full bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                        <Loader2 v-if="devToolsLoading.report" class="w-5 h-5 animate-spin" />
+                        <Mail v-else class="w-5 h-5" />
+                        {{ devToolsLoading.report ? 'Sending...' : 'Send Report Now' }}
+                    </button>
 
-                        <div v-if="devToolsResults.report" class="mt-4 p-4 rounded-xl text-sm" :class="devToolsResults.report.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'">
-                            <div class="flex items-center gap-2 mb-2">
-                                <CheckCircle v-if="devToolsResults.report.success" class="w-4 h-4 text-green-600" />
-                                <XCircle v-else class="w-4 h-4 text-red-600" />
-                                <span :class="devToolsResults.report.success ? 'text-green-700 font-bold' : 'text-red-700 font-bold'">
-                                    {{ devToolsResults.report.message }}
-                                </span>
-                            </div>
-                            <div v-if="devToolsResults.report.results" class="space-y-1">
-                                <div v-for="r in devToolsResults.report.results" :key="r.email" class="flex items-center gap-2 text-xs">
-                                    <CheckCircle v-if="r.success" class="w-3 h-3 text-green-500" />
-                                    <XCircle v-else class="w-3 h-3 text-red-500" />
-                                    <span class="font-mono">{{ r.email }}</span>
-                                </div>
+                    <div v-if="devToolsResults.report" class="mt-4 p-4 rounded-xl text-sm" :class="devToolsResults.report.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'">
+                        <div class="flex items-center gap-2 mb-2">
+                            <CheckCircle v-if="devToolsResults.report.success" class="w-4 h-4 text-green-600" />
+                            <XCircle v-else class="w-4 h-4 text-red-600" />
+                            <span :class="devToolsResults.report.success ? 'text-green-700 font-bold' : 'text-red-700 font-bold'">
+                                {{ devToolsResults.report.message }}
+                            </span>
+                        </div>
+                        <div v-if="devToolsResults.report.results" class="space-y-1">
+                            <div v-for="r in devToolsResults.report.results" :key="r.email" class="flex items-center gap-2 text-xs">
+                                <CheckCircle v-if="r.success" class="w-3 h-3 text-green-500" />
+                                <XCircle v-else class="w-3 h-3 text-red-500" />
+                                <span class="font-mono">{{ r.email }}</span>
                             </div>
                         </div>
                     </div>
+                </div>
 
                     <!-- Email Test Section -->
                     <div class="bg-surface border border-border rounded-2xl p-6 shadow-sm">
@@ -963,7 +917,7 @@
                         </div>
 
                         <div class="mt-4 flex items-center justify-between text-xs text-muted">
-                            <span>Environment: <span class="font-mono text-amber-500 font-bold">DEVELOPMENT</span></span>
+                            <span>Environment: <span class="font-mono font-bold" :class="isDev ? 'text-amber-500' : 'text-green-500'">{{ isDev ? 'DEVELOPMENT' : 'PRODUCTION' }}</span></span>
                             <button @click="refreshSystemStats" class="flex items-center gap-1 hover:text-primary transition">
                                 <RefreshCw class="w-3 h-3" :class="{ 'animate-spin': devToolsLoading.stats }" />
                                 Refresh
@@ -971,7 +925,24 @@
                         </div>
                     </div>
 
-                </div>
+                    <!-- Configuration Viewer -->
+                    <div class="bg-surface border border-border rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="p-2 bg-slate-100 rounded-lg">
+                                <FileText class="w-5 h-5 text-slate-600" />
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg text-text">App Config</h3>
+                                <p class="text-xs text-muted">Runtime configuration & environment.</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-900 text-gray-300 p-4 rounded-xl text-xs font-mono overflow-auto max-h-48">
+                            <pre>{{ JSON.stringify(appConfig, null, 2) }}</pre>
+                        </div>
+                    </div>
+
+
             </div>
         </div>
 
@@ -980,21 +951,20 @@
 </template>
 
 <script setup>
+definePageMeta({
+    middleware: 'admin'
+})
 import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, setDoc, startAfter, endBefore, limit, limitToLast, deleteDoc, where, onSnapshot, updateDoc } from 'firebase/firestore'
 import { 
     LayoutDashboard, ExternalLink, LogOut, Check,
     Users, Briefcase, Plus, User, Zap, Bug, Hammer, Trash2, Clipboard, Archive,
     Rocket, Flame, Github, CreditCard, BarChart3, Triangle, Globe, ArrowLeft,
-    Wrench, Mail, FileText, Server, RefreshCw, CheckCircle, XCircle, Loader2, MessageCircle, ShoppingBag, Bell, Search
+    Wrench, Mail, FileText, Server, RefreshCw, CheckCircle, XCircle, Loader2, MessageCircle, ShoppingBag, Bell, Search, Palette, ToggleLeft
 } from 'lucide-vue-next'
 import { generateMarkdown } from '~/utils/taskMarkdown'
 
-definePageMeta({
-    middleware: 'admin'
-})
-
 const { $db } = useNuxtApp()
-const { logout, user, isAdmin, role } = useAuth()
+const { logout, user, isAdmin, role, isDeveloper } = useAuth()
 const toast = useToast()
 const appConfig = useAppConfig()
 
@@ -1050,6 +1020,7 @@ const newBroadcast = ref({
     type: 'info',
     style: 'toast',
     dismissible: true,
+    cardTheme: 'standard', // 'standard' | 'neutral'
     durationHours: 24 // Default duration if not dismissible
 })
 const sendingBroadcast = ref(false)
@@ -1226,7 +1197,7 @@ const deactivateBroadcast = async (id) => {
 }
 
 // --- DEV TOOLS LOGIC ---
-const isDev = computed(() => process.dev || user.value?.email === 'nicole@ilytat.com' || isAdmin.value)
+const isDev = computed(() => import.meta.dev || ['nicole@ilytat.com', 'zettler.jj@ilytat.com'].includes(user.value?.email) || isAdmin.value)
 // Only true in development mode OR for Admin
 const reportEmails = ref('')
 
@@ -1337,109 +1308,7 @@ onMounted(() => {
     }
 })
 
-// --- DEV BOARD LOGIC ---
-const tasks = ref([])
-const newTask = ref({ 
-    title: '', 
-    type: 'feature', 
-    priority: 'med', 
-    status: 'todo',
-    description: '',
-    goals: '',
-    section: 'Active Tasks (Engineering)',
-    subsection: 'General'
-})
 
-const copyBoard = async () => {
-    try {
-        const md = generateMarkdown(tasks.value)
-        await navigator.clipboard.writeText(md)
-        toast.success('Tasks copied to clipboard!')
-    } catch (e) {
-        console.error(e)
-        // Fallback or error
-        toast.error('Failed to copy')
-    }
-}
-
-const fetchTasks = async () => {
-    try {
-        const q = query(collection($db, 'tasks'), orderBy('createdAt', 'desc'))
-        const snapshot = await getDocs(q)
-        tasks.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-    } catch (e) {
-        console.error(e)
-    }
-}
-
-const submitTask = async () => {
-    if (!newTask.value.title) return
-    uploading.value = true
-    try {
-        await addDoc(collection($db, 'tasks'), {
-            ...newTask.value,
-            createdAt: serverTimestamp()
-        })
-        newTask.value = { 
-            title: '', 
-            type: 'feature', 
-            priority: 'med', 
-            status: 'todo',
-            description: '',
-            goals: '',
-            section: 'Active Tasks (Engineering)',
-            subsection: 'General'
-        }
-        await fetchTasks()
-    } catch (e) {
-        console.error(e)
-    } finally {
-        uploading.value = false
-    }
-}
-
-const updateTaskStatus = async (taskId, status) => {
-    try {
-        await setDoc(doc($db, 'tasks', taskId), { status }, { merge: true })
-        await fetchTasks()
-    } catch (e) {
-        console.error(e)
-    }
-}
-
-const archiveTask = async (task) => {
-    try {
-        await setDoc(doc($db, 'archived_tasks', task.id), { 
-            ...task, 
-            archivedAt: serverTimestamp() 
-        })
-        await deleteDoc(doc($db, 'tasks', task.id))
-        tasks.value = tasks.value.filter(t => t.id !== task.id)
-        toast.success('Task archived')
-    } catch (e) {
-        console.error(e)
-        toast.error('Failed to archive task')
-    }
-}
-
-const deleteTask = async (taskId) => {
-    if(!confirm('Delete task?')) return
-    try {
-        await deleteDoc(doc($db, 'tasks', taskId))
-        tasks.value = tasks.value.filter(t => t.id !== taskId)
-    } catch (e) {
-        console.error(e)
-    }
-}
-
-const getPriorityColor = (priority) => {
-    switch(priority) {
-        case 'high': return 'text-red-600 font-bold'
-        case 'med': return 'text-orange-500 font-bold'
-        case 'low': return 'text-blue-500 font-medium'
-        default: return 'text-muted'
-    }
-}
 
 
 // --- GIVEAWAYS LOGIC ---
@@ -1514,13 +1383,17 @@ const saveRound = async () => {
         showRoundForm.value = false
         newRound.value = { activationTime: '', endTime: '', status: 'scheduled' }
         await viewCampaign(activeCampaign.value) // Refresh
+        toast.success('Round added!')
     } catch (e) {
         console.error(e)
-        toast.error('Error: ' + e.message)
+        alert('Failed to add round: ' + e.message)
     } finally {
         uploading.value = false
     }
 }
+
+
+
 
 
 
@@ -1573,15 +1446,51 @@ const fetchUsers = async (direction = 'first') => {
     }
 }
 
-const updateUserRole = async (userDoc) => {
+const getRoleBadgeClass = (r) => {
+    switch(r) {
+        case 'admin': return 'bg-red-100 text-red-700 border-red-200'
+        case 'creator': return 'bg-purple-100 text-purple-700 border-purple-200'
+        case 'developer': return 'bg-blue-100 text-blue-700 border-blue-200'
+        default: return 'bg-gray-100 text-gray-700 border-gray-200'
+    }
+}
+
+const saveUserRoles = async (userDoc, newRoles) => {
     try {
         const userRef = doc($db, 'users', userDoc.id)
-        await setDoc(userRef, { role: userDoc.role }, { merge: true })
-        toast.success(`User role updated to ${userDoc.role}`)
+        // Sync legacy 'role' field to the first role for backward/external compatibility
+        await setDoc(userRef, { roles: newRoles, role: newRoles[0] || 'user' }, { merge: true })
+        
+        // Update local state
+        userDoc.roles = newRoles
+        userDoc.role = newRoles[0] || 'user'
+        
+        toast.success(`Roles updated for ${userDoc.email}`)
     } catch (e) {
-        console.error('Error updating role:', e)
-        toast.error('Failed to update role: ' + e.message)
+        console.error('Error updating roles:', e)
+        toast.error('Failed to update: ' + e.message)
     }
+}
+
+const addUserRole = async (u, newRole) => {
+    const currentRoles = u.roles && u.roles.length ? u.roles : [u.role || 'user']
+    if (currentRoles.includes(newRole)) return
+    await saveUserRoles(u, [...currentRoles, newRole])
+}
+
+const removeUserRole = async (u, roleToRemove) => {
+    const currentRoles = u.roles && u.roles.length ? u.roles : [u.role || 'user']
+    const newRoles = currentRoles.filter(r => r !== roleToRemove)
+    
+    if (newRoles.length === 0) {
+        // Option: allow upgrading to 'user' if removing only role? 
+        // Or just block emptying. Let's block for safety, or default to ['user'] if removing 'admin' e.g.
+        // If they remove 'user' from ['user'], maybe allow? But app expects auth.
+        // Let's enforce at least one role.
+        toast.error('User must have at least one role.')
+        return
+    }
+    await saveUserRoles(u, newRoles)
 }
 
 // --- BRAND DEALS LOGIC ---
@@ -1694,11 +1603,10 @@ const formatDate = (timestamp) => {
 }
 
 // Watch tab changes to load data
-watch(currentTab, (tab) => {
+watch(activeSubTab, (tab) => {
     if (tab === 'users') fetchUsers()
     if (tab === 'deals') fetchDeals()
     if (tab === 'giveaways') fetchCampaigns()
-    if (tab === 'dev') fetchTasks()
 }, { immediate: true })
 </script>
 

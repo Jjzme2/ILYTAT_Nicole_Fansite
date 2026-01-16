@@ -413,6 +413,9 @@
 </template>
 
 <script setup>
+definePageMeta({
+    middleware: 'auth'
+})
 import { collection, query, orderBy, getDocs, where, limit } from 'firebase/firestore'
 import { BookOpen, Mic, ImageIcon, Sparkles, Ghost, Lock, Gamepad2, MousePointerClick, ArrowLeft, ArrowRight, Quote, Clapperboard, MonitorPlay, X, Brain, Grid, LayoutGrid, Zap, User } from 'lucide-vue-next'
 import SnakeGame from '~/components/games/SnakeGame.vue'

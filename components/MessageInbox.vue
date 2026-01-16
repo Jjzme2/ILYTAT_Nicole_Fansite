@@ -231,9 +231,56 @@
 
 <script setup>
 import { Send, ArrowLeft, User, Sparkles, MessageCircle, Inbox, RefreshCw, Check, Loader2, RotateCcw, ShieldAlert, Flag } from 'lucide-vue-next'
-// ... (imports)
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore'
 
-// ...
+const { $db } = useNuxtApp()
+const toast = useToast() // Assuming useToast is available, loosely typed or auto-imported
+const route = useRoute()
+
+// State
+const messages = ref([])
+const loading = ref(false)
+const filterStatus = ref('all') // 'all', 'unread', 'flagged'
+const viewingMessage = ref(null)
+const replies = ref([])
+const replyContent = ref('')
+const sending = ref(false)
+const resetting = ref(false)
+const globalResetting = ref(false)
+
+let inboxListener = null
+let repliesListener = null
+
+// Listeners
+const startInboxListener = () => {
+    loading.value = true
+    // Order by createdAt desc
+    const q = query(collection($db, 'messages'), orderBy('createdAt', 'desc'))
+    
+    inboxListener = onSnapshot(q, (snapshot) => {
+        messages.value = snapshot.docs.map(doc => ({ 
+            id: doc.id, 
+            ...doc.data() 
+        }))
+        loading.value = false
+    }, (error) => {
+        console.error("Error fetching messages:", error)
+        loading.value = false
+    })
+}
+
+const startRepliesListener = (messageId) => {
+    const q = query(collection($db, 'messages', messageId, 'replies'), orderBy('createdAt', 'asc'))
+    
+    repliesListener = onSnapshot(q, (snapshot) => {
+        replies.value = snapshot.docs.map(doc => ({ 
+            id: doc.id, 
+            ...doc.data() 
+        }))
+    }, (error) => {
+        console.error("Error fetching replies:", error)
+    })
+}
 
 // Computed
 const unrepliedCount = computed(() => messages.value.filter(m => !m.hasReply).length)

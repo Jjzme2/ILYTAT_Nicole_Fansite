@@ -41,7 +41,12 @@ Stores the content feed (media items).
 - **Fields**:
   - `caption` (string): Text description of the post.
   - `mediaUrl` (string): Public URL to the file in Firebase Storage.
-  - `type` (string): `'image'` or `'video'`.
+  - `type` (string): `'image'`, `'video'`, `'text'`, or `'audio'`.
+  - `subtype` (string|null): For text posts: `'quote'`, `'motivation'`, `'blog'`, `'status'`.
+  - `citation` (string|null): Author/source for quote posts.
+  - `title` (string|null): Title for blog posts.
+  - `mood` (string|null): Mood/Feeling for status posts.
+  - `theme` (string|null): Visual theme (gradient/color) for motivation, quotes, and status.
   - `isFree` (boolean): If `true`, visible to non-subscribers. if `false`, locked.
   - `createdAt` (timestamp): When the post was uploaded.
 

@@ -29,20 +29,26 @@
                 <div 
                     v-for="msg in activeToasts" 
                     :key="msg.id"
-                    class="pointer-events-auto w-full bg-surface border rounded-xl shadow-xl p-4 flex items-start gap-3 backdrop-blur-md"
+                    class="pointer-events-auto w-full bg-white dark:bg-zinc-800 border-l-4 rounded-r-xl shadow-xl p-4 flex items-start gap-3"
                     :class="[
-                        msg.type === 'error' ? 'border-red-500/50 bg-red-100 dark:bg-red-500/10 text-red-800 dark:text-red-200' :
-                        msg.type === 'success' ? 'border-green-500/50 bg-green-100 dark:bg-green-500/10 text-green-800 dark:text-green-200' :
-                        'border-border text-text bg-surface'
+                        msg.cardTheme === 'neutral' ? 'border-gray-500' :
+                        msg.type === 'error' ? 'border-red-600' :
+                        msg.type === 'success' ? 'border-green-600' :
+                        'border-blue-600'
                     ]"
                 >
                      <div class="shrink-0 mt-0.5">
-                        <component :is="getIcon(msg.type)" class="w-5 h-5" />
+                        <component :is="getIcon(msg.type)" class="w-5 h-5" :class="[
+                            msg.cardTheme === 'neutral' ? 'text-gray-600 dark:text-gray-400' :
+                            msg.type === 'error' ? 'text-red-600' :
+                            msg.type === 'success' ? 'text-green-600' :
+                            'text-blue-600'
+                        ]" />
                     </div>
                     <div class="flex-1 min-w-0">
-                        <h4 class="font-bold text-sm mb-0.5" v-if="msg.title">{{ msg.title }}</h4>
+                        <h4 class="font-bold text-sm mb-0.5 text-gray-900 dark:text-white" v-if="msg.title">{{ msg.title }}</h4>
                         <!-- Allow newlines in content -->
-                        <p class="text-sm opacity-90 whitespace-pre-line">{{ msg.content }}</p>
+                        <p class="text-sm text-gray-800 dark:text-gray-300 whitespace-pre-line">{{ msg.content }}</p>
                     </div>
                     <button @click="dismiss(msg.id)" class="shrink-0 hover:opacity-70 transition p-1">
                         <X class="w-4 h-4" />
@@ -60,7 +66,7 @@ import { AlertCircle, AlertTriangle, Info, CheckCircle, X, Megaphone } from 'luc
 const { $db } = useNuxtApp()
 const messages = ref([])
 
-// Dismissed local state (session only or local storage)
+// Dismissed local state (persisted)
 const dismissedIds = ref(new Set())
 
 const activeMessages = computed(() => {
@@ -74,7 +80,18 @@ const activeBanners = computed(() => activeMessages.value.filter(m => {
 }))
 const activeToasts = computed(() => activeMessages.value.filter(m => m.style === 'toast'))
 
+// Load dismissed IDs from local storage on mount
 onMounted(() => {
+    try {
+        const stored = localStorage.getItem('dismissed_messages')
+        if (stored) {
+            const ids = JSON.parse(stored)
+            ids.forEach(id => dismissedIds.value.add(id))
+        }
+    } catch (e) {
+        // quiet fail
+    }
+
     const q = query(
         collection($db, 'system_messages'),
         where('isActive', '==', true),
@@ -90,6 +107,11 @@ onMounted(() => {
 
 const dismiss = (id) => {
     dismissedIds.value.add(id)
+    // Persist
+    try {
+        const arr = Array.from(dismissedIds.value) // Limit size?
+        localStorage.setItem('dismissed_messages', JSON.stringify(arr))
+    } catch (e) {}
 }
 
 const getIcon = (type) => {
@@ -132,5 +154,12 @@ const getBannerClass = (type) => {
 .fade-scale-leave-to {
     transform: scale(0.9) translateY(-20px);
     opacity: 0;
+}
+
+.text-contrast {
+    text-shadow: 0 0 1px rgba(255, 255, 255, 0.4), 0 0 0 rgba(255, 255, 255, 0.2); 
+}
+:global(.dark) .text-contrast {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 </style>

@@ -4,6 +4,12 @@
     <header class="py-12 px-6 text-center border-b border-border relative">
         <h1 class="text-4xl md:text-5xl font-serif font-bold text-text mb-4">{{ config.meta.name }}</h1>
         <p class="text-muted tracking-widest uppercase text-sm">{{ config.meta.tagline }}</p>
+        
+        <!-- Last Updated Badge -->
+        <div v-if="displayData.updatedAt" class="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-surface border border-border rounded-full text-xs text-muted">
+            <RefreshCw class="w-3 h-3" />
+            <span>Updated {{ formatUpdatedAt(displayData.updatedAt) }}</span>
+        </div>
     </header>
 
     <div class="max-w-4xl mx-auto px-6 py-12">
@@ -59,6 +65,14 @@
         <section v-if="!displayData.platforms || Object.keys(displayData.platforms).length === 0" class="mb-20 text-center text-muted">
             <p>No statistics available yet.</p>
         </section>
+
+        <!-- Stats Last Updated Note -->
+        <div v-if="displayData.updatedAt && displayData.platforms && Object.keys(displayData.platforms).length > 0" class="mb-20 text-center">
+            <p class="text-xs text-muted flex items-center justify-center gap-2">
+                <Calendar class="w-3 h-3" />
+                Statistics last verified: {{ formatUpdatedAtFull(displayData.updatedAt) }}
+            </p>
+        </div>
 
         <!-- Access -->
         <section class="mb-20">
@@ -124,7 +138,7 @@
 </template>
 
 <script setup>
-import { MapPin, Image as ImageIcon, X, Loader as LucideLoader } from 'lucide-vue-next'
+import { MapPin, Image as ImageIcon, X, Loader as LucideLoader, RefreshCw, Calendar } from 'lucide-vue-next'
 import { collection, query, orderBy, limit, getDocs, addDoc, serverTimestamp } from 'firebase/firestore'
 
 const config = useAppConfig()
@@ -145,6 +159,34 @@ const defaultData = {
 const formatStatLabel = (key) => {
     // Convert snake_case to Title Case
     return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+}
+
+// Format updated at for badge (relative)
+const formatUpdatedAt = (timestamp) => {
+    if (!timestamp) return ''
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+    const now = new Date()
+    const diffMs = now - date
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    
+    if (diffDays === 0) return 'today'
+    if (diffDays === 1) return 'yesterday'
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+// Format updated at for full display
+const formatUpdatedAtFull = (timestamp) => {
+    if (!timestamp) return ''
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+    return date.toLocaleDateString('en-US', { 
+        month: 'long', 
+        day: 'numeric', 
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+    })
 }
 
 // Fetch Latest Media Kit

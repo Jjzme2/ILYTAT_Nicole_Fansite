@@ -14,6 +14,24 @@
       </header>
 
       <div class="space-y-8">
+
+        <!-- Global Verification Alert -->
+        <div v-if="user && !user.emailVerified" class="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 flex items-start gap-4">
+            <div class="p-3 bg-amber-500/20 rounded-xl text-amber-600">
+                <Info class="w-6 h-6" />
+            </div>
+            <div class="flex-1">
+                <h2 class="font-bold text-amber-900 dark:text-amber-400">Account Not Verified</h2>
+                <p class="text-sm text-amber-800/80 dark:text-amber-400/80 mt-1 leading-relaxed">
+                    Your messages to Nicole currently carry a <span class="font-black uppercase text-[10px] bg-amber-500 text-white px-1.5 py-0.5 rounded ml-1">Non-Verified</span> badge. 
+                    Please verify your email address to establish full trust and remove this flag.
+                </p>
+                <button @click="handleSendVerification" :disabled="verificationSent" class="mt-4 text-sm font-bold text-amber-700 dark:text-amber-300 hover:underline flex items-center gap-1">
+                    {{ verificationSent ? 'Check your inbox' : 'Resend verification email' }}
+                    <ArrowRight class="w-4 h-4" />
+                </button>
+            </div>
+        </div>
         
         <!-- Personal Settings -->
         <section class="bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm">
@@ -40,6 +58,49 @@
                     </button>
                 </div>
                 <p class="text-xs text-muted mt-2">This is how you will appear across the platform.</p>
+            </div>
+        </section>
+
+        <!-- Account Security -->
+        <section class="bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
+            <h2 class="text-xl font-bold mb-2 flex items-center gap-2">
+                <ShieldCheck class="w-5 h-5 text-primary" />
+                Account Security
+            </h2>
+
+            <!-- Email Verification -->
+            <div v-if="user && !user.emailVerified">
+                <div class="p-4 bg-orange-500/10 border border-orange-500/20 rounded-xl flex items-start gap-4">
+                    <div class="p-2 bg-orange-500/20 rounded-lg text-orange-600">
+                        <MailWarning class="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-orange-700 dark:text-orange-400">Verify your Email</h3>
+                        <p class="text-sm text-text/80 mb-3">Your email address <strong>{{ user.email }}</strong> is not verified. Please verify it to secure your account.</p>
+                        <button 
+                            @click="handleSendVerification" 
+                            :disabled="verificationSent" 
+                            class="px-4 py-2 bg-orange-500 text-white text-sm font-bold rounded-lg hover:bg-orange-600 disabled:opacity-50 transition"
+                        >
+                            {{ verificationSent ? 'Verification Sent!' : 'Send Verification Email' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password Reset -->
+            <div>
+                <label class="block text-sm font-bold text-muted mb-2">Password Reset</label>
+                <div class="flex items-center gap-4">
+                    <button 
+                        @click="handlePasswordReset" 
+                        :disabled="resetSent"
+                        class="px-6 py-3 bg-background border-2 border-border text-text font-bold rounded-xl hover:border-primary hover:text-primary transition disabled:opacity-50"
+                    >
+                        {{ resetSent ? 'Reset Email Sent' : 'Change Password' }}
+                    </button>
+                    <p class="text-xs text-muted">We will send you an email to reset your password securely.</p>
+                </div>
             </div>
         </section>
 
@@ -72,6 +133,11 @@
                     </div>
                 </div>
             </div>
+        </section>
+
+        <!-- Message Nicole -->
+        <section class="bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm">
+            <MessageNicole />
         </section>
 
         <!-- User Data Transparency -->
@@ -207,8 +273,8 @@
 </template>
 
 <script setup>
-import { Palette, Database, User as UserIcon, MessageSquare, Lightbulb, Trophy } from 'lucide-vue-next'
-import { updateProfile } from 'firebase/auth'
+import { Palette, Database, User as UserIcon, MessageSquare, Lightbulb, Trophy, ShieldCheck, MailWarning, Mail, Info, ArrowRight } from 'lucide-vue-next'
+import { updateProfile, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth'
 import { doc, setDoc, collection, query, where, getDocs, orderBy, collectionGroup } from 'firebase/firestore'
 import { useAuth } from '#imports'
 
@@ -225,6 +291,39 @@ useHead({
 // Profile State
 const newDisplayName = ref('')
 const updating = ref(false)
+
+// Security State
+const verificationSent = ref(false)
+const resetSent = ref(false)
+
+const handleSendVerification = async () => {
+    if (!$auth.currentUser) return
+    try {
+        await sendEmailVerification($auth.currentUser)
+        verificationSent.value = true
+        toast.success('Verification email sent! Check your inbox.')
+    } catch (e) {
+        console.error(e)
+        // Handle "too many requests" gracefully
+        if(e.code === 'auth/too-many-requests') {
+            toast.error('Too many requests. Please check your email or try again later.')
+        } else {
+            toast.error('Error sending verification.')
+        }
+    }
+}
+
+const handlePasswordReset = async () => {
+    if (!$auth.currentUser || !$auth.currentUser.email) return
+    try {
+        await sendPasswordResetEmail($auth, $auth.currentUser.email)
+        resetSent.value = true
+        toast.success(`Password reset link sent to ${$auth.currentUser.email}`)
+    } catch (e) {
+        console.error(e)
+        toast.error('Error sending reset email.')
+    }
+}
 
 // Data Transparency State
 const contentLoading = ref(false)

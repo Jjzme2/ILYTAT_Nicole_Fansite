@@ -39,12 +39,16 @@ export const useToast = () => {
     const error = (msg: string) => addToast(msg, 'error')
     const info = (msg: string) => addToast(msg, 'info')
 
+    // Alias for show(message, type) pattern
+    const show = (msg: string, type: 'success' | 'error' | 'info' = 'info') => addToast(msg, type)
+
     return {
         toasts,
         addToast,
         removeToast,
         success,
         error,
-        info
+        info,
+        show
     }
 }

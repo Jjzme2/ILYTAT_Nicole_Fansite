@@ -71,6 +71,7 @@ export const useAuth = () => {
                         email: currentUser.email,
                         displayName: currentUser.displayName || '',
                         isSubscriber: false,
+                        isVerified: currentUser.emailVerified || false,
                         stripeCustomerId: null,
                         role: 'user',
                         createdAt: new Date()
@@ -114,6 +115,7 @@ export const useAuth = () => {
                 email: email,
                 displayName: name,
                 isSubscriber: false,
+                isVerified: false,
                 stripeCustomerId: null,
                 role: 'user',
                 createdAt: new Date()

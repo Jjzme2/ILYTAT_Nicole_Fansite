@@ -6,6 +6,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
     // Private keys (server-side only)
+    adminSecret: '', // NUXT_ADMIN_SECRET
     stripeSecretKey: '', // NUXT_STRIPE_SECRET_KEY
     stripeWebhookSecret: '',
     firebaseAdminServiceAccount: '', // JSON string or path

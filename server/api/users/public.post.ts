@@ -1,12 +1,10 @@
-import { LRUCache } from 'lru-cache'
-
-// Initialize cache (5 min TTL, 500 items)
-// We cache the final public profile object, or null if user doesn't exist
-const cache = new LRUCache<string, any>({
-    max: 500,
-    ttl: 1000 * 60 * 5, // 5 minutes
-    allowStale: false,
-})
+// import { LRUCache } from 'lru-cache'
+const cache = new Map<string, any>()
+// const cache = new LRUCache<string, any>({
+//     max: 500,
+//     ttl: 1000 * 60 * 5, // 5 minutes
+//     allowStale: false,
+// })
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event)

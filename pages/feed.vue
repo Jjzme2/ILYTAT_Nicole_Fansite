@@ -1,21 +1,24 @@
 <template>
-  <div class="min-h-screen bg-gray-50 pb-20">
+  <div class="min-h-screen bg-background pb-20">
     <!-- Header -->
-    <nav class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b px-4 py-3 flex justify-between items-center">
+    <nav class="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3 flex justify-between items-center">
         <div class="flex items-center gap-3">
             <h1 class="font-bold text-xl tracking-tight">THE CIRCLE</h1>
         </div>
         <div class="flex items-center gap-4">
-            <NuxtLink to="/hub" class="text-xs font-bold uppercase tracking-widest border border-black px-3 py-1.5 rounded hover:bg-black hover:text-white transition">
+            <NuxtLink to="/hub" class="text-xs font-bold uppercase tracking-widest border border-text px-3 py-1.5 rounded hover:bg-text hover:text-background transition">
                 The Hub
             </NuxtLink>
-            <NuxtLink v-if="role === 'creator'" to="/creator" class="text-sm font-bold border border-black px-3 py-1.5 rounded-full hover:bg-black hover:text-white transition">
+            <NuxtLink v-if="role === 'creator'" to="/creator" class="text-sm font-bold border border-text px-3 py-1.5 rounded-full hover:bg-text hover:text-background transition">
                 Studio
             </NuxtLink>
-            <NuxtLink v-if="role === 'admin'" to="/admin" class="text-sm font-bold border border-black px-3 py-1.5 rounded-full hover:bg-black hover:text-white transition">
+            <NuxtLink v-if="role === 'admin'" to="/admin" class="text-sm font-bold border border-text px-3 py-1.5 rounded-full hover:bg-text hover:text-background transition">
                Office
             </NuxtLink>
-            <button @click="logout" class="text-sm font-medium text-gray-500 hover:text-black">
+            <NuxtLink to="/profile" class="text-sm font-bold border border-text px-3 py-1.5 rounded-full hover:bg-text hover:text-background transition">
+               Profile
+            </NuxtLink>
+            <button @click="logout" class="text-sm font-medium text-muted hover:text-text">
                 Log Out
             </button>
         </div>
@@ -24,7 +27,7 @@
     <!-- Mixed Feed -->
     <div class="max-w-2xl mx-auto p-4 space-y-8 mt-6">
         <!-- Public Welcome / CTA for Non-Subs -->
-        <div v-if="!isSubscriber" class="bg-black text-white p-6 rounded-2xl shadow-xl text-center mb-8 relative overflow-hidden">
+        <div v-if="!loading && !isSubscriber" class="bg-surface text-text border border-border p-6 rounded-2xl shadow-xl text-center mb-8 relative overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 opacity-20"></div>
             <h2 class="text-2xl font-bold mb-2 relative z-10">Welcome to The Circle</h2>
             <p class="text-gray-200 mb-6 max-w-lg mx-auto relative z-10">
@@ -33,7 +36,7 @@
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center relative z-10">
                 <button 
                     @click="handleSubscribe"
-                    class="px-8 py-3 bg-white text-black font-bold rounded-full hover:scale-105 transition shadow-lg flex items-center gap-2"
+                    class="px-8 py-3 bg-primary text-white font-bold rounded-full hover:scale-105 transition shadow-lg flex items-center gap-2"
                 >
                     <span>Subscribe - $5/mo</span>
                 </button>
@@ -41,31 +44,31 @@
         </div>
 
         <div v-if="loadingPosts" class="text-center py-10">
-            <p class="text-gray-500 animate-pulse">Loading updates...</p>
+            <p class="text-muted animate-pulse">Loading updates...</p>
         </div>
 
         <!-- Suggestion Box (Subscribers Only) -->
         <div v-if="isSubscriber" class="mb-8">
             <button 
                 @click="showSuggestionForm = !showSuggestionForm"
-                class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 p-4 rounded-xl flex items-center justify-between transition group"
+                class="w-full bg-surface hover:bg-background border border-primary/20 text-primary p-4 rounded-xl flex items-center justify-between transition group"
             >
                 <div class="flex items-center gap-3">
-                    <div class="bg-white p-2 rounded-full shadow-sm">
-                        <Lightbulb class="w-5 h-5 text-indigo-500" />
+                    <div class="bg-background p-2 rounded-full shadow-sm">
+                        <Lightbulb class="w-5 h-5 text-primary" />
                     </div>
                     <div class="text-left">
                         <span class="font-bold text-sm block">Have an idea?</span>
-                        <span class="text-xs text-indigo-400">Suggest music, trends, or content</span>
+                        <span class="text-xs text-muted">Suggest music, trends, or content</span>
                     </div>
                 </div>
                 <ChevronDown :class="['w-5 h-5 transition', showSuggestionForm ? 'rotate-180' : '']" />
             </button>
 
-            <div v-if="showSuggestionForm" class="mt-4 bg-white border border-indigo-100 rounded-xl p-4 shadow-sm animate-in fade-in slide-in-from-top-2">
+            <div v-if="showSuggestionForm" class="mt-4 bg-surface border border-border rounded-xl p-4 shadow-sm animate-in fade-in slide-in-from-top-2">
                 <form @submit.prevent="submitSuggestion" class="space-y-3">
                     <div class="grid grid-cols-2 gap-3">
-                         <select v-model="suggestionType" class="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg block w-full p-2.5 font-medium">
+                         <select v-model="suggestionType" class="bg-background border border-border text-text text-sm rounded-lg block w-full p-2.5 font-medium">
                             <option value="music">🎵 Music Rec</option>
                             <option value="trend">🔥 Viral Trend</option>
                             <option value="content">📹 Content Request</option>
@@ -82,7 +85,7 @@
                     <textarea 
                         v-model="suggestionText" 
                         rows="2" 
-                        class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-200 focus:ring-indigo-500 focus:border-indigo-500" 
+                        class="block p-2.5 w-full text-sm text-text bg-background rounded-lg border border-border focus:ring-primary focus:border-primary" 
                         placeholder="What's on your mind?"
                         required
                     ></textarea>
@@ -90,7 +93,7 @@
             </div>
         </div>
         
-        <div v-if="!loadingPosts && posts.length === 0" class="text-center py-20 text-gray-400">
+        <div v-if="!loadingPosts && posts.length === 0" class="text-center py-20 text-muted">
             <FileImage class="w-12 h-12 mx-auto mb-2 opacity-20" />
             <p>No posts yet.</p>
         </div>
@@ -98,20 +101,20 @@
         <article 
             v-for="post in posts" 
             :key="post.id" 
-            class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100"
+            class="bg-surface rounded-2xl shadow-sm overflow-hidden border border-border"
         >
             <!-- Header -->
             <div class="p-4 border-b border-gray-50 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                    <span class="text-xs font-bold text-gray-400">NC</span>
+                <div class="w-10 h-10 rounded-full bg-background flex items-center justify-center overflow-hidden">
+                    <span class="text-xs font-bold text-muted">NC</span>
                 </div>
                 <div>
-                    <p class="font-bold text-sm">Nicole Christine</p>
-                    <p class="text-xs text-gray-400">{{ formatDate(post.createdAt) }}</p>
+                    <p class="font-bold text-sm text-text">Nicole Christine</p>
+                    <p class="text-xs text-muted">{{ formatDate(post.createdAt) }}</p>
                 </div>
                 <!-- Badge for Type -->
-                <div class="ml-2 px-2 py-0.5 bg-gray-100 rounded text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                    {{ post.type || 'image' }}
+                <div class="ml-2 px-2 py-0.5 bg-background rounded text-[10px] font-bold uppercase tracking-wider text-muted">
+                    {{ post.subtype || post.type || 'image' }}
                 </div>
                 <div class="ml-auto flex items-center gap-2">
                      <button 
@@ -122,12 +125,12 @@
                         <MessageSquare class="w-4 h-4" />
                     </button>
                      <div v-if="!post.isFree && !isSubscriber">
-                        <Lock class="w-4 h-4 text-gray-400" />
+                        <Lock class="w-4 h-4 text-muted" />
                     </div>
                     <NuxtLink 
                         v-if="role === 'creator'"
                         :to="'/creator?edit=' + post.id"
-                        class="p-2 text-gray-400 hover:text-black transition rounded-full hover:bg-gray-100"
+                        class="p-2 text-muted hover:text-text transition rounded-full hover:bg-background"
                         title="Edit Post"
                     >
                         <Edit2 class="w-4 h-4" />
@@ -135,7 +138,7 @@
                     <button 
                         v-if="role === 'admin' || role === 'creator'"
                         @click="deletePost(post.id)"
-                        class="p-2 text-gray-400 hover:text-red-500 transition rounded-full hover:bg-red-50"
+                        class="p-2 text-muted hover:text-red-500 transition rounded-full hover:bg-red-50"
                         title="Delete Post"
                     >
                         <Trash2 class="w-4 h-4" />
@@ -189,15 +192,15 @@
                 </div>
 
                 <!-- Locked Content Overlay (Media) -->
-                <div v-else class="absolute inset-0 flex flex-col items-center justify-center p-6 bg-gray-100">
-                    <div class="absolute inset-0 bg-gray-200 blur-xl opacity-50"></div>
+                <div v-else class="absolute inset-0 flex flex-col items-center justify-center p-6 bg-surface">
+                    <div class="absolute inset-0 bg-background blur-xl opacity-50"></div>
                     <div class="relative z-10 text-center">
-                        <Lock class="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                        <h3 class="font-bold text-lg mb-1">Subscriber Exclusive</h3>
-                        <p class="text-sm text-gray-500 mb-4">Subscribe to unlock this post</p>
+                        <Lock class="w-12 h-12 mx-auto mb-3 text-muted" />
+                        <h3 class="font-bold text-lg mb-1 text-text">Subscriber Exclusive</h3>
+                        <p class="text-sm text-muted mb-4">Subscribe to unlock this post</p>
                         <button 
                             @click="handleSubscribe"
-                            class="px-6 py-2 bg-black text-white text-sm font-bold rounded-full hover:bg-gray-800 transition shadow-lg"
+                            class="px-6 py-2 bg-primary text-white text-sm font-bold rounded-full hover:opacity-90 transition shadow-lg"
                         >
                             Unlock Access
                         </button>
@@ -206,23 +209,90 @@
             </div>
 
             <!-- TEXT CONTENT -->
-            <div v-else class="p-8 bg-gray-50 min-h-[200px] flex items-center justify-center relative">
-                <div v-if="isSubscriber || post.isFree" class="text-center">
-                     <p class="text-xl md:text-2xl font-serif text-gray-800 whitespace-pre-wrap leading-relaxed">{{ post.caption }}</p>
+            <div v-else class="p-8 bg-surface min-h-[200px] flex items-center justify-center relative">
+                <div v-if="isSubscriber || post.isFree" class="text-center w-full max-w-2xl px-4">
+                     <!-- Quote -->
+                    <div v-if="post.subtype === 'quote'" class="relative py-4">
+                        <Quote 
+                            class="absolute -top-4 -left-0 w-8 h-8 opacity-20" 
+                             :class="{
+                                'text-primary': !post.theme || post.theme === 'sunset',
+                                'text-cyan-500': post.theme === 'ocean',
+                                'text-emerald-500': post.theme === 'forest',
+                                'text-red-500': post.theme === 'love',
+                                'text-indigo-500': post.theme === 'midnight'
+                            }"
+                        />
+                        <p class="text-xl md:text-3xl font-serif italic text-text whitespace-pre-wrap leading-loose">"{{ post.caption }}"</p>
+                        <p v-if="post.citation" class="mt-4 text-base font-medium text-muted text-right">— {{ post.citation }}</p>
+                        <Quote 
+                            class="absolute -bottom-4 -right-0 w-8 h-8 opacity-20 rotate-180"
+                            :class="{
+                                'text-primary': !post.theme || post.theme === 'sunset',
+                                'text-cyan-500': post.theme === 'ocean',
+                                'text-emerald-500': post.theme === 'forest',
+                                'text-red-500': post.theme === 'love',
+                                'text-indigo-500': post.theme === 'midnight'
+                            }"
+                         />
+                    </div>
+
+                    <!-- Blog (was Story) -->
+                    <div v-else-if="post.subtype === 'blog'" class="text-left">
+                        <div class="mb-6 text-center">
+                            <h3 class="font-bold text-muted uppercase tracking-widest text-xs border-b border-border pb-2 w-20 mx-auto mb-3">Blog</h3>
+                            <h2 v-if="post.title" class="font-serif font-bold text-2xl md:text-3xl text-text">{{ post.title }}</h2>
+                        </div>
+                        <p class="text-lg font-serif text-text whitespace-pre-wrap leading-loose px-2">{{ post.caption }}</p>
+                    </div>
+
+                    <!-- Motivation -->
+                    <div v-else-if="post.subtype === 'motivation'">
+                        <p 
+                            class="text-2xl md:text-4xl font-extrabold uppercase tracking-tight text-transparent bg-clip-text leading-tight py-4"
+                            :class="{
+                                'bg-gradient-to-r from-pink-500 to-violet-500': !post.theme || post.theme === 'sunset',
+                                'bg-gradient-to-r from-cyan-500 to-blue-500': post.theme === 'ocean',
+                                'bg-gradient-to-r from-emerald-500 to-teal-500': post.theme === 'forest',
+                                'bg-gradient-to-r from-red-500 to-rose-500': post.theme === 'love',
+                                'bg-gradient-to-r from-indigo-900 to-slate-900': post.theme === 'midnight'
+                            }"
+                        >
+                            {{ post.caption }}
+                        </p>
+                    </div>
+
+                    <!-- Default/Status -->
+                    <div v-else>
+                         <div 
+                            v-if="post.subtype === 'status' && post.mood" 
+                            class="mb-4 inline-block px-3 py-1 bg-surface border rounded-full text-xs font-bold text-muted"
+                            :class="{
+                                'border-pink-200 bg-pink-50': (!post.theme || post.theme === 'sunset'),
+                                'border-cyan-200 bg-cyan-50': post.theme === 'ocean',
+                                'border-emerald-200 bg-emerald-50': post.theme === 'forest',
+                                'border-rose-200 bg-rose-50': post.theme === 'love',
+                                'border-indigo-200 bg-indigo-50': post.theme === 'midnight'
+                            }"
+                        >
+                            Currently: {{ post.mood }}
+                        </div>
+                        <p class="text-xl md:text-2xl font-serif text-text whitespace-pre-wrap leading-relaxed">{{ post.caption }}</p>
+                    </div>
                 </div>
                 
                 <!-- Locked Content (Text) -->
                 <div v-else class="absolute inset-0 overflow-hidden flex items-center justify-center">
-                    <div class="absolute inset-0 p-8 opacity-20 blur-sm select-none pointer-events-none">
+                    <div class="absolute inset-0 p-8 opacity-20 blur-sm select-none pointer-events-none text-muted">
                         <p class="text-xl">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
                         <p class="mt-4">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
                     </div>
-                    <div class="relative z-10 text-center bg-white/80 backdrop-blur px-6 py-4 rounded-xl shadow-sm">
-                        <Lock class="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                        <p class="font-bold text-sm mb-3">Locked Text Post</p>
+                    <div class="relative z-10 text-center bg-surface/80 backdrop-blur px-6 py-4 rounded-xl shadow-sm border border-border">
+                        <Lock class="w-8 h-8 mx-auto mb-2 text-muted" />
+                        <p class="font-bold text-sm mb-3 text-text">Locked Text Post</p>
                          <button 
                             @click="handleSubscribe"
-                            class="px-5 py-1.5 bg-black text-white text-xs font-bold rounded-full hover:bg-gray-800 transition"
+                            class="px-5 py-1.5 bg-primary text-white text-xs font-bold rounded-full hover:opacity-90 transition"
                         >
                             Subscribe to Read
                         </button>
@@ -232,28 +302,28 @@
 
             <!-- Caption / Footer (Only for Media types) -->
             <div class="p-4" v-if="post.type !== 'text' && post.caption">
-                <p class="text-gray-900 text-sm"><span class="font-bold mr-2">Nicole Christine</span> {{ post.caption }}</p>
+                <p class="text-text text-sm"><span class="font-bold mr-2">Nicole Christine</span> {{ post.caption }}</p>
             </div>
 
             <!-- Comments Section -->
-            <div v-if="activeCommentId === post.id" class="px-4 pb-4 border-t border-gray-50 pt-4 bg-gray-50/50">
-                <h4 class="font-bold text-xs uppercase text-gray-400 mb-3 tracking-wider">Comments</h4>
+            <div v-if="activeCommentId === post.id" class="px-4 pb-4 border-t border-border pt-4 bg-background/50">
+                <h4 class="font-bold text-xs uppercase text-muted mb-3 tracking-wider">Comments</h4>
                 
                 <!-- List -->
                 <div v-if="postComments.length > 0" class="space-y-3 mb-4 max-h-60 overflow-y-auto pr-2">
-                    <div v-for="comment in postComments" :key="comment.id" class="bg-white p-3 rounded-lg border border-gray-100 text-sm shadow-sm">
+                    <div v-for="comment in postComments" :key="comment.id" class="bg-background p-3 rounded-lg border border-border text-sm shadow-sm">
                         <div class="flex justify-between items-start mb-1">
                             <div class="flex items-center gap-1">
-                                <span class="font-bold text-xs text-gray-900">{{ comment.userEmail?.split('@')[0] }}</span>
+                                <span class="font-bold text-xs text-text">{{ comment.userEmail?.split('@')[0] }}</span>
                                 
                                 <!-- Badges -->
                                 <div 
                                     v-if="commentAuthors[comment.userId]?.tier && commentAuthors[comment.userId]?.tier !== 'Member'" 
                                     :class="[
                                         'px-1.5 py-0.5 rounded flex items-center gap-1',
-                                        commentAuthors[comment.userId]?.tier === 'Creator' ? 'bg-black text-white' : 
-                                        commentAuthors[comment.userId]?.tier === 'Admin' ? 'bg-gray-600 text-white' : 
-                                        'bg-indigo-600 text-white'
+                                        commentAuthors[comment.userId]?.tier === 'Creator' ? 'bg-primary text-white' : 
+                                        commentAuthors[comment.userId]?.tier === 'Admin' ? 'bg-muted text-white' : 
+                                        'bg-secondary text-white'
                                     ]"
                                     :title="commentAuthors[comment.userId]?.tier"
                                 >
@@ -263,21 +333,21 @@
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="text-[10px] text-gray-400">{{ formatDate(comment.createdAt) }}</span>
+                                <span class="text-[10px] text-muted">{{ formatDate(comment.createdAt) }}</span>
                                 <button 
                                     v-if="role === 'creator' || role === 'admin' || comment.userId === user?.uid"
                                     @click="deleteComment(post.id, comment.id)"
-                                    class="text-gray-300 hover:text-red-500 transition"
+                                    class="text-muted/50 hover:text-red-500 transition"
                                     title="Delete Comment"
                                 >
                                     <Trash2 class="w-3 h-3" />
                                 </button>
                             </div>
                         </div>
-                        <p class="text-gray-600">{{ comment.text }}</p>
+                        <p class="text-text">{{ comment.text }}</p>
                     </div>
                 </div>
-                <p v-else class="text-sm text-gray-400 italic mb-4 text-center py-4">No comments yet. Start the conversation!</p>
+                <p v-else class="text-sm text-muted italic mb-4 text-center py-4">No comments yet. Start the conversation!</p>
 
                 <!-- Input -->
                 <form @submit.prevent="submitComment(post.id)" class="gap-2">
@@ -285,20 +355,20 @@
                          <input 
                             v-model="newComment" 
                             type="text" 
-                            class="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-black focus:ring-0 outline-none transition"
+                            class="flex-1 bg-surface border border-border rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-0 outline-none transition text-text"
                             placeholder="Write a comment..."
                             required
                         >
                         <button 
                             type="submit" 
                             :disabled="commenting"
-                            class="bg-black text-white rounded-lg px-4 py-2 text-sm font-bold hover:opacity-80 transition disabled:opacity-50"
+                            class="bg-primary text-white rounded-lg px-4 py-2 text-sm font-bold hover:opacity-80 transition disabled:opacity-50"
                         >
                             <Send class="w-4 h-4" />
                         </button>
                     </div>
                     <!-- Char Count -->
-                    <div class="mt-1 text-[10px] text-right" :class="newComment.length > (isSubscriber ? 500 : 140) ? 'text-red-500 font-bold' : 'text-gray-400'">
+                    <div class="mt-1 text-[10px] text-right" :class="newComment.length > (isSubscriber ? 500 : 140) ? 'text-red-500 font-bold' : 'text-muted'">
                         {{ newComment.length }} / {{ isSubscriber ? 500 : 140 }}
                     </div>
                 </form>
@@ -313,20 +383,20 @@
     </div>
 
     <!-- Bottom Navigation -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-200 px-6 pb-6 pt-3 md:pb-3 flex justify-around items-center z-50">
-        <NuxtLink to="/" class="flex flex-col items-center gap-1 text-gray-400 hover:text-black transition group">
+    <nav class="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-xl border-t border-border px-6 pb-6 pt-3 md:pb-3 flex justify-around items-center z-50">
+        <NuxtLink to="/" class="flex flex-col items-center gap-1 text-muted hover:text-text transition group">
             <LayoutGrid class="w-6 h-6 group-hover:scale-110 transition" />
             <span class="text-[10px] font-bold uppercase tracking-wider">Hub</span>
         </NuxtLink>
 
-        <button class="flex flex-col items-center gap-1 text-black transition group">
-            <div class="bg-black text-white p-3 rounded-full -mt-10 shadow-xl border-4 border-gray-50 group-hover:scale-105 transition">
+        <button class="flex flex-col items-center gap-1 text-text transition group">
+            <div class="bg-primary text-white p-3 rounded-full -mt-10 shadow-xl border-4 border-background group-hover:scale-105 transition">
                 <Zap class="w-6 h-6" />
             </div>
             <span class="text-[10px] font-bold uppercase tracking-wider">The Circle</span>
         </button>
 
-        <NuxtLink to="/media-kit" class="flex flex-col items-center gap-1 text-gray-400 hover:text-black transition group">
+        <NuxtLink to="/media-kit" class="flex flex-col items-center gap-1 text-muted hover:text-text transition group">
             <Star class="w-6 h-6 group-hover:scale-110 transition" />
             <span class="text-[10px] font-bold uppercase tracking-wider">Media Kit</span>
         </NuxtLink>
@@ -336,7 +406,8 @@
 
 <script setup>
 import { collection, query, orderBy, getDocs, deleteDoc, doc, addDoc, serverTimestamp, onSnapshot, limit, startAfter } from 'firebase/firestore'
-import { Lock, FileImage, LayoutGrid, Zap, Star, Trash2, Edit2, Lightbulb, ChevronDown, MessageSquare, Send } from 'lucide-vue-next'
+
+import { Lock, FileImage, LayoutGrid, Zap, Star, Trash2, Edit2, Lightbulb, ChevronDown, MessageSquare, Send, Quote } from 'lucide-vue-next'
 
 definePageMeta({
     middleware: 'auth'
@@ -562,6 +633,7 @@ const fetchPosts = async (isLoadMore = false) => {
         } else {
             q = query(collection($db, 'posts'), orderBy('createdAt', 'desc'), limit(POSTS_PER_PAGE))
         }
+
 
         const querySnapshot = await getDocs(q)
         const newPosts = querySnapshot.docs.map(doc => ({

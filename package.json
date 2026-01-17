@@ -7,20 +7,29 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "manage-users": "node .dev/scripts/manage-users.js",
+    "create-task-list": "node .dev/scripts/createFile.js --name TaskList --path .dev/Tasks/",
+    "migrate": "curl -X POST http://localhost:3000/api/migrations/run-all"
   },
   "dependencies": {
     "@nuxtjs/tailwindcss": "^6.14.0",
+    "@sendgrid/mail": "^8.1.6",
+    "@vueuse/core": "^14.1.0",
+    "croner": "^9.1.0",
     "firebase": "^12.7.0",
     "firebase-admin": "^13.6.0",
     "lru-cache": "^11.2.4",
     "lucide-vue-next": "^0.562.0",
+    "nodemailer": "^7.0.12",
     "nuxt": "^3.20.2",
+    "nuxt-gtag": "^4.1.0",
     "stripe": "^20.1.2",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "vitest": "^4.0.17"
+    "@types/nodemailer": "^7.0.5"
   }
 }

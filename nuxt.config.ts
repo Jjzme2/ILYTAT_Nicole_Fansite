@@ -2,7 +2,10 @@
 export default defineNuxtConfig({
   // Configuration
   compatibilityDate: '2025-07-15',
-  modules: ['@nuxtjs/tailwindcss'],
+  modules: ['@nuxtjs/tailwindcss', 'nuxt-gtag'],
+  gtag: {
+    id: 'G-XXXXXXXXXX' // TODO: Replace with actual Google Analytics ID
+  },
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
     // Private keys (server-side only)
@@ -13,6 +16,18 @@ export default defineNuxtConfig({
     firebaseAdminProjectId: '',
     firebaseAdminClientEmail: '',
     firebaseAdminPrivateKey: '',
+    // SendGrid Email Config (Primary)
+    sendgridApiKey: '', // NUXT_SENDGRID_API_KEY
+    sendgridFromEmail: 'noreply@ilytat.com', // NUXT_SENDGRID_FROM_EMAIL
+    // SMTP Email Config (Fallback)
+    smtpHost: '',
+    smtpPort: '587',
+    smtpSecure: 'false',
+    smtpUser: '',
+    smtpPass: '',
+    smtpFrom: '', // NUXT_SMTP_FROM - must match smtpUser for Zoho
+    // Daily Reports
+    reportEmail: '', // NUXT_REPORT_EMAIL - CSV list of emails to receive daily reports
     // Public keys (client-side)
     public: {
       firebaseApiKey: '',

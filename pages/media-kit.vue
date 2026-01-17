@@ -4,62 +4,80 @@
     <header class="py-12 px-6 text-center border-b border-border relative">
         <h1 class="text-4xl md:text-5xl font-serif font-bold text-text mb-4">{{ config.meta.name }}</h1>
         <p class="text-muted tracking-widest uppercase text-sm">{{ config.meta.tagline }}</p>
+        
+        <!-- Last Updated Badge -->
+        <div class="mt-4 flex flex-col items-center gap-2">
+            <div v-if="displayData.updatedAt" class="inline-flex items-center gap-2 px-3 py-1.5 bg-surface border border-border rounded-full text-xs text-muted">
+                <RefreshCw class="w-3 h-3" />
+                <span>Updated {{ formatUpdatedAt(displayData.updatedAt) }}</span>
+            </div>
+            <div v-if="displayData.createdAt" class="text-[10px] text-muted opacity-60 uppercase tracking-widest font-bold">
+                Last updated {{ formatDate(displayData.createdAt) }}
+            </div>
+        </div>
     </header>
 
     <div class="max-w-4xl mx-auto px-6 py-12">
         
         <!-- Bio -->
-        <section class="grid md:grid-cols-2 gap-12 items-center mb-20">
-            <div class="aspect-[3/4] bg-surface rounded-2xl overflow-hidden shadow-lg relative">
+        <section class="grid md:grid-cols-2 gap-12 items-center mb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div class="aspect-[3/4] bg-surface rounded-2xl overflow-hidden shadow-lg relative group">
+                 <img 
+                    v-if="displayData.photoUrl" 
+                    :src="displayData.photoUrl" 
+                    class="w-full h-full object-cover transition duration-700 group-hover:scale-105"
+                    alt="Creator"
+                >
                  <!-- Placeholder for Hero Image -->
-                 <div class="absolute inset-0 flex items-center justify-center text-muted bg-background/50">
-                    <span class="text-sm">Hero Image</span>
+                 <div v-else class="absolute inset-0 flex items-center justify-center text-muted bg-background/50">
+                    <div class="text-center">
+                        <ImageIcon class="w-12 h-12 mx-auto mb-2 opacity-20" />
+                        <span class="text-sm">No Photo Set</span>
+                    </div>
                  </div>
             </div>
             <div>
                 <h2 class="text-2xl font-bold mb-6 text-text">About Me</h2>
                 <p class="text-muted leading-relaxed mb-6 whitespace-pre-wrap">{{ displayData.bio }}</p>
                 <div class="space-y-4">
-                    <div class="flex items-center gap-3">
+                    <div v-if="displayData.location" class="flex items-center gap-3">
                         <MapPin class="w-5 h-5 text-primary" />
-                        <span class="text-text">Los Angeles, CA</span>
+                        <span class="text-text">{{ displayData.location }}</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Stats -->
-        <section class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20">
-            <div class="p-6 bg-surface border border-border rounded-xl text-center">
-                <h3 class="text-3xl font-bold text-primary mb-1">{{ displayData.stats.followers }}</h3>
-                <p class="text-xs uppercase tracking-wider text-muted">Followers</p>
+        <!-- Stats (Dynamic Platforms) -->
+        <section v-for="(stats, platform) in displayData.platforms" :key="platform" class="mb-20 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+            <div class="flex items-center gap-3 mb-8 justify-center">
+                <!-- Branding Icons -->
+                 <div v-if="platform === 'tiktok'" class="bg-black text-white p-2 rounded-full">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+                 </div>
+                <h3 class="text-2xl font-bold text-text capitalize">{{ platform }} Statistics</h3>
             </div>
-            <div class="p-6 bg-surface border border-border rounded-xl text-center">
-                <h3 class="text-3xl font-bold text-primary mb-1">{{ displayData.stats.engagement }}</h3>
-                <p class="text-xs uppercase tracking-wider text-muted">Engagement</p>
-            </div>
-            <div class="p-6 bg-surface border border-border rounded-xl text-center">
-                <h3 class="text-3xl font-bold text-primary mb-1">{{ displayData.stats.impressions }}</h3>
-                <p class="text-xs uppercase tracking-wider text-muted">Impressions</p>
-            </div>
-            <div class="p-6 bg-surface border border-border rounded-xl text-center">
-                <h3 class="text-3xl font-bold text-primary mb-1">{{ displayData.stats.rank }}</h3>
-                <p class="text-xs uppercase tracking-wider text-muted">Creator Rank</p>
-            </div>
-        </section>
-
-        <!-- Gallery -->
-        <section class="mb-20">
-            <h2 class="text-2xl font-bold mb-8 text-center text-text">Recent Collaboration Styles</h2>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div v-for="i in 6" :key="i" class="aspect-square bg-surface border border-border rounded-lg overflow-hidden relative group">
-                     <div class="absolute inset-0 bg-background/50 animate-pulse" />
-                     <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300 bg-black/20 text-white font-medium">
-                        View
-                     </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div v-for="(value, key) in stats" :key="key" class="p-6 bg-surface border border-border rounded-xl text-center hover:border-primary transition group">
+                    <h3 class="text-2xl md:text-3xl font-bold text-primary mb-1 group-hover:scale-110 transition">{{ value }}</h3>
+                    <p class="text-[10px] uppercase tracking-wider text-muted font-bold">{{ formatStatLabel(key) }}</p>
                 </div>
             </div>
         </section>
+
+        <!-- Fallback if no platforms -->
+        <section v-if="!displayData.platforms || Object.keys(displayData.platforms).length === 0" class="mb-20 text-center text-muted">
+            <p>No statistics available yet.</p>
+        </section>
+
+        <!-- Stats Last Updated Note -->
+        <div v-if="displayData.updatedAt && displayData.platforms && Object.keys(displayData.platforms).length > 0" class="mb-20 text-center">
+            <p class="text-xs text-muted flex items-center justify-center gap-2">
+                <Calendar class="w-3 h-3" />
+                Statistics last verified: {{ formatUpdatedAtFull(displayData.updatedAt) }}
+            </p>
+        </div>
 
         <!-- Access -->
         <section class="mb-20">
@@ -67,20 +85,66 @@
                 <h2 class="text-2xl font-bold mb-4 text-text">Partner with {{ config.meta.copyright }}</h2>
                 <p class="text-muted mb-8 max-w-xl mx-auto">Available for brand deals, sponsored content, and exclusive collaborations.</p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a :href="config.socials.email" class="px-8 py-3 bg-primary text-white font-bold rounded-full hover:opacity-90 transition">
-                        Contact Management
-                    </a>
+                    <button @click="showCollabForm = true" class="px-8 py-3 bg-primary text-white font-bold rounded-full hover:bg-primary/90 transition shadow-lg shadow-primary/20 flex items-center gap-2 mx-auto">
+                        Inquire for Collaboration
+                    </button>
                 </div>
              </div>
         </section>
 
     </div>
+
+    <!-- Collab Modal -->
+    <div v-if="showCollabForm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" @click="showCollabForm = false"></div>
+        <div class="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-lg relative z-10 animate-in fade-in zoom-in-95 duration-300">
+            <button @click="showCollabForm = false" class="absolute top-4 right-4 text-muted hover:text-text">
+                <X class="w-6 h-6" />
+            </button>
+            
+            <div class="p-8">
+                <h3 class="text-2xl font-bold mb-2 text-text">Let's Work Together</h3>
+                <p class="text-muted text-sm mb-6">Fill out the details below to start the conversation.</p>
+                
+                <form @submit.prevent="submitCollab" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-muted mb-1">Brand Name</label>
+                        <input v-model="collabForm.brandName" required type="text" class="w-full bg-background border border-border text-text rounded-xl p-3 focus:border-primary outline-none transition">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-muted mb-1">Contact Name</label>
+                            <input v-model="collabForm.contactName" required type="text" class="w-full bg-background border border-border text-text rounded-xl p-3 focus:border-primary outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-muted mb-1">Budget / Value</label>
+                            <input v-model="collabForm.value" type="text" placeholder="e.g. $1,500" class="w-full bg-background border border-border text-text rounded-xl p-3 focus:border-primary outline-none transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-muted mb-1">Contact Email</label>
+                        <input v-model="collabForm.contactEmail" required type="email" class="w-full bg-background border border-border text-text rounded-xl p-3 focus:border-primary outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-muted mb-1">Vision & Deliverables</label>
+                        <textarea v-model="collabForm.deliverables" required rows="4" placeholder="Describe your campaign goals and what you are looking for..." class="w-full bg-background border border-border text-text rounded-xl p-3 focus:border-primary outline-none transition"></textarea>
+                    </div>
+
+                    <button type="submit" :disabled="submitting" class="w-full py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition shadow-lg shadow-primary/20 flex justify-center items-center gap-2">
+                        <LucideLoader v-if="submitting" class="w-5 h-5 animate-spin" />
+                        {{ submitting ? 'Sending Request...' : 'Submit Inquiry' }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
   </div>
 </template>
 
 <script setup>
-import { MapPin } from 'lucide-vue-next'
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore'
+import { MapPin, Image as ImageIcon, X, Loader as LucideLoader, RefreshCw, Calendar } from 'lucide-vue-next'
+import { collection, query, orderBy, limit, getDocs, addDoc, serverTimestamp } from 'firebase/firestore'
 
 const config = useAppConfig()
 const { $db } = useNuxtApp()
@@ -91,14 +155,49 @@ useHead({
 
 // Default Data
 const defaultData = {
-    bio: `A short professional bio goes here. Highlight your brand, your audience, and what makes your content unique. 
-                    Focus on engagement, aesthetics, and the community you are building.`,
-    stats: {
-        followers: '150K+',
-        engagement: '8.5%',
-        impressions: '2M+',
-        rank: 'Top 1%'
-    }
+    bio: `A short professional bio goes here. Highlight your brand, your audience, and what makes your content unique.`,
+    location: '',
+    photoUrl: '',
+    platforms: {}
+}
+
+const formatStatLabel = (key) => {
+    // Convert snake_case to Title Case
+    return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+}
+
+const formatDate = (ts) => {
+    if (!ts) return ''
+    const date = ts.toDate ? ts.toDate() : new Date(ts)
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+// Format updated at for badge (relative)
+const formatUpdatedAt = (timestamp) => {
+    if (!timestamp) return ''
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+    const now = new Date()
+    const diffMs = now - date
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    
+    if (diffDays === 0) return 'today'
+    if (diffDays === 1) return 'yesterday'
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+// Format updated at for full display
+const formatUpdatedAtFull = (timestamp) => {
+    if (!timestamp) return ''
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+    return date.toLocaleDateString('en-US', { 
+        month: 'long', 
+        day: 'numeric', 
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+    })
 }
 
 // Fetch Latest Media Kit
@@ -116,4 +215,47 @@ const { data: mediaKit } = await useAsyncData('mediaKit', async () => {
 })
 
 const displayData = computed(() => mediaKit.value || defaultData)
+
+// --- COLLAB FORM ---
+const showCollabForm = ref(false)
+const submitting = ref(false)
+const collabForm = ref({
+    brandName: '',
+    contactName: '',
+    contactEmail: '',
+    value: '',
+    deliverables: ''
+})
+
+const submitCollab = async () => {
+    submitting.value = true
+    try {
+        // 1. Create Pending Deal
+        await addDoc(collection($db, 'brand_deals'), {
+            brandName: collabForm.value.brandName,
+            contactName: collabForm.value.contactName,
+            contactEmail: collabForm.value.contactEmail,
+            value: collabForm.value.value || 'Waitlist / Inquire',
+            deliverables: collabForm.value.deliverables,
+            status: 'pending',
+            notes: 'Submitted via Media Kit Form',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        })
+
+        // 2. Alert / Simulate Email
+        const alertMsg = `New Collab Request from ${collabForm.value.brandName}!\n\nSimulating email notification sent to: ${config.socials.brandDealsEmail}`
+        console.log(alertMsg)
+        alert('Request Sent! We will be in touch shortly.')
+
+        showCollabForm.value = false
+        collabForm.value = { brandName: '', contactName: '', contactEmail: '', value: '', deliverables: '' }
+
+    } catch (e) {
+        console.error('Error submitting deal:', e)
+        alert('Something went wrong. Please try again.')
+    } finally {
+        submitting.value = false
+    }
+}
 </script>

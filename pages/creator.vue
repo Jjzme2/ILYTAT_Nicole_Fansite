@@ -30,6 +30,13 @@
                 <Lightbulb class="w-5 h-5" />
                 Suggestions
             </button>
+            <NuxtLink 
+                to="/merch"
+                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full text-muted hover:text-text transition"
+            >
+                <ShoppingBag class="w-5 h-5" />
+                Merch Store
+            </NuxtLink>
 
             <div class="pt-4 mt-4 border-t border-border space-y-2">
                 <a href="/admin" class="flex items-center gap-3 px-4 py-3 text-muted hover:text-text rounded-xl text-sm font-medium transition">
@@ -47,7 +54,12 @@
             </div>
         </nav>
 
-        <button @click="logout" class="flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 transition text-sm font-medium mt-auto">
+        <button @click="showDevTaskModal = true" class="flex items-center gap-3 px-4 py-3 text-muted hover:text-text transition text-sm font-medium mt-auto">
+            <Bug class="w-5 h-5" />
+            Report Issue
+        </button>
+
+        <button @click="logout" class="flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 transition text-sm font-medium">
             <LogOut class="w-5 h-5" />
             Log Out
         </button>
@@ -56,12 +68,30 @@
     <!-- Main Content -->
     <main class="flex-1 p-6 md:p-10 overflow-y-auto">
         <!-- Mobile Header -->
-        <div class="md:hidden flex justify-between items-center mb-8">
-            <h1 class="font-bold text-xl">THE STUDIO</h1>
-            <div class="flex gap-4">
-                <NuxtLink to="/admin" class="text-sm font-bold">Admin</NuxtLink>
-                <button @click="logout" class="text-sm text-red-500">Log Out</button>
+        <div class="md:hidden flex justify-between items-center mb-6">
+            <div class="flex items-center gap-3">
+                 <NuxtLink to="/feed" class="p-2 -ml-2 text-muted hover:text-text">
+                    <ArrowLeft class="w-6 h-6" />
+                </NuxtLink>
+                <h1 class="font-bold text-xl">THE STUDIO</h1>
             </div>
+            <div class="flex gap-4 items-center">
+                <NuxtLink to="/admin" class="text-xs font-bold font-mono uppercase text-muted border border-border px-2 py-1 rounded">Admin</NuxtLink>
+                <button @click="logout" class="text-xs text-red-500 font-medium">Log Out</button>
+            </div>
+        </div>
+
+        <!-- Mobile Tab Navigation -->
+        <div class="md:hidden flex overflow-x-auto gap-2 mb-8 pb-2 -mx-6 px-6 scrollbar-hide">
+             <button @click="currentTab = 'content'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'content' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
+                Content
+            </button>
+             <button @click="currentTab = 'media-kit'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'media-kit' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
+                Media Kit
+            </button>
+             <button @click="currentTab = 'suggestions'" :class="['whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold border transition', currentTab === 'suggestions' ? 'bg-text text-background border-text' : 'bg-surface border-border text-muted']">
+                Suggestions
+            </button>
         </div>
 
         <!-- CONTENT TAB -->
@@ -121,6 +151,20 @@
 
             </div>
 
+            <!-- Random Drop Button (Special) + Bug Report -->
+            <div v-if="!file && postType !== 'text' && !captureMode" class="mb-10 flex gap-4">
+                 <button @click="startRandomDrop" class="flex-1 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-2 border-dashed border-purple-500/30 rounded-2xl p-4 flex items-center justify-center gap-3 hover:bg-purple-500/20 hover:border-purple-500 transition group">
+                    <Sparkles class="w-5 h-5 text-purple-500 group-hover:rotate-12 transition" />
+                    <span class="font-bold text-purple-700 dark:text-purple-300">Random Drop</span>
+                    <span class="text-xs text-muted">(Post to Random Room)</span>
+                </button>
+                 <button @click="showDevTaskModal = true" class="flex-1 bg-surface border-2 border-dashed border-border rounded-2xl p-4 flex items-center justify-center gap-3 hover:border-primary transition group">
+                    <Bug class="w-5 h-5 text-muted group-hover:text-primary transition" />
+                    <span class="font-bold text-muted group-hover:text-primary transition">Report Issue</span>
+                    <span class="text-xs text-muted">(Found a bug?)</span>
+                </button>
+            </div>
+
              <!-- Editor / Preview Area -->
             <div v-if="file || postType === 'text' || captureMode === 'link'" class="bg-surface rounded-2xl shadow-lg border border-border overflow-hidden max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div class="p-4 border-b border-border flex justify-between items-center bg-background/50">
@@ -172,6 +216,17 @@
 
                     <!-- Form -->
                     <form @submit.prevent="handleUpload" class="space-y-6">
+                        <!-- Subtype Selector for Text -->
+                        <div v-if="postType === 'text'">
+                            <label class="block text-sm font-bold text-muted mb-2">Post Category</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button type="button" @click="postSubtype = 'status'" :class="['p-3 rounded-xl border-2 text-sm font-bold transition', postSubtype === 'status' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted hover:border-text']">Status Update</button>
+                                <button type="button" @click="postSubtype = 'quote'" :class="['p-3 rounded-xl border-2 text-sm font-bold transition', postSubtype === 'quote' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted hover:border-text']">Quote</button>
+                                <button type="button" @click="postSubtype = 'motivation'" :class="['p-3 rounded-xl border-2 text-sm font-bold transition', postSubtype === 'motivation' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted hover:border-text']">Motivational</button>
+                                <button type="button" @click="postSubtype = 'blog'" :class="['p-3 rounded-xl border-2 text-sm font-bold transition', postSubtype === 'blog' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted hover:border-text']">Blog Post</button>
+                            </div>
+                        </div>
+
                         <div>
                             <label class="block text-sm font-bold text-muted mb-2">
                                  {{ postType === 'text' ? 'Message' : 'Caption' }}
@@ -182,6 +237,54 @@
                                 class="w-full border-2 border-border bg-background text-text rounded-xl p-4 focus:border-primary focus:ring-0 outline-none transition resize-none text-lg"
                                 :placeholder="postType === 'text' ? 'What\'s on your mind?' : 'Add a caption...'"
                             ></textarea>
+                        </div>
+
+                         <!-- Citation Input (Quotes Only) -->
+                        <div v-if="postType === 'text' && postSubtype === 'quote'" class="animate-in fade-in slide-in-from-top-2">
+                            <label class="block text-sm font-bold text-muted mb-2">Author / Citation</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-serif italic">—</span>
+                                <input 
+                                    v-model="citation" 
+                                    type="text" 
+                                    placeholder="e.g. Maya Angelou" 
+                                    class="w-full border-2 border-border bg-background text-text rounded-xl pl-10 p-4 focus:border-primary focus:ring-0 outline-none transition"
+                                >
+                            </div>
+                        </div>
+
+                         <!-- Title Input (Blog Only) -->
+                        <div v-if="postType === 'text' && postSubtype === 'blog'" class="animate-in fade-in slide-in-from-top-2">
+                            <label class="block text-sm font-bold text-muted mb-2">Title</label>
+                            <input 
+                                v-model="title" 
+                                type="text" 
+                                placeholder="Chapter 1: The Beginning" 
+                                class="w-full border-2 border-border bg-background text-text rounded-xl p-4 focus:border-primary focus:ring-0 outline-none transition font-serif font-bold"
+                            >
+                        </div>
+
+                        <!-- Mood Input (Status Only) -->
+                        <div v-if="postType === 'text' && postSubtype === 'status'" class="animate-in fade-in slide-in-from-top-2">
+                             <label class="block text-sm font-bold text-muted mb-2">Current Mood</label>
+                            <input 
+                                v-model="mood" 
+                                type="text" 
+                                placeholder="Feelin' Great 🚀" 
+                                class="w-full border-2 border-border bg-background text-text rounded-xl p-4 focus:border-primary focus:ring-0 outline-none transition"
+                            >
+                        </div>
+
+                         <!-- Theme Selector (Motivation, Quote, Status) -->
+                        <div v-if="postType === 'text' && ['motivation', 'quote', 'status'].includes(postSubtype)" class="animate-in fade-in slide-in-from-top-2">
+                            <label class="block text-sm font-bold text-muted mb-2">Visual Theme</label>
+                            <div class="grid grid-cols-5 gap-2">
+                                <button type="button" @click="theme = 'sunset'" :class="['h-12 rounded-lg bg-gradient-to-r from-pink-500 to-violet-500 hover:scale-105 transition', theme === 'sunset' ? 'ring-2 ring-offset-2 ring-primary' : 'opacity-70']" title="Sunset"></button>
+                                <button type="button" @click="theme = 'ocean'" :class="['h-12 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 hover:scale-105 transition', theme === 'ocean' ? 'ring-2 ring-offset-2 ring-cyan-500' : 'opacity-70']" title="Ocean"></button>
+                                <button type="button" @click="theme = 'forest'" :class="['h-12 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:scale-105 transition', theme === 'forest' ? 'ring-2 ring-offset-2 ring-emerald-500' : 'opacity-70']" title="Forest"></button>
+                                <button type="button" @click="theme = 'love'" :class="['h-12 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 hover:scale-105 transition', theme === 'love' ? 'ring-2 ring-offset-2 ring-red-500' : 'opacity-70']" title="Love"></button>
+                                <button type="button" @click="theme = 'midnight'" :class="['h-12 rounded-lg bg-gradient-to-r from-indigo-900 to-slate-900 hover:scale-105 transition', theme === 'midnight' ? 'ring-2 ring-offset-2 ring-indigo-500' : 'opacity-70']" title="Midnight"></button>
+                            </div>
                         </div>
 
                         <!-- Options -->
@@ -213,9 +316,15 @@
 
         <!-- MEDIA KIT TAB -->
         <div v-if="currentTab === 'media-kit'">
-            <header class="mb-10">
-                <h2 class="text-3xl font-serif text-text mb-2">Update Media Kit</h2>
-                <p class="text-muted">Keep your public profile up to date for brands.</p>
+            <header class="mb-10 flex justify-between items-end">
+                <div>
+                    <h2 class="text-3xl font-serif text-text mb-2">Update Media Kit</h2>
+                    <p class="text-muted">Keep your public profile up to date for brands.</p>
+                </div>
+                <div v-if="mediaKit.updatedAt" class="text-xs text-muted text-right">
+                    Last Updated<br>
+                    <span class="font-bold text-text">{{ formatDate(mediaKit.updatedAt) }}</span>
+                </div>
             </header>
 
              <div class="bg-surface rounded-2xl shadow-lg border border-border overflow-hidden max-w-2xl">
@@ -225,31 +334,59 @@
                             <label class="block text-sm font-bold text-muted mb-2">Bio</label>
                             <textarea v-model="mediaKit.bio" rows="4" class="w-full border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none"></textarea>
                         </div>
+                        <div class="mb-6">
+                            <label class="block text-sm font-bold text-muted mb-2">Platform</label>
+                            <select v-model="activePlatform" class="w-full border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
+                                <option value="tiktok">TikTok</option>
+                                <option value="instagram" disabled>Instagram (Coming Soon)</option>
+                                <option value="youtube" disabled>YouTube (Coming Soon)</option>
+                            </select>
+                        </div>
+                        
                         <div class="grid grid-cols-2 gap-4">
-                             <div>
-                                <label class="block text-sm font-bold text-muted mb-2">Followers</label>
-                                <input v-model="mediaKit.stats.followers" type="text" class="w-full border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
-                            </div>
-                             <div>
-                                <label class="block text-sm font-bold text-muted mb-2">Engagement</label>
-                                <input v-model="mediaKit.stats.engagement" type="text" class="w-full border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
-                            </div>
-                             <div>
-                                <label class="block text-sm font-bold text-muted mb-2">Impressions</label>
-                                <input v-model="mediaKit.stats.impressions" type="text" class="w-full border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
-                            </div>
-                             <div>
-                                <label class="block text-sm font-bold text-muted mb-2">Creator Rank</label>
-                                <input v-model="mediaKit.stats.rank" type="text" class="w-full border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none">
+                             <div v-for="field in platformSchemas[activePlatform]" :key="field.key">
+                                <label class="block text-sm font-bold text-muted mb-2">{{ field.label }}</label>
+                                <input 
+                                    v-model="mediaKit.platforms[activePlatform][field.key]" 
+                                    type="text" 
+                                    class="w-full border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none"
+                                >
                             </div>
                         </div>
-                        <button 
-                            type="submit" 
-                            :disabled="uploading"
-                            class="w-full bg-primary text-white font-bold py-4 rounded-xl hover:opacity-90 disabled:opacity-50 transition flex items-center justify-center gap-2 text-lg shadow-xl"
-                        >
-                            {{ uploading ? 'Saving...' : 'Save Updates' }}
-                        </button>
+
+                        <div class="grid grid-cols-2 gap-4 mt-6">
+                            <div>
+                                <label class="block text-sm font-bold text-muted mb-2">Location</label>
+                                <div class="relative">
+                                    <MapPin class="w-4 h-4 absolute left-3 top-3.5 text-muted" />
+                                    <input v-model="mediaKit.location" type="text" class="w-full pl-9 border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none" placeholder="e.g. Los Angeles, CA">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-muted mb-2">Hero Photo URL</label>
+                                <div class="flex gap-2">
+                                     <input v-model="mediaKit.photoUrl" type="text" class="flex-1 border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none" placeholder="https://...">
+                                     <button type="button" @click="openGalleryPicker" class="bg-surface border border-border hover:border-primary p-3 rounded-xl transition text-primary">
+                                        <ImageIcon class="w-5 h-5" />
+                                     </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-6 border-t border-border flex justify-end gap-4">
+                             <button 
+                                type="button" 
+                                class="px-6 py-3 font-bold text-muted hover:text-text transition"
+                            >
+                                Preview
+                            </button>
+                            <button 
+                                type="submit" 
+                                class="px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition shadow-lg shadow-primary/20"
+                            >
+                                {{ uploading ? 'Saving...' : 'Save Media Kit' }}
+                            </button>
+                        </div>
                     </form>
                  </div>
             </div>
@@ -296,6 +433,33 @@
 
     </main>
 
+    <!-- Gallery Picker Modal -->
+    <div v-if="showGalleryPicker" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" @click.self="showGalleryPicker = false">
+        <div class="bg-surface w-full max-w-2xl rounded-2xl shadow-2xl border border-border flex flex-col max-h-[80vh]">
+            <div class="p-4 border-b border-border flex justify-between items-center">
+                <h3 class="font-bold text-lg text-text">Select from Gallery</h3>
+                <button type="button" @click="showGalleryPicker = false" class="text-muted hover:text-text"><X class="w-6 h-6" /></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4">
+                <div v-if="loadingGallery" class="text-center py-10 text-muted">Loading photos...</div>
+                <div v-else-if="galleryImages.length === 0" class="text-center py-10 text-muted">No images found in your posts.</div>
+                <div v-else class="grid grid-cols-3 gap-2">
+                    <div 
+                        v-for="img in galleryImages" 
+                        :key="img.id" 
+                        @click="selectGalleryImage(img.mediaUrl || img.imageUrl)"
+                        class="aspect-square bg-black rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition relative group"
+                    >
+                        <img :src="img.mediaUrl || img.imageUrl" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                            <Check class="w-8 h-8 text-white drop-shadow-md" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Media Capturer Modal -->
     <MediaCapture 
         v-if="captureMode && captureMode !== 'link'" 
@@ -304,6 +468,42 @@
         @cancel="captureMode = null"
     />
 
+    <!-- Dev Task Modal -->
+    <div v-if="showDevTaskModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" @click.self="showDevTaskModal = false">
+        <div class="bg-surface w-full max-w-md rounded-2xl shadow-2xl border border-border p-6">
+            <h3 class="font-bold text-xl mb-4">Report Issue / Request Feature</h3>
+            <form @submit.prevent="submitDevTask" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-muted uppercase mb-1">Title</label>
+                    <input v-model="devTask.title" type="text" class="w-full bg-background border border-border rounded-lg p-2 focus:border-primary outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-muted uppercase mb-1">Type</label>
+                    <div class="flex gap-2">
+                        <button type="button" @click="devTask.type = 'bug'" :class="['px-3 py-1 rounded text-sm', devTask.type === 'bug' ? 'bg-red-500/20 text-red-500 border border-red-500' : 'bg-background border border-border']">Bug</button>
+                        <button type="button" @click="devTask.type = 'feature'" :class="['px-3 py-1 rounded text-sm', devTask.type === 'feature' ? 'bg-blue-500/20 text-blue-500 border border-blue-500' : 'bg-background border border-border']">Feature</button>
+                    </div>
+                </div>
+                 <div>
+                    <label class="block text-xs font-bold text-muted uppercase mb-1">Priority</label>
+                    <select v-model="devTask.priority" class="w-full bg-background border border-border rounded-lg p-2 outline-none">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-muted uppercase mb-1">Description</label>
+                    <textarea v-model="devTask.description" rows="3" class="w-full bg-background border border-border rounded-lg p-2 focus:border-primary outline-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 mt-4">
+                    <button type="button" @click="showDevTaskModal = false" class="text-muted hover:text-text text-sm">Cancel</button>
+                    <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg font-bold hover:opacity-90">Submit Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
   </div>
 </template>
 
@@ -311,9 +511,24 @@
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore'
 import { 
-    LayoutDashboard, ExternalLink, LogOut, 
-    Camera, Video, Mic, FileText, Upload, Check, Pencil,
-    Briefcase, Link, Lightbulb, UserCircle
+    LayoutDashboard, 
+    FileText, 
+    BarChart, 
+    Lightbulb, 
+    Upload, 
+    X, 
+    Camera, 
+    Video as VideoIcon, 
+    Mic, 
+    Image as ImageIcon,
+    StopCircle,
+    RotateCcw,
+    Check,
+    MapPin,
+    Sparkles,
+    Bug,
+    ArrowLeft,
+    ShoppingBag
 } from 'lucide-vue-next'
 // ... (imports)
 
@@ -336,10 +551,7 @@ const fetchSuggestions = async () => {
     }
 }
 
-// Watch tab for fetch
-watch(currentTab, (val) => {
-    if (val === 'suggestions') fetchSuggestions()
-})
+
 
 // Optimize: Reuse formatter instance to avoid creation overhead in loops
 const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
@@ -356,18 +568,31 @@ definePageMeta({
 
 const { $storage, $db } = useNuxtApp()
 const { logout, user } = useAuth()
+const toast = useToast()
 const route = useRoute()
 const router = useRouter()
 
 // TABS
 const currentTab = ref('content') // 'content', 'media-kit'
 
+// Watch tab for fetch
+watch(currentTab, (val) => {
+    if (val === 'suggestions') fetchSuggestions()
+    if (val === 'media-kit') fetchMediaKit()
+})
+
 // --- CONTENT LOGIC ---
 const captureMode = ref(null)
 const postType = ref(null)
+const postSubtype = ref('status') // Default subtype for text
+const postFormat = ref(null) // 'image', 'video', 'audio', 'text' (subtype for random)
 const file = ref(null)
 const previewUrl = ref(null)
 const caption = ref('')
+const citation = ref('') // For quotes
+const title = ref('') // For stories
+const mood = ref('') // For status
+const theme = ref('sunset') // For motivation (sunset, ocean, forest, love, midnight)
 
 // Embed State
 const embedUrl = ref('')
@@ -389,7 +614,13 @@ onMounted(async () => {
             if (docSnap.exists()) {
                 const data = docSnap.data()
                 postType.value = data.type
+                postSubtype.value = data.subtype || 'status'
+                postFormat.value = data.format || data.type // Backwards compat
                 caption.value = data.caption || ''
+                citation.value = data.citation || ''
+                title.value = data.title || ''
+                mood.value = data.mood || ''
+                theme.value = data.theme || 'sunset'
                 isFree.value = data.isFree || false
                 
                 // Handle Previews based on type
@@ -404,7 +635,7 @@ onMounted(async () => {
                     previewUrl.value = data.mediaUrl
                 }
             } else {
-                alert('Post not found!')
+                toast.error('Post not found!')
                 router.push('/creator')
             }
         } catch (e) {
@@ -421,21 +652,51 @@ const selectType = (type) => {
     if (type === 'text') file.value = null
 }
 const handleCapture = ({ blob, url, type }) => {
-    const ext = type === 'audio' ? 'webm' : (type === 'video' ? 'webm' : 'jpg')
+    // Determine extension from MIME type
+    let ext = 'webm'
+    if (blob.type.includes('mp4')) {
+        ext = type === 'audio' ? 'm4a' : 'mp4'
+    } else if (blob.type.includes('webm')) {
+        ext = 'webm'
+    } else if (type === 'photo') {
+        ext = 'jpg'
+    }
+
     const fileName = `capture_${Date.now()}.${ext}`
     file.value = new File([blob], fileName, { type: blob.type })
     previewUrl.value = url
-    postType.value = type === 'photo' ? 'image' : type
+    // If we are in random mode, keep type as random, set format
+    if (postType.value === 'random') {
+        postFormat.value = type === 'photo' ? 'image' : type
+    } else {
+        postType.value = type === 'photo' ? 'image' : type
+    }
     captureMode.value = null
 }
+
+const startRandomDrop = () => {
+    postType.value = 'random'
+    // Trigger file input
+    document.querySelector('input[type="file"]').click()
+}
+
 const onFileSelected = (e) => {
     const selected = e.target.files[0]
     if (selected) {
         file.value = selected
         previewUrl.value = URL.createObjectURL(selected)
-        if (selected.type.startsWith('video/')) postType.value = 'video'
-        else if (selected.type.startsWith('audio/')) postType.value = 'audio'
-        else postType.value = 'image'
+        previewUrl.value = URL.createObjectURL(selected)
+        
+        // Determine format
+        let detectedFormat = 'image'
+        if (selected.type.startsWith('video/')) detectedFormat = 'video'
+        else if (selected.type.startsWith('audio/')) detectedFormat = 'audio'
+        
+        if (postType.value === 'random') {
+            postFormat.value = detectedFormat
+        } else {
+            postType.value = detectedFormat
+        }
     }
 }
 
@@ -467,13 +728,30 @@ const resetForm = () => {
     file.value = null
     previewUrl.value = null
     postType.value = null
+    postSubtype.value = 'status'
+    postFormat.value = null
     caption.value = ''
+    citation.value = ''
+    title.value = ''
+    mood.value = ''
+    theme.value = 'sunset'
     embedUrl.value = ''
     embedInput.value = ''
     isFree.value = false
     captureMode.value = null
     editingPostId.value = null
     router.replace('/creator') // Clear query param
+}
+
+const validateText = (text) => {
+    if (!text) return ''
+    // 1. Auto-capitalize first letter
+    let refined = text.charAt(0).toUpperCase() + text.slice(1)
+    
+    // 2. Ensure basic punctuation ending (optional, maybe too strict for social? Let's stick to capitalization for now)
+    // if (!/[.!?]$/.test(refined)) refined += '.'
+
+    return refined
 }
 
 const handleUpload = async () => {
@@ -494,8 +772,14 @@ const handleUpload = async () => {
         
         const payload = {
             mediaUrl: downloadURL,
-            type: embedUrl.value ? 'video' : postType.value,
-            caption: caption.value,
+            type: postType.value,
+            subtype: postType.value === 'text' ? postSubtype.value : null,
+            citation: postType.value === 'text' && postSubtype.value === 'quote' ? citation.value : null,
+            title: postType.value === 'text' && postSubtype.value === 'blog' ? title.value : null,
+            mood: postType.value === 'text' && postSubtype.value === 'status' ? mood.value : null,
+            theme: postType.value === 'text' && ['motivation', 'quote', 'status'].includes(postSubtype) ? theme.value : null,
+            format: postType.value === 'random' ? (embedUrl.value ? 'video' : postFormat.value) : null,
+            caption: postType.value === 'text' ? validateText(caption.value) : caption.value,
             isFree: isFree.value,
             updatedAt: serverTimestamp()
         }
@@ -503,20 +787,26 @@ const handleUpload = async () => {
         if (editingPostId.value) {
             // UPDATE
             await updateDoc(doc($db, 'posts', editingPostId.value), payload)
-            alert('Post updated successfully!')
+            toast.success('Post updated successfully!', {
+                label: 'View Post',
+                onClick: () => router.push(`/feed?highlight=${editingPostId.value}`)
+            })
         } else {
              // CREATE
-             await addDoc(collection($db, 'posts'), {
+             const docRef = await addDoc(collection($db, 'posts'), {
                 ...payload,
                 createdAt: serverTimestamp()
             })
-            alert('Post created successfully!')
+            toast.success('Post created successfully!', {
+                label: 'View Post',
+                onClick: () => router.push(`/feed?highlight=${docRef.id}`)
+            })
         }
         
         resetForm()
     } catch (e) {
         console.error(e)
-        alert('Operation failed: ' + e.message)
+        toast.error('Operation failed: ' + e.message)
     } finally {
         uploading.value = false
     }
@@ -525,28 +815,136 @@ const handleUpload = async () => {
 // --- MEDIA KIT LOGIC ---
 const mediaKit = ref({
     bio: '',
-    stats: {
-        followers: '150K+',
-        engagement: '8.5%',
-        impressions: '2M+',
-        rank: 'Top 1%'
+    location: '',
+    photoUrl: '',
+    platforms: {
+        tiktok: {
+            followers_total: '',
+            followers_net: '',
+            views_post: '',
+            views_profile: '',
+            likes: '',
+            comments: '',
+            shares: '',
+            viewers_total: '',
+            viewers_new: '',
+            demographics: ''
+        }
     }
 })
+
+const platformSchemas = {
+    tiktok: [
+        { key: 'followers_total', label: 'Total Followers' },
+        { key: 'followers_net', label: 'Net Followers' },
+        { key: 'views_post', label: 'Post Views' },
+        { key: 'views_profile', label: 'Profile Views' },
+        { key: 'likes', label: 'Likes' },
+        { key: 'comments', label: 'Comments' },
+        { key: 'shares', label: 'Shares' },
+        { key: 'viewers_total', label: 'Total Viewers' },
+        { key: 'viewers_new', label: 'New Viewers' },
+        { key: 'demographics', label: 'Avg Age & Gender' }
+    ]
+}
+
+const activePlatform = ref('tiktok')
+
+// Gallery Picker Logic
+const showGalleryPicker = ref(false)
+const galleryImages = ref([])
+const loadingGallery = ref(false)
+
+const openGalleryPicker = async () => {
+    showGalleryPicker.value = true
+    loadingGallery.value = true
+    try {
+        // Fetch recent image posts
+        const q = query(
+            collection($db, 'posts'), 
+            where('type', '==', 'image'), 
+            orderBy('createdAt', 'desc'), 
+            limit(20)
+        )
+        const snapshot = await getDocs(q)
+        galleryImages.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    } catch (e) {
+        console.error("Error fetching gallery:", e)
+    } finally {
+        loadingGallery.value = false
+    }
+}
+
+const selectGalleryImage = (url) => {
+    mediaKit.value.photoUrl = url
+    showGalleryPicker.value = false
+}
+
 const saveMediaKit = async () => {
     uploading.value = true
     try {
         await addDoc(collection($db, 'media_kits'), {
             bio: mediaKit.value.bio,
-            stats: mediaKit.value.stats,
+            location: mediaKit.value.location || '',
+            photoUrl: mediaKit.value.photoUrl || '',
+            platforms: mediaKit.value.platforms,
             createdAt: serverTimestamp(),
             createdBy: user.value?.uid
         })
-        alert('Media Kit updated!')
+        toast.success('Media Kit updated!')
     } catch (e) {
         console.error(e)
-        alert('Error saving Media Kit: ' + e.message)
+        toast.error('Error saving Media Kit: ' + e.message)
     } finally {
         uploading.value = false
+    }
+}
+
+// Fetch existing Media Kit to populate form
+const fetchMediaKit = async () => {
+    try {
+        const q = query(collection($db, 'media_kits'), orderBy('createdAt', 'desc'), limit(1))
+        const snapshot = await getDocs(q)
+        if (!snapshot.empty) {
+            const data = snapshot.docs[0].data()
+            mediaKit.value = {
+                bio: data.bio || '',
+                location: data.location || '',
+                photoUrl: data.photoUrl || '',
+                platforms: {
+                    ...mediaKit.value.platforms,
+                    ...(data.platforms || {})
+                },
+                updatedAt: data.updatedAt || data.createdAt
+            }
+        }
+    } catch (e) {
+        console.error('Error fetching existing media kit:', e)
+    }
+}
+
+onMounted(() => {
+    fetchMediaKit()
+})
+
+// Dev Task Logic
+const showDevTaskModal = ref(false)
+const devTask = ref({ title: '', description: '', type: 'bug', priority: 'medium' })
+
+const submitDevTask = async () => {
+    try {
+        await addDoc(collection($db, 'tasks'), {
+            ...devTask.value,
+            status: 'todo',
+            createdBy: user.value.uid,
+            createdAt: serverTimestamp()
+        })
+        toast.success('Task submitted to Dev Board')
+        showDevTaskModal.value = false
+        devTask.value = { title: '', description: '', type: 'bug', priority: 'medium' }
+    } catch (e) {
+        console.error(e)
+        toast.error('Failed to submit task')
     }
 }
 </script>

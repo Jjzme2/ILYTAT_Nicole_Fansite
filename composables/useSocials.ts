@@ -51,6 +51,7 @@ export const useSocials = () => {
         processSocial('twitter', 'X (Twitter)', 'hover:border-blue-400')
         processSocial('email', 'Email', 'hover:border-gray-800')
         processSocial('tiktok', 'TikTok', 'hover:border-black')
+        processSocial('youtube', 'YouTube', 'hover:border-red-600')
 
         return links
     })

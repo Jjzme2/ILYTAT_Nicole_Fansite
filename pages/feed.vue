@@ -9,10 +9,10 @@
             <NuxtLink to="/hub" class="text-xs font-bold uppercase tracking-widest border border-text px-3 py-1.5 rounded hover:bg-text hover:text-background transition">
                 The Hub
             </NuxtLink>
-            <NuxtLink v-if="role === 'creator'" to="/creator" class="text-sm font-bold border border-text px-3 py-1.5 rounded-full hover:bg-text hover:text-background transition">
+            <NuxtLink v-if="isCreator" to="/creator" class="text-sm font-bold border border-text px-3 py-1.5 rounded-full hover:bg-text hover:text-background transition">
                 Studio
             </NuxtLink>
-            <NuxtLink v-if="role === 'admin'" to="/admin" class="text-sm font-bold border border-text px-3 py-1.5 rounded-full hover:bg-text hover:text-background transition">
+            <NuxtLink v-if="isAdmin" to="/admin" class="text-sm font-bold border border-text px-3 py-1.5 rounded-full hover:bg-text hover:text-background transition">
                Office
             </NuxtLink>
             <NuxtLink to="/profile" class="text-sm font-bold border border-text px-3 py-1.5 rounded-full hover:bg-text hover:text-background transition">
@@ -101,7 +101,8 @@
         <article 
             v-for="post in posts" 
             :key="post.id" 
-            class="bg-surface rounded-2xl shadow-sm overflow-hidden border border-border"
+            :id="'post-' + post.id"
+            class="bg-surface rounded-2xl shadow-sm overflow-hidden border border-border transition-all duration-500"
         >
             <!-- Header -->
             <div class="p-4 border-b border-gray-50 flex items-center gap-3">
@@ -128,7 +129,7 @@
                         <Lock class="w-4 h-4 text-muted" />
                     </div>
                     <NuxtLink 
-                        v-if="role === 'creator'"
+                        v-if="isCreator"
                         :to="'/creator?edit=' + post.id"
                         class="p-2 text-muted hover:text-text transition rounded-full hover:bg-background"
                         title="Edit Post"
@@ -136,7 +137,7 @@
                         <Edit2 class="w-4 h-4" />
                     </NuxtLink>
                     <button 
-                        v-if="role === 'admin' || role === 'creator'"
+                        v-if="isAdmin"
                         @click="deletePost(post.id)"
                         class="p-2 text-muted hover:text-red-500 transition rounded-full hover:bg-red-50"
                         title="Delete Post"
@@ -335,7 +336,7 @@
                             <div class="flex items-center gap-2">
                                 <span class="text-[10px] text-muted">{{ formatDate(comment.createdAt) }}</span>
                                 <button 
-                                    v-if="role === 'creator' || role === 'admin' || comment.userId === user?.uid"
+                                    v-if="isAdmin || comment.userId === user?.uid"
                                     @click="deleteComment(post.id, comment.id)"
                                     class="text-muted/50 hover:text-red-500 transition"
                                     title="Delete Comment"
@@ -413,7 +414,7 @@ definePageMeta({
     middleware: 'auth'
 })
 
-const { user, isSubscriber, role, logout, refreshUser, loading } = useAuth()
+const { user, isSubscriber, isAdmin, isCreator, logout, refreshUser, loading } = useAuth()
 const { $db } = useNuxtApp()
 const route = useRoute()
 const router = useRouter()
@@ -661,6 +662,18 @@ const fetchPosts = async (isLoadMore = false) => {
     } finally {
         loadingPosts.value = false
         isFetchingMore.value = false
+    }
+    
+    // Check highlight after fetch
+    if (!isLoadMore && route.query.highlight) {
+        setTimeout(() => {
+            const el = document.getElementById('post-' + route.query.highlight)
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                el.classList.add('ring-2', 'ring-primary', 'ring-offset-2')
+                setTimeout(() => el.classList.remove('ring-2', 'ring-primary', 'ring-offset-2'), 3000)
+            }
+        }, 500)
     }
 }
 

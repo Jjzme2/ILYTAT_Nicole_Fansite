@@ -32,6 +32,15 @@
                 <Briefcase class="w-5 h-5" />
                 Business
             </button>
+             <button 
+                v-if="isAdmin"
+                @click="switchSection('requests')"
+                :class="['flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition', activeSection === 'requests' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-text']"
+            >
+                <ClipboardCheck class="w-5 h-5" />
+                Requests
+                <span v-if="pendingRequestsCount > 0" class="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 rounded-full">{{ pendingRequestsCount }}</span>
+            </button>
             <button 
                 @click="switchSection('engineering')"
                 :class="['flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full transition', activeSection === 'engineering' ? 'bg-primary/10 text-primary' : 'text-muted hover:text-text']"
@@ -177,6 +186,7 @@
             <!-- Sub-Nav -->
             <div class="flex gap-1 mb-8 bg-surface p-1 rounded-xl border border-border inline-flex">
                 <button @click="activeSubTab = 'users'" :class="['px-6 py-2 rounded-lg text-sm font-bold transition', activeSubTab === 'users' ? 'bg-background shadow-sm text-text' : 'text-muted hover:text-text hover:bg-background/50']">Users</button>
+                <button @click="activeSubTab = 'suggestions'" :class="['px-6 py-2 rounded-lg text-sm font-bold transition', activeSubTab === 'suggestions' ? 'bg-background shadow-sm text-text' : 'text-muted hover:text-text hover:bg-background/50']">Suggestions</button>
                 <button v-if="role === 'creator'" @click="activeSubTab = 'inbox'" :class="['px-6 py-2 rounded-lg text-sm font-bold transition', activeSubTab === 'inbox' ? 'bg-background shadow-sm text-text' : 'text-muted hover:text-text hover:bg-background/50']">Inbox</button>
                 <button @click="activeSubTab = 'broadcasts'" :class="['px-6 py-2 rounded-lg text-sm font-bold transition', activeSubTab === 'broadcasts' ? 'bg-background shadow-sm text-text' : 'text-muted hover:text-text hover:bg-background/50']">Broadcasts</button>
             </div>
@@ -199,8 +209,10 @@
                     <button @click="fetchUsers" class="px-4 py-2 bg-surface border border-border rounded-lg hover:border-primary text-sm font-bold text-text">Refresh</button>
                 </header>
 
+
+
                 <!-- Users Table with Notify Action -->
-                <div class="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
+                <div v-if="activeSubTab === 'users'" class="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
                     <table class="w-full text-left">
                         <thead class="bg-surface/50 border-b border-border">
                             <tr>
@@ -303,7 +315,62 @@
                 </div>
             </div>
 
-            <!-- INBOX TAB -->
+            <!-- SUGGESTIONS TAB -->
+            <div v-if="activeSubTab === 'suggestions'">
+                <header class="mb-8 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-serif text-text mb-2">Member Suggestions</h2>
+                        <p class="text-muted">Review ideas from subscribers. Flag important ones or reply.</p>
+                    </div>
+                    <button @click="fetchSuggestions" class="px-4 py-2 bg-surface border border-border rounded-lg hover:border-primary text-sm font-bold text-text">Refresh</button>
+                </header>
+                
+                <div class="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
+                        <table class="w-full text-left">
+                        <thead class="bg-surface/50 border-b border-border">
+                            <tr>
+                                <th class="p-4 text-xs font-bold text-text opacity-70 uppercase tracking-wider">User</th>
+                                <th class="p-4 text-xs font-bold text-text opacity-70 uppercase tracking-wider">Type</th>
+                                <th class="p-4 text-xs font-bold text-text opacity-70 uppercase tracking-wider w-1/3">Content</th>
+                                <th class="p-4 text-xs font-bold text-text opacity-70 uppercase tracking-wider">Date</th>
+                                <th class="p-4 text-xs font-bold text-text opacity-70 uppercase tracking-wider text-right">Actions</th>
+                            </tr>
+                        </thead>
+                            <tbody class="divide-y divide-border">
+                            <tr v-if="suggestions.length === 0">
+                                <td colspan="5" class="p-8 text-center text-muted">No suggestions found.</td>
+                            </tr>
+                            <tr v-for="s in suggestions" :key="s.id" class="hover:bg-background/50 transition">
+                                <td class="p-4 text-sm font-medium">
+                                        <div>{{ s.userEmail?.split('@')[0] }}</div>
+                                        <div class="text-[10px] text-muted font-mono">{{ s.userId }}</div>
+                                </td>
+                                <td class="p-4 text-xs badge"><span class="bg-secondary/10 text-secondary px-2 py-1 rounded font-bold uppercase">{{ s.type }}</span></td>
+                                <td class="p-4 text-sm text-text leading-relaxed">{{ s.content }}</td>
+                                <td class="p-4 text-xs text-muted">{{ s.createdAt?.toDate ? s.createdAt.toDate().toLocaleDateString() : 'Just now' }}</td>
+                                <td class="p-4 text-right flex justify-end gap-2">
+                                    <button 
+                                        @click="toggleFlag(s)" 
+                                        class="p-2 rounded-lg transition"
+                                        :class="s.isFlagged ? 'bg-red-500 text-white shadow-lg shadow-red-500/30' : 'bg-surface hover:bg-red-50 text-muted hover:text-red-500'"
+                                        title="Flag for attention"
+                                    >
+                                        <Flag class="w-4 h-4" :fill="s.isFlagged ? 'currentColor' : 'none'" />
+                                    </button>
+                                    <button 
+                                        @click="replyToSuggestion(s)" 
+                                        class="p-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg transition"
+                                        title="Send Notification Reply"
+                                    >
+                                        <Reply class="w-4 h-4" />
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <div v-if="activeSubTab === 'inbox'">
                 <header class="mb-6">
                     <h2 class="text-2xl font-serif text-text">Message Inbox</h2>
@@ -469,6 +536,12 @@
                             <div>
                                 <label class="block text-xs font-bold text-muted uppercase mb-1">Action URL (Optional)</label>
                                 <input v-model="newNotification.actionUrl" type="text" placeholder="/settings" class="w-full bg-background border border-border rounded-xl p-3 text-sm focus:border-indigo-500 outline-none">
+                                <div class="mt-2 flex flex-wrap gap-2">
+                                    <button type="button" @click="newNotification.actionUrl = '/legal/content-policy'" class="text-[10px] px-2 py-1 bg-surface border border-border rounded-lg hover:border-primary transition text-muted hover:text-primary">Content Policy</button>
+                                    <button type="button" @click="newNotification.actionUrl = '/legal/privacy-policy'" class="text-[10px] px-2 py-1 bg-surface border border-border rounded-lg hover:border-primary transition text-muted hover:text-primary">Privacy</button>
+                                    <button type="button" @click="newNotification.actionUrl = '/feed'" class="text-[10px] px-2 py-1 bg-surface border border-border rounded-lg hover:border-primary transition text-muted hover:text-primary">Feed</button>
+                                    <button type="button" @click="newNotification.actionUrl = '/profile'" class="text-[10px] px-2 py-1 bg-surface border border-border rounded-lg hover:border-primary transition text-muted hover:text-primary">Profile</button>
+                                </div>
                             </div>
 
                             <div>
@@ -763,11 +836,68 @@
         </div>
 
         <!-- ENGINEERING SECTION -->
+        <!-- REQUESTS SECTION -->
+        <div v-if="activeSection === 'requests'" class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <header class="mb-8 flex justify-between items-end">
+                <div>
+                    <h2 class="text-3xl font-bold font-serif mb-2">Profile Change Requests</h2>
+                    <p class="text-muted">Review and approve user profile updates.</p>
+                </div>
+                <button @click="fetchRequests" class="p-2 border border-border rounded-lg hover:border-primary transition"><RefreshCw class="w-4 h-4" /></button>
+            </header>
+
+            <div class="bg-surface border border-border rounded-2xl overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-background border-b border-border text-muted font-bold uppercase text-xs">
+                        <tr>
+                            <th class="p-4">User</th>
+                            <th class="p-4">Field</th>
+                            <th class="p-4">Requested Value</th>
+                            <th class="p-4">Date</th>
+                            <th class="p-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                        <tr v-if="requestsLoading" key="loading">
+                            <td colspan="5" class="p-8 text-center text-muted">
+                                <div class="flex items-center justify-center gap-2">
+                                    <Loader2 class="w-5 h-5 animate-spin" />
+                                    <span>Loading requests...</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-for="req in requests" v-else-if="requests.length > 0" :key="req.id" class="hover:bg-background/50 transition">
+                            <td class="p-4">
+                                <div class="font-bold">{{ req.userEmail }}</div>
+                                <div class="text-xs text-muted font-mono">{{ req.userId }}</div>
+                            </td>
+                            <td class="p-4 capitalize badge"><span class="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-bold">{{ req.field }}</span></td>
+                            <td class="p-4 font-mono">{{ req.value }}</td>
+                            <td class="p-4 text-muted">{{ req.createdAt?.toDate ? req.createdAt.toDate().toLocaleDateString() : 'Just now' }}</td>
+                            <td class="p-4 text-right flex justify-end gap-2">
+                                <button @click="handleRequestAction(req, 'approve')" class="p-2 bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white rounded-lg transition" title="Approve">
+                                    <Check class="w-4 h-4" />
+                                </button>
+                                <button @click="handleRequestAction(req, 'deny')" class="p-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition" title="Deny">
+                                    <XCircle class="w-4 h-4" />
+                                </button>
+                            </td>
+                        </tr>
+                        <tr v-else-if="!requestsLoading && requests.length === 0" key="empty">
+                            <td colspan="5" class="p-8 text-center text-muted italic">No pending requests.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ENGINEERING SECTION -->
         <div v-if="activeSection === 'engineering'" class="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <!-- Sub-Nav -->
             <div class="flex gap-1 mb-8 bg-surface p-1 rounded-xl border border-border inline-flex">
                 <button @click="activeSubTab = 'tasks'" :class="['px-6 py-2 rounded-lg text-sm font-bold transition', activeSubTab === 'tasks' ? 'bg-background shadow-sm text-text' : 'text-muted hover:text-text hover:bg-background/50']">Dev Board</button>
                 <button v-if="isDev" @click="activeSubTab = 'tools'" :class="['px-6 py-2 rounded-lg text-sm font-bold transition', activeSubTab === 'tools' ? 'bg-background shadow-sm text-text' : 'text-muted hover:text-text hover:bg-background/50']">Dev Tools</button>
+                <button v-if="isDev" @click="activeSubTab = 'tests'" :class="['px-6 py-2 rounded-lg text-sm font-bold transition', activeSubTab === 'tests' ? 'bg-background shadow-sm text-text' : 'text-muted hover:text-text hover:bg-background/50']">System Tests</button>
             </div>
 
             <div v-if="activeSubTab === 'tasks'">
@@ -944,8 +1074,65 @@
 
 
             </div>
-        </div>
 
+            <!-- TESTS TAB -->
+            <div v-if="isDev && activeSubTab === 'tests'" class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="bg-surface border border-border rounded-2xl p-6 shadow-sm">
+                    <header class="flex justify-between items-center mb-6">
+                         <div class="flex items-center gap-3">
+                            <div class="p-2 bg-blue-100 rounded-lg">
+                                <Activity class="w-6 h-6 text-blue-600" />
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg text-text">System Diagnostics</h3>
+                                <p class="text-xs text-muted">Run comprehensive tests to verify system integrity.</p>
+                            </div>
+                        </div>
+                        <button 
+                            @click="runAllTests" 
+                            :disabled="testsRunning"
+                            class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition flex items-center gap-2 disabled:opacity-50 shadow-lg shadow-blue-500/20"
+                        >
+                            <Loader2 v-if="testsRunning" class="w-5 h-5 animate-spin" />
+                            <Play v-else class="w-5 h-5" />
+                            {{ testsRunning ? 'Running Tests...' : 'Run All Tests' }}
+                        </button>
+                    </header>
+
+                    <div class="space-y-4">
+                        <div v-for="test in testRegistry" :key="test.id" class="border border-border rounded-xl p-4 flex items-center justify-between" :class="gettestStatusClass(test.status)">
+                            <div class="flex items-center gap-4">
+                                <div class="w-2 h-12 rounded-full" :class="getStatusIndicator(test.status)"></div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-text">{{ test.name }}</h4>
+                                    <p class="text-xs text-muted">{{ test.description }}</p>
+                                    <p v-if="test.result" class="text-xs mt-1 font-mono" :class="test.status === 'pass' ? 'text-green-600' : 'text-red-500'">
+                                        {{ test.result }}
+                                    </p>
+                                </div>
+                            </div>
+                            <button 
+                                v-if="test.status !== 'running'"
+                                @click="runSingleTest(test.id)" 
+                                class="p-2 hover:bg-background rounded-lg text-muted hover:text-primary transition"
+                                title="Run this test"
+                            >
+                                <Play class="w-4 h-4" />
+                            </button>
+                            <Loader2 v-else class="w-4 h-4 animate-spin text-blue-500" />
+                        </div>
+                    </div>
+                    
+                    <div v-if="lastTestRun" class="mt-6 pt-6 border-t border-border flex justify-between items-center text-xs text-muted">
+                        <span>Last Run: <span class="font-mono text-text">{{ lastTestRun }}</span></span>
+                        <div class="flex gap-4">
+                             <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500"></span> {{ testRegistry.filter(t => t.status === 'pass').length }} Passed</span>
+                             <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> {{ testRegistry.filter(t => t.status === 'fail').length }} Failed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
   </div>
 </template>
@@ -959,7 +1146,7 @@ import {
     LayoutDashboard, ExternalLink, LogOut, Check,
     Users, Briefcase, Plus, User, Zap, Bug, Hammer, Trash2, Clipboard, Archive,
     Rocket, Flame, Github, CreditCard, BarChart3, Triangle, Globe, ArrowLeft,
-    Wrench, Mail, FileText, Server, RefreshCw, CheckCircle, XCircle, Loader2, MessageCircle, ShoppingBag, Bell, Search, Palette, ToggleLeft
+    Wrench, Mail, FileText, Server, RefreshCw, CheckCircle, XCircle, Loader2, MessageCircle, ShoppingBag, Bell, Search, Palette, ToggleLeft, ClipboardCheck, Flag, Reply, Activity, Play, X
 } from 'lucide-vue-next'
 import { generateMarkdown } from '~/utils/taskMarkdown'
 
@@ -1605,13 +1792,232 @@ const formatDate = (timestamp) => {
     return dateFormatter.format(date)
 }
 
+// Requests Logic
+const requests = ref([])
+const requestsLoading = ref(false)
+const pendingRequestsCount = ref(0) // Could implement realtime listener later
+
+const fetchRequests = async () => {
+    requestsLoading.value = true
+    try {
+        const q = query(collection($db, 'profile_update_requests'), where('status', '==', 'pending'), orderBy('createdAt', 'desc'), limit(50))
+        const snap = await getDocs(q)
+        requests.value = snap.docs.map(d => ({id: d.id, ...d.data()}))
+        pendingRequestsCount.value = requests.value.length
+    } catch(e) {
+        console.error("Fetch requests failed:", e)
+    } finally {
+        requestsLoading.value = false
+    }
+}
+
+const handleRequestAction = async (req, action) => {
+    try {
+        if (action === 'approve') {
+             // Update User Profile
+             await setDoc(doc($db, 'users', req.userId), {
+                [req.field]: req.value,
+                updatedAt: serverTimestamp()
+            }, { merge: true })
+            
+            // Mark Request Approved
+            await updateDoc(doc($db, 'profile_update_requests', req.id), { status: 'approved' })
+            
+            // Notify User
+            await addDoc(collection($db, `users/${req.userId}/notifications`), {
+                title: 'Profile Update Approved',
+                message: `Your request to update your ${req.field === 'fullName' ? 'Full Name' : 'Birthday'} has been approved.`,
+                type: 'success',
+                read: false,
+                createdAt: serverTimestamp()
+            })
+
+             toast.success('Request Approved & Profile Updated')
+        } else {
+            // Mark Request Denied
+            await updateDoc(doc($db, 'profile_update_requests', req.id), { status: 'denied' })
+            
+            // Notify User
+            await addDoc(collection($db, `users/${req.userId}/notifications`), {
+                title: 'update Request Denied',
+                message: `Your request to update your ${req.field === 'fullName' ? 'Full Name' : 'Birthday'} was denied. Please ensure the information is accurate.`,
+                type: 'error',
+                read: false,
+                createdAt: serverTimestamp()
+            })
+
+             toast.success('Request Denied')
+        }
+        fetchRequests() // Refresh list
+    } catch(e) { 
+        console.error(e)
+        toast.error('Action Failed: ' + e.message) 
+    }
+}
+
+// Suggestions Logic
+const suggestions = ref([])
+const fetchSuggestions = async () => {
+    try {
+        const q = query(collection($db, 'suggestions'), limit(50))
+        const snap = await getDocs(q)
+        console.log(`[Admin] Fetched ${snap.size} suggestions`)
+        suggestions.value = snap.docs.map(d => ({id: d.id, ...d.data()}))
+    } catch(e) { 
+        console.error('[Admin] Fetch suggestions failed:', e)
+        toast.error('Failed to load suggestions')
+    }
+}
+
+const toggleFlag = async (s) => {
+    try {
+        await updateDoc(doc($db, 'suggestions', s.id), {
+            isFlagged: !s.isFlagged
+        })
+        s.isFlagged = !s.isFlagged
+        toast.success(s.isFlagged ? 'Flagged' : 'Unflagged')
+    } catch(e) { console.error(e); toast.error('Update failed') }
+}
+
+const replyToSuggestion = (s) => {
+    initiateNotification({
+        id: s.userId,
+        email: s.userEmail
+    })
+    // Pre-fill message with context
+    newNotification.value.message = `Regarding your suggestion: "${s.content}"\n\n`
+}
+
+// --- TEST SUITE LOGIC ---
+
+
+// --- TEST SUITE LOGIC ---
+const testsRunning = ref(false)
+const lastTestRun = ref(null)
+
+const testRegistry = ref([
+    { 
+        id: 'firebase_conn', 
+        name: 'Firebase Connection', 
+        description: 'Verify connection to Firestore database', 
+        status: 'idle', // idle, running, pass, fail
+        result: '',
+        run: async () => {
+            if (!$db) throw new Error('$db instance is missing')
+            // Try a lightweight read
+            await getDocs(query(collection($db, 'users'), limit(1)))
+            return 'Connected successfully'
+        }
+    },
+    {
+        id: 'auth_state',
+        name: 'Authentication State',
+        description: 'Verify current admin session',
+        status: 'idle',
+        result: '',
+        run: async () => {
+            if (!user.value) throw new Error('No user logged in')
+            if (!isAdmin.value && !isDev.value) throw new Error('User lacks Admin/Dev permissions')
+            return `Logged in as ${user.value.email} (UID: ${user.value.uid.slice(0,5)}...)`
+        }
+    },
+    {
+        id: 'env_config',
+        name: 'Environment Config',
+        description: 'Check critical runtime configuration',
+        status: 'idle',
+        result: '',
+        run: async () => {
+            const config = useAppConfig()
+            if (!config) throw new Error('App config missing')
+            // Check for critical keys (example)
+            const required = ['firebase', 'theme'] // Add actual keys you rely on
+            const missing = required.filter(k => !config[k] && !config.public?.[k])
+            if (missing.length) throw new Error(`Missing keys: ${missing.join(', ')}`)
+            return 'Configuration loaded'
+        }
+    },
+    {
+        id: 'network_check',
+        name: 'Network Connectivity',
+        description: 'Ping external service (Google)',
+        status: 'idle',
+        result: '',
+        run: async () => {
+             const start = Date.now()
+             await fetch('https://www.google.com/favicon.ico', { mode: 'no-cors' })
+             const duration = Date.now() - start
+             return `Network reachable (${duration}ms)`
+        }
+    }
+])
+
+const gettestStatusClass = (status) => {
+    switch(status) {
+        case 'pass': return 'bg-green-50 border-green-200'
+        case 'fail': return 'bg-red-50 border-red-200'
+        case 'running': return 'bg-blue-50 border-blue-200'
+        default: return 'bg-surface'
+    }
+}
+
+const getStatusIndicator = (status) => {
+    switch(status) {
+        case 'pass': return 'bg-green-500'
+        case 'fail': return 'bg-red-500'
+        case 'running': return 'bg-blue-500 animate-pulse'
+        default: return 'bg-gray-200'
+    }
+}
+
+const runSingleTest = async (testId) => {
+    const test = testRegistry.value.find(t => t.id === testId)
+    if (!test) return
+
+    test.status = 'running'
+    test.result = 'Running...'
+
+    try {
+        const resultMsg = await test.run()
+        test.status = 'pass'
+        test.result = resultMsg
+    } catch (e) {
+        test.status = 'fail'
+        test.result = e.message
+        console.error(`Test ${test.name} failed:`, e)
+    }
+}
+
+const runAllTests = async () => {
+    testsRunning.value = true
+    lastTestRun.value = new Date().toLocaleString()
+    
+    // Reset all
+    testRegistry.value.forEach(t => {
+        t.status = 'idle'
+        t.result = ''
+    })
+
+    // Run sequentially
+    for (const test of testRegistry.value) {
+        await runSingleTest(test.id)
+    }
+    
+    testsRunning.value = false
+    toast.success('Diagnostic suite completed')
+}
+
 // Watch tab changes to load data
 watch(activeSubTab, (tab) => {
     if (tab === 'users') fetchUsers()
     if (tab === 'deals') fetchDeals()
     if (tab === 'giveaways') fetchCampaigns()
+    if (tab === 'suggestions') fetchSuggestions()
 }, { immediate: true })
+
+
 </script>
+
 
 <style scoped>
 /* Resetting style block to fix Vite HMR error */

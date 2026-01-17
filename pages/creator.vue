@@ -509,7 +509,7 @@
 
 <script setup>
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, setDoc, getDoc, updateDoc, limit, where } from 'firebase/firestore'
 import { 
     LayoutDashboard, 
     FileText, 
@@ -553,10 +553,13 @@ const fetchSuggestions = async () => {
 
 
 
+// Optimize: Reuse formatter instance to avoid creation overhead in loops
+const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
+
 const formatDate = (timestamp) => {
     if (!timestamp) return ''
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
-    return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(date)
+    return dateFormatter.format(date)
 }
 
 definePageMeta({

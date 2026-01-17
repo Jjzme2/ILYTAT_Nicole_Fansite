@@ -8,6 +8,10 @@ service cloud.firestore {
       return request.auth != null;
     }
     
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
     // Helper: Role Checks (Safe & Multi-role)
     function getUserData() {
         return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
@@ -20,8 +24,10 @@ service cloud.firestore {
     function hasRole(roleName) {
         let data = getUserData();
         // Check 'roles' array (new) OR 'role' string (legacy)
-        return (data.keys().hasAny(['roles']) && roleName in data.roles) 
-            || (data.keys().hasAny(['role']) && data.role == roleName);
+        let roles = data.get('roles', []);
+        let role = data.get('role', null);
+        return (roles is list && roles.hasAny([roleName])) 
+            || (role == roleName);
     }
     
     // Management Access (Admin OR Creator)
@@ -91,7 +97,7 @@ service cloud.firestore {
         // Note: For list queries, the query must filter by userId
         allow read: if canManage() || (isAuthenticated() && resource.data.userId == request.auth.uid);
         
-        allow delete: if canManage();
+        allow update, delete: if canManage();
     }
 
     // Developer Tasks (Legacy)
@@ -179,6 +185,13 @@ service cloud.firestore {
     // Matches ANY document in a 'comments' collection
     match /{path=**}/comments/{commentId} {
         allow read: if true;
+    }
+
+    // Profile Update Requests
+    match /profile_update_requests/{requestId} {
+        allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+        allow read: if canManage() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+        allow update: if canManage();
     }
   }
 }

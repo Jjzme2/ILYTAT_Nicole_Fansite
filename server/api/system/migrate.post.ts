@@ -2,6 +2,14 @@ import { useFirebaseAdmin } from '../../utils/firebaseAdmin'
 import { logger } from '../../utils/logger'
 
 export default defineEventHandler(async (event) => {
+    const config = useRuntimeConfig()
+    const secret = getHeader(event, 'x-admin-secret')
+
+    if (!config.adminSecret || secret !== config.adminSecret) {
+        logger.warn('Unauthorized migration attempt')
+        throw createError({ statusCode: 401, message: 'Unauthorized' })
+    }
+
     const { db } = useFirebaseAdmin()
     const query = getQuery(event)
     const adminEmail = query.admin_email as string

@@ -29,6 +29,7 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "vitest": "^4.0.17"
     "@types/nodemailer": "^7.0.5"
   }
 }

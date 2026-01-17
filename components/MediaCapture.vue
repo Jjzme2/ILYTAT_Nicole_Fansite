@@ -9,7 +9,12 @@
                 <span v-if="mode === 'video'">🎥 Record Video</span>
                 <span v-if="mode === 'audio'">🎙️ Record Audio</span>
             </h3>
-            <button @click="$emit('cancel')" class="text-gray-400 hover:text-white">
+            <button
+                @click="$emit('cancel')"
+                class="text-gray-400 hover:text-white"
+                aria-label="Close"
+                title="Close"
+            >
                 <X class="w-6 h-6" />
             </button>
         </div>
@@ -57,6 +62,8 @@
                     v-if="mode === 'photo'" 
                     @click="takePhoto"
                     class="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center hover:bg-white/10 transition"
+                    aria-label="Take photo"
+                    title="Take photo"
                 >
                     <div class="w-12 h-12 bg-white rounded-full"></div>
                 </button>
@@ -67,6 +74,8 @@
                     @click="toggleRecording"
                     class="w-16 h-16 rounded-full border-4 flex items-center justify-center transition"
                     :class="isRecording ? 'border-red-500' : 'border-white'"
+                    :aria-label="isRecording ? 'Stop recording' : 'Start recording'"
+                    :title="isRecording ? 'Stop recording' : 'Start recording'"
                 >
                     <div 
                         class="rounded transition-all duration-300"

@@ -88,16 +88,19 @@
                     </div>
 
                     <!-- Empty State -->
-                    <div v-else-if="notifications.length === 0" class="p-8 text-center">
+                    <div v-else-if="unreadNotifications.length === 0" class="p-8 text-center">
                         <BellOff class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                        <p class="text-gray-500 dark:text-gray-400 font-medium">No notifications yet</p>
-                        <p class="text-gray-400 dark:text-gray-500 text-sm mt-1">You'll see updates here when something happens</p>
+                        <p class="text-gray-500 dark:text-gray-400 font-medium">All caught up!</p>
+                        <p class="text-gray-400 dark:text-gray-500 text-sm mt-1">Check the inbox for older messages.</p>
+                        <NuxtLink to="/notifications" @click="isOpen = false" class="inline-block mt-4 text-primary text-sm font-bold hover:underline">
+                            View History
+                        </NuxtLink>
                     </div>
 
                     <!-- Notification List -->
                     <div v-else class="divide-y divide-gray-100 dark:divide-gray-800">
                         <div 
-                            v-for="notif in notifications" 
+                            v-for="notif in unreadNotifications" 
                             :key="notif.id"
                             @click="handleNotificationClick(notif)"
                             class="notification-item p-4 cursor-pointer transition-all duration-200"
@@ -153,6 +156,13 @@
                             </div>
                         </div>
                     </div>
+                        </div>
+
+
+                <div class="p-3 bg-gray-50 dark:bg-gray-800/50 text-center border-t border-gray-200 dark:border-gray-700">
+                    <NuxtLink to="/notifications" @click="isOpen = false" class="text-xs font-bold text-primary hover:underline">
+                        View All Notifications
+                    </NuxtLink>
                 </div>
 
                 <!-- Footer with debug toggle -->
@@ -198,7 +208,9 @@ onClickOutside(panelRef, () => {
     isOpen.value = false
 })
 
-const unreadCount = computed(() => notifications.value.filter(n => !n.read).length)
+
+const unreadNotifications = computed(() => notifications.value.filter(n => !n.read))
+const unreadCount = computed(() => unreadNotifications.value.length)
 
 const togglePanel = () => {
     isOpen.value = !isOpen.value

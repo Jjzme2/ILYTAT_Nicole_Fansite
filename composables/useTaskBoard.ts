@@ -38,14 +38,35 @@ export const useTaskBoard = () => {
             // Need to manually import firebase functions if auto-import isn't reliable
             // But based on previous files, they are imported from 'firebase/firestore'
             // We will dynamically import to avoid top-level issues if SSR
-            const { collection, getDocs, query, orderBy } = await import('firebase/firestore')
+            const { collection, getDocs, query, orderBy, where, Timestamp, writeBatch, doc } = await import('firebase/firestore')
 
+            // Active Tasks
             const q = query(collection($db, 'tasks'), orderBy('createdAt', 'desc'))
             const snapshot = await getDocs(q)
             tasks.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DeveloperTask))
+
+            // Lazy Cleanup (Async)
+            cleanupArchivedTasks()
         } catch (e) {
             console.error(e)
         }
+    }
+
+    const cleanupArchivedTasks = async () => {
+        try {
+            const { collection, getDocs, query, where, Timestamp, writeBatch, doc } = await import('firebase/firestore')
+            const cutoff = new Date()
+            cutoff.setDate(cutoff.getDate() - 7)
+
+            const q = query(collection($db, 'archived_tasks'), where('archivedAt', '<', Timestamp.fromDate(cutoff)))
+            const snapshot = await getDocs(q)
+
+            if (!snapshot.empty) {
+                const batch = writeBatch($db)
+                snapshot.docs.forEach(d => batch.delete(doc($db, 'archived_tasks', d.id)))
+                await batch.commit()
+            }
+        } catch (e) { console.error('Cleanup failed', e) }
     }
 
     const submitTask = async () => {

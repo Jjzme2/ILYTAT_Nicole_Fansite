@@ -509,7 +509,7 @@
 
 <script setup>
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, setDoc, getDoc, updateDoc, limit, where } from 'firebase/firestore'
 import { 
     LayoutDashboard, 
     FileText, 

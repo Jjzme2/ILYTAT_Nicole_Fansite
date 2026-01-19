@@ -42,22 +42,53 @@
             
             <div class="max-w-md">
                 <label class="block text-sm font-bold text-muted mb-2">Display Name</label>
-                <div class="flex gap-2">
+                <div class="mb-4">
                     <input 
                         v-model="newDisplayName" 
                         type="text" 
-                        placeholder="Enter your name"
-                        class="flex-1 bg-background border-2 border-border text-text rounded-xl p-3 outline-none focus:border-primary transition"
+                        placeholder="Enter your public display name"
+                        class="w-full bg-background border-2 border-border text-text rounded-xl p-3 outline-none focus:border-primary transition"
                     />
-                    <button 
-                        @click="handleUpdateProfile" 
-                        :disabled="updating"
-                        class="px-6 bg-primary text-white font-bold rounded-xl hover:scale-105 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {{ updating ? '...' : 'Update' }}
-                    </button>
+                     <p class="text-xs text-muted mt-2">This is how you will appear publicly across the platform.</p>
                 </div>
-                <p class="text-xs text-muted mt-2">This is how you will appear across the platform.</p>
+
+                <div class="mb-4 grid grid-cols-2 gap-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-sm font-bold text-muted">Full Name (Private)</label>
+                            <button v-if="userProfile?.fullName" @click="openRequestModal('fullName')" class="text-[10px] text-primary hover:underline font-bold">Request Change</button>
+                            <span v-else class="text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Required</span>
+                        </div>
+                        <input 
+                            v-model="newFullName" 
+                            type="text" 
+                            placeholder="Your legal name"
+                            :disabled="!!userProfile?.fullName"
+                            class="w-full bg-background border-2 border-border text-text rounded-xl p-3 outline-none focus:border-primary transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                             <label class="block text-sm font-bold text-muted">Birthday</label>
+                             <button v-if="userProfile?.birthday" @click="openRequestModal('birthday')" class="text-[10px] text-primary hover:underline font-bold">Request Change</button>
+                             <span v-else class="text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Required</span>
+                        </div>
+                        <input 
+                            v-model="newBirthday" 
+                            type="date" 
+                            :disabled="!!userProfile?.birthday"
+                            class="w-full bg-background border-2 border-border text-text rounded-xl p-3 outline-none focus:border-primary transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                    </div>
+                </div>
+
+                <button 
+                    @click="handleUpdateProfile" 
+                    :disabled="updating"
+                    class="w-full px-6 py-3 bg-primary text-white font-bold rounded-xl hover:scale-[1.02] active:scale-[0.98] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    {{ updating ? 'Saving Changes...' : 'Update Profile' }}
+                </button>
             </div>
         </section>
 
@@ -140,6 +171,23 @@
             <MessageNicole />
         </section>
 
+        <!-- Legal & Transparency -->
+        <section class="bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm">
+             <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                <Scale class="w-5 h-5 text-primary" />
+                Legal & Transparency
+            </h2>
+            <div class="grid md:grid-cols-2 gap-4">
+                 <NuxtLink to="/legal/content-policy" class="block p-4 bg-background border border-border rounded-xl hover:border-primary transition group">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold group-hover:text-primary transition">Content Policy</span>
+                        <ArrowRight class="w-4 h-4 text-muted group-hover:text-primary transition" />
+                    </div>
+                    <p class="text-sm text-muted">Read our guidelines on age (21+), conduct, and prohibited content.</p>
+                </NuxtLink>
+            </div>
+        </section>
+
         <!-- User Data Transparency -->
         <section class="bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm">
              <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
@@ -150,7 +198,7 @@
 
             <div v-if="loading" class="py-10 text-center text-muted">Loading user data...</div>
             
-            <div v-else-if="user" class="space-y-6">
+            <div v-if="user" class="grid gap-6">
                 <!-- Basic Info -->
                 <div class="grid md:grid-cols-2 gap-4">
                      <div class="p-4 bg-background rounded-xl border border-border">
@@ -172,11 +220,52 @@
                         <span class="font-medium">{{ user.metadata?.lastSignInTime || 'N/A' }}</span>
                     </div>
                 </div>
+                
+                <!-- Expanded Profile Data -->
+                <div class="mt-6" v-if="userProfile">
+                    <span class="text-xs text-muted font-bold uppercase tracking-wider block mb-3">Profile Details</span>
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="p-4 bg-background rounded-xl border border-border">
+                            <span class="text-xs text-muted uppercase tracking-wider block mb-1">Full Name (Private)</span>
+                            <span class="font-medium">{{ userProfile.fullName || 'Not set' }}</span>
+                        </div>
+                        <div class="p-4 bg-background rounded-xl border border-border">
+                            <span class="text-xs text-muted uppercase tracking-wider block mb-1">Birthday</span>
+                            <span class="font-medium">{{ userProfile.birthday || 'Not set' }}</span>
+                        </div>
+                        <div class="p-4 bg-background rounded-xl border border-border">
+                            <span class="text-xs text-muted uppercase tracking-wider block mb-1">Roles</span>
+                            <div class="flex flex-wrap gap-1">
+                                <span v-for="role in (userProfile.roles || ['user'])" :key="role" 
+                                      class="inline-block px-2 py-0.5 text-xs font-bold bg-primary/10 text-primary rounded border border-primary/20 capitalize">
+                                    {{ role }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-background rounded-xl border border-border">
+                            <span class="text-xs text-muted uppercase tracking-wider block mb-1">Member Since</span>
+                            <span class="font-medium">{{ userProfile.createdAt?.toDate ? userProfile.createdAt.toDate().toLocaleDateString() : 'Unknown' }}</span>
+                        </div>
+                         <div class="p-4 bg-background rounded-xl border border-border">
+                            <span class="text-xs text-muted uppercase tracking-wider block mb-1">Subscription Status</span>
+                            <span :class="userProfile.isSubscriber ? 'text-green-500' : 'text-muted'" class="font-medium">
+                                {{ userProfile.isSubscriber ? 'Active Subscriber' : 'Free Tier' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Technical Metadata -->
                 <div class="mt-6">
-                    <span class="text-xs text-muted font-bold uppercase tracking-wider block mb-3">Safe Metadata</span>
-                    <div class="bg-background rounded-xl border border-border p-4 overflow-x-auto">
+                    <button 
+                        @click="showSafeMetadata = !showSafeMetadata" 
+                        class="flex items-center gap-2 text-xs text-muted font-bold uppercase tracking-wider mb-3 hover:text-text transition"
+                    >
+                        <span>Safe Metadata</span>
+                        <Triangle :class="[showSafeMetadata ? 'rotate-180' : 'rotate-90']" class="w-3 h-3 transition-transform" />
+                    </button>
+                    
+                    <div v-show="showSafeMetadata" class="bg-background rounded-xl border border-border p-4 overflow-x-auto">
                         <pre class="text-xs font-mono text-muted whitespace-pre-wrap">{{ JSON.stringify(safeUserData, null, 2) }}</pre>
                     </div>
                 </div>
@@ -291,6 +380,46 @@
 
       </div>
     </div>
+
+    <!-- Update Request Modal -->
+    <div v-if="showUpdateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div class="bg-surface border border-border rounded-2xl w-full max-w-md p-6 relative">
+            <button @click="showUpdateModal = false" class="absolute top-4 right-4 text-muted hover:text-text">
+                <XCircle class="w-6 h-6" />
+            </button>
+            
+            <h3 class="text-xl font-bold mb-2">Request Profile Change</h3>
+            <p class="text-sm text-muted mb-6">Since your profile is verified, changes must be approved by an admin.</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-muted uppercase tracking-wider mb-2">Field to Update</label>
+                    <div class="p-3 bg-background border border-border rounded-xl font-mono text-sm capitalize">
+                        {{ updateRequestField === 'fullName' ? 'Full Name' : 'Birthday' }}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-muted uppercase tracking-wider mb-2">New Value</label>
+                    <input 
+                        v-model="updateRequestValue" 
+                        :type="updateRequestField === 'birthday' ? 'date' : 'text'" 
+                        class="w-full bg-background border-2 border-border text-text rounded-xl p-3 outline-none focus:border-primary transition"
+                        placeholder="Enter correct information"
+                    />
+                </div>
+
+                <button 
+                    @click="submitUpdateRequest" 
+                    :disabled="requesting || !updateRequestValue"
+                    class="w-full py-3 bg-primary text-white font-bold rounded-xl hover:scale-[1.02] active:scale-[0.98] transition shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    {{ requesting ? 'Submitting Request...' : 'Submit Request' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
   </div>
 </template>
 
@@ -298,13 +427,13 @@
 definePageMeta({
     middleware: 'auth'
 })
-import { Palette, Database, User as UserIcon, MessageSquare, Lightbulb, Trophy, ShieldCheck, MailWarning, Mail, Info, ArrowRight } from 'lucide-vue-next'
+import { Palette, Database, User as UserIcon, MessageSquare, Lightbulb, Trophy, ShieldCheck, MailWarning, Mail, Info, ArrowRight, Triangle, Scale, XCircle, Lock, LayoutDashboard, Wrench } from 'lucide-vue-next'
 import { updateProfile, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth'
-import { doc, setDoc, collection, query, where, getDocs, orderBy, collectionGroup } from 'firebase/firestore'
+import { doc, getDoc, setDoc, addDoc, collection, query, where, getDocs, orderBy, collectionGroup, serverTimestamp } from 'firebase/firestore'
 import { useAuth } from '#imports'
 
 const config = useAppConfig()
-const { user, loading, logout } = useAuth()
+const { user, loading, logout, isAdmin, isCreator } = useAuth()
 const { activeTheme, themes } = useTheme()
 const toast = useToast()
 const { $auth, $db } = useNuxtApp()
@@ -313,9 +442,49 @@ useHead({
     title: 'User Profile - Settings'
 })
 
+
 // Profile State
 const newDisplayName = ref('')
+const newFullName = ref('')
+const newBirthday = ref('')
 const updating = ref(false)
+const userProfile = ref(null) // Holds full Firestore Doc Data
+const showSafeMetadata = ref(false)
+
+// Request Update State
+const showUpdateModal = ref(false)
+const updateRequestField = ref('') // 'fullName' | 'birthday'
+const updateRequestValue = ref('')
+const requesting = ref(false)
+
+const openRequestModal = (field) => {
+    updateRequestField.value = field
+    updateRequestValue.value = ''
+    showUpdateModal.value = true
+}
+
+const submitUpdateRequest = async () => {
+    if (!user.value || !updateRequestValue.value) return
+    requesting.value = true
+    try {
+        await addDoc(collection($db, 'profile_update_requests'), {
+            userId: user.value.uid,
+            userEmail: user.value.email,
+            field: updateRequestField.value,
+            value: updateRequestValue.value,
+            status: 'pending',
+            createdAt: serverTimestamp()
+        })
+        toast.success('Request submitted for approval.')
+        showUpdateModal.value = false
+    } catch (e) {
+        console.error(e)
+        toast.error('Failed to submit request.')
+    } finally {
+        requesting.value = false
+    }
+}
+
 
 // Security State
 const verificationSent = ref(false)
@@ -362,6 +531,18 @@ const fetchUserContent = async () => {
     if (!user.value) return
     contentLoading.value = true
     errorMessage.value = ''
+    
+    // 0. Fetch Full User Profile (Firestore)
+    try {
+        const docRef = doc($db, 'users', user.value.uid)
+        const docSnap = await getDoc(docRef)
+        if (docSnap.exists()) {
+            userProfile.value = docSnap.data()
+        }
+    } catch (e) {
+        console.error("Profile fetch failed:", e)
+        errorMessage.value += `Profile: ${e.message} `
+    }
     
     // 1. Fetch Comments
     try {
@@ -436,31 +617,37 @@ watchEffect(() => {
     if (user.value?.displayName) {
         newDisplayName.value = user.value.displayName
     }
+    if (userProfile.value) {
+        if(userProfile.value.fullName) newFullName.value = userProfile.value.fullName
+        if(userProfile.value.birthday) newBirthday.value = userProfile.value.birthday
+    }
 })
 
 const handleUpdateProfile = async () => {
-    if (!newDisplayName.value.trim()) return
     updating.value = true
     
     try {
-
-
         if ($auth.currentUser) {
-            // 1. Update Auth Profile
-            await updateProfile($auth.currentUser, {
-                displayName: newDisplayName.value
-            })
+            // 1. Update Auth Profile (Display Name only)
+            if (newDisplayName.value !== user.value.displayName) {
+                await updateProfile($auth.currentUser, {
+                    displayName: newDisplayName.value
+                })
+            }
             
             // 2. Sync to Firestore 'users' collection
             const { $db } = useNuxtApp()
             await setDoc(doc($db, 'users', $auth.currentUser.uid), {
                 displayName: newDisplayName.value,
+                fullName: newFullName.value,
+                birthday: newBirthday.value,
                 email: $auth.currentUser.email,
                 photoURL: $auth.currentUser.photoURL,
                 updatedAt: new Date()
             }, { merge: true })
 
-            // Force refresh user state if needed, or rely on Firebase auth listener
+            // Force refresh user profile data
+            await fetchUserContent() // Refresh local profile data
             toast.success("Profile updated successfully!")
         }
     } catch (e) {
@@ -485,6 +672,13 @@ const safeUserData = computed(() => {
     delete data.proactiveRefresh
     delete data.accessToken
     
+    
+    // Merge Auth data with Firestore Profile data for full transparency
+    if (userProfile.value) {
+        data.firestoreProfile = userProfile.value
+    }
+    
     return data
+
 })
 </script>

@@ -50,16 +50,17 @@ const USER_DEFAULTS = {
 
 export default defineEventHandler(async (event) => {
     const { db } = useFirebaseAdmin()
+    const config = useRuntimeConfig()
 
     // Security: Only allow in dev mode or with admin token
     // In production, you'd want proper authentication here
     const isDev = process.dev
     const authHeader = getHeader(event, 'authorization')
 
-    if (!isDev && authHeader !== `Bearer ${process.env.MIGRATION_SECRET}`) {
+    if (!isDev && (!config.adminSecret || authHeader !== `Bearer ${config.adminSecret}`)) {
         throw createError({
             statusCode: 403,
-            message: 'Migration requires dev mode or valid MIGRATION_SECRET'
+            message: 'Migration requires dev mode or valid adminSecret'
         })
     }
 

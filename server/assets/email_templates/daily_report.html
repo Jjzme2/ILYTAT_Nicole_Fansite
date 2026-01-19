@@ -5,259 +5,221 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{title}}</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #0A0118;
-            color: #FAF5FF;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 40px auto;
-            background-color: #1A0B2E;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border: 1px solid #2E1065;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #0A0118 0%, #1A0B2E 100%);
-            padding: 30px;
-            text-align: center;
-            border-bottom: 1px solid #2E1065;
-        }
-
-        .logo-text {
-            color: #D946EF;
-            font-size: 20px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .report-title {
-            color: #FAF5FF;
-            font-size: 22px;
-            margin: 10px 0 5px 0;
-            font-weight: 600;
-        }
-
-        .report-date {
-            color: #A78BFA;
-            font-size: 14px;
-        }
-
-        .content {
-            padding: 30px;
-        }
-
-        .section-title {
-            color: #D946EF;
-            font-size: 16px;
-            font-weight: 700;
-            text-transform: uppercase;
-            border-bottom: 1px solid #2E1065;
-            padding-bottom: 8px;
-            margin-top: 30px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .section-title:first-child {
-            margin-top: 0;
-        }
-
-        .stat-grid {
-            display: table;
-            width: 100%;
-            border-spacing: 10px;
-            margin: -10px;
-            /* Offset spacing */
-        }
-
-        .stat-card {
-            display: table-cell;
-            width: 50%;
-            background-color: rgba(255, 255, 255, 0.03);
-            border: 1px solid #2E1065;
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #FAF5FF;
-            margin-bottom: 4px;
-        }
-
-        .stat-value.highlight {
-            color: #4ADE80;
-            /* Success Text */
-        }
-
-        .stat-value.warning {
-            color: #FACC15;
-        }
-
-        .stat-value.danger {
-            color: #F87171;
-        }
-
-        .stat-label {
-            font-size: 11px;
-            color: #A78BFA;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .list-container {
-            background-color: rgba(46, 16, 101, 0.3);
-            border-radius: 8px;
-            padding: 12px;
-            margin-top: 10px;
-            font-size: 13px;
-        }
-
-        .list-header {
-            color: #D946EF;
-            font-weight: bold;
-            font-size: 12px;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-
-        .list-item {
-            padding: 4px 0;
-            border-bottom: 1px solid rgba(167, 139, 250, 0.1);
-            color: #e9d5ff;
-        }
-
-        .list-item:last-child {
-            border-bottom: none;
-        }
-
-        .footer {
-            background-color: #05000C;
-            padding: 20px;
-            text-align: center;
-            font-size: 12px;
-            color: #5b4a7a;
-            border-top: 1px solid #2E1065;
-        }
-    </style>
 </head>
 
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="logo-text">ILYTAT Fans</div>
-            <div class="report-title">{{title}}</div>
-            <div class="report-date">{{date}}</div>
-        </div>
+<body
+    style="margin: 0; padding: 0; background-color: #0A0118; color: #FAF5FF; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-font-smoothing: antialiased;">
 
-        <div class="content">
-            <!-- USERS SECTION -->
-            <div class="section-title">👥 Users & Growth</div>
-            <div class="stat-grid">
-                <div class="stat-card">
-                    <div class="stat-value">{{users_subscribers}}</div>
-                    <div class="stat-label">Subscribers</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value highlight">+{{users_new}}</div>
-                    <div class="stat-label">New Users</div>
-                </div>
-            </div>
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"
+        style="background-color: #0A0118; padding: 20px;">
+        <tr>
+            <td align="center">
 
-            <div class="stat-grid" style="margin-top: 10px;">
-                <div class="stat-card">
-                    <div class="stat-value">{{users_total}}</div>
-                    <div class="stat-label">Total Users</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" style="color: #67E8F9;">{{users_team}}</div>
-                    <div class="stat-label">Team Size</div>
-                </div>
-            </div>
+                <!-- MAIN CONTAINER -->
+                <table role="presentation" width="600" border="0" cellspacing="0" cellpadding="0"
+                    style="background-color: #1A0B2E; border-radius: 16px; border: 1px solid #2E1065; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 600px; width: 100%;">
 
-            <!-- New Users List (HTML String) -->
-            {{{users_new_list}}}
+                    <!-- HEADER -->
+                    <tr>
+                        <td
+                            style="background-color: #1A0B2E; padding: 30px; text-align: center; border-bottom: 1px solid #2E1065;">
+                            <div
+                                style="color: #D946EF; font-size: 20px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">
+                                ILYTAT Fans</div>
+                            <div style="color: #FAF5FF; font-size: 22px; font-weight: 600; margin-bottom: 5px;">
+                                {{title}}</div>
+                            <div style="color: #A78BFA; font-size: 14px;">{{date}}</div>
+                        </td>
+                    </tr>
 
-            <!-- CONTENT SECTION -->
-            <div class="section-title">📝 Content & Activity</div>
-            <div class="stat-grid">
-                <div class="stat-card">
-                    <div class="stat-value">{{posts_total}}</div>
-                    <div class="stat-label">Total Posts</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value highlight">+{{posts_new}}</div>
-                    <div class="stat-label">Posted Today</div>
-                </div>
-            </div>
-            <div style="text-align: center; font-size: 12px; color: #A78BFA; margin-top: 10px;">
-                {{posts_by_type}}
-            </div>
+                    <!-- CONTENT -->
+                    <tr>
+                        <td style="padding: 30px;">
 
-            <!-- BUSINESS SECTION -->
-            <div class="section-title">🤝 Business</div>
-            <div class="stat-grid">
-                <div class="stat-card">
-                    <div class="stat-value warning">{{deals_pending}}</div>
-                    <div class="stat-label">Pending Deals</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value highlight">+{{suggestions_new}}</div>
-                    <div class="stat-label">New Suggestions</div>
-                </div>
-            </div>
+                            <!-- USERS SECTION -->
+                            <div
+                                style="color: #D946EF; font-size: 16px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid #2E1065; padding-bottom: 8px; margin-bottom: 15px;">
+                                👥 Users & Growth</div>
 
-            <!-- ENGINEERING SECTION -->
-            <div class="section-title">🛠️ Engineering</div>
-            <div class="stat-grid">
-                <div class="stat-card">
-                    <div class="stat-value danger">+{{tasks_new}}</div>
-                    <div class="stat-label">Issues Today</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value warning">{{tasks_open}}</div>
-                    <div class="stat-label">Open / Todo</div>
-                </div>
-            </div>
-            <div style="text-align: center; margin-top: 15px;">
-                <span
-                    style="font-size: 12px; color: #67E8F9; background: rgba(103, 232, 249, 0.1); padding: 4px 10px; border-radius: 12px;">
-                    In Progress: <b>{{tasks_progress}}</b>
-                </span>
-                <span
-                    style="font-size: 12px; color: #4ADE80; background: rgba(74, 222, 128, 0.1); padding: 4px 10px; border-radius: 12px; margin-left: 10px;">
-                    Done: <b>{{tasks_done}}</b>
-                </span>
-            </div>
+                            <table width="100%" border="0" cellspacing="10" cellpadding="0" style="margin: -10px;">
+                                <tr>
+                                    <td width="50%"
+                                        style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid #2E1065; border-radius: 12px; padding: 15px; text-align: center;">
+                                        <div
+                                            style="font-size: 24px; font-weight: bold; color: #FAF5FF; margin-bottom: 4px;">
+                                            {{users_subscribers}}</div>
+                                        <div
+                                            style="font-size: 11px; color: #A78BFA; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            Subscribers</div>
+                                    </td>
+                                    <td width="50%"
+                                        style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid #2E1065; border-radius: 12px; padding: 15px; text-align: center;">
+                                        <div
+                                            style="font-size: 24px; font-weight: bold; color: #4ADE80; margin-bottom: 4px;">
+                                            +{{users_new}}</div>
+                                        <div
+                                            style="font-size: 11px; color: #A78BFA; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            New Users</div>
+                                    </td>
+                                </tr>
+                            </table>
 
-            <!-- SYSTEM SECTION -->
-            <div class="section-title">🔄 System Events</div>
-            <div class="list-container">
-                <div class="list-item">Quota Resets (Individual): <b>{{resets_individual}}</b></div>
-                <div class="list-item">Quota Resets (Global): <b>{{resets_global}}</b></div>
-            </div>
-        </div>
+                            <table width="100%" border="0" cellspacing="10" cellpadding="0"
+                                style="margin: 0 -10px -10px -10px;">
+                                <tr>
+                                    <td width="50%"
+                                        style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid #2E1065; border-radius: 12px; padding: 15px; text-align: center;">
+                                        <div
+                                            style="font-size: 24px; font-weight: bold; color: #FAF5FF; margin-bottom: 4px;">
+                                            {{users_total}}</div>
+                                        <div
+                                            style="font-size: 11px; color: #A78BFA; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            Total Users</div>
+                                    </td>
+                                    <td width="50%"
+                                        style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid #2E1065; border-radius: 12px; padding: 15px; text-align: center;">
+                                        <div
+                                            style="font-size: 24px; font-weight: bold; color: #67E8F9; margin-bottom: 4px;">
+                                            {{users_team}}</div>
+                                        <div
+                                            style="font-size: 11px; color: #A78BFA; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            Team Size</div>
+                                    </td>
+                                </tr>
+                            </table>
 
-        <div class="footer">
-            <p>Report generated automatically at 8:00 AM CST.</p>
-            <p>&copy; 2026 ILYTAT Fans.</p>
-        </div>
-    </div>
+                            <!-- HTML CONTENT (New Users List) -->
+                            <div style="margin-top: 15px;">
+                                <!-- NOTE: Triple braces required for Handlebars to render HTML -->
+                                {{{users_new_list}}}
+                            </div>
+
+                            <!-- CONTENT SECTION -->
+                            <div
+                                style="color: #D946EF; font-size: 16px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid #2E1065; padding-bottom: 8px; margin-top: 30px; margin-bottom: 15px;">
+                                📝 Content & Activity</div>
+
+                            <table width="100%" border="0" cellspacing="10" cellpadding="0" style="margin: -10px;">
+                                <tr>
+                                    <td width="50%"
+                                        style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid #2E1065; border-radius: 12px; padding: 15px; text-align: center;">
+                                        <div
+                                            style="font-size: 24px; font-weight: bold; color: #FAF5FF; margin-bottom: 4px;">
+                                            {{posts_total}}</div>
+                                        <div
+                                            style="font-size: 11px; color: #A78BFA; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            Total Posts</div>
+                                    </td>
+                                    <td width="50%"
+                                        style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid #2E1065; border-radius: 12px; padding: 15px; text-align: center;">
+                                        <div
+                                            style="font-size: 24px; font-weight: bold; color: #4ADE80; margin-bottom: 4px;">
+                                            +{{posts_new}}</div>
+                                        <div
+                                            style="font-size: 11px; color: #A78BFA; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            Posted Today</div>
+                                    </td>
+                                </tr>
+                            </table>
+                            <div style="text-align: center; font-size: 12px; color: #A78BFA; margin-top: 10px;">
+                                {{posts_by_type}}
+                            </div>
+
+                            <!-- BUSINESS SECTION -->
+                            <div
+                                style="color: #D946EF; font-size: 16px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid #2E1065; padding-bottom: 8px; margin-top: 30px; margin-bottom: 15px;">
+                                🤝 Business</div>
+
+                            <table width="100%" border="0" cellspacing="10" cellpadding="0" style="margin: -10px;">
+                                <tr>
+                                    <td width="50%"
+                                        style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid #2E1065; border-radius: 12px; padding: 15px; text-align: center;">
+                                        <div
+                                            style="font-size: 24px; font-weight: bold; color: #FACC15; margin-bottom: 4px;">
+                                            {{deals_pending}}</div>
+                                        <div
+                                            style="font-size: 11px; color: #A78BFA; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            Pending Deals</div>
+                                    </td>
+                                    <td width="50%"
+                                        style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid #2E1065; border-radius: 12px; padding: 15px; text-align: center;">
+                                        <div
+                                            style="font-size: 24px; font-weight: bold; color: #4ADE80; margin-bottom: 4px;">
+                                            +{{suggestions_new}}</div>
+                                        <div
+                                            style="font-size: 11px; color: #A78BFA; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            New Suggestions</div>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- ENGINEERING SECTION -->
+                            <div
+                                style="color: #D946EF; font-size: 16px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid #2E1065; padding-bottom: 8px; margin-top: 30px; margin-bottom: 15px;">
+                                🛠️ Engineering</div>
+
+                            <table width="100%" border="0" cellspacing="10" cellpadding="0" style="margin: -10px;">
+                                <tr>
+                                    <td width="50%"
+                                        style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid #2E1065; border-radius: 12px; padding: 15px; text-align: center;">
+                                        <div
+                                            style="font-size: 24px; font-weight: bold; color: #F87171; margin-bottom: 4px;">
+                                            +{{tasks_new}}</div>
+                                        <div
+                                            style="font-size: 11px; color: #A78BFA; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            Issues Today</div>
+                                    </td>
+                                    <td width="50%"
+                                        style="background-color: rgba(255, 255, 255, 0.03); border: 1px solid #2E1065; border-radius: 12px; padding: 15px; text-align: center;">
+                                        <div
+                                            style="font-size: 24px; font-weight: bold; color: #FACC15; margin-bottom: 4px;">
+                                            {{tasks_open}}</div>
+                                        <div
+                                            style="font-size: 11px; color: #A78BFA; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            Open / Todo</div>
+                                    </td>
+                                </tr>
+                            </table>
+                            <div style="text-align: center; margin-top: 15px;">
+                                <span
+                                    style="font-size: 12px; color: #67E8F9; background: rgba(103, 232, 249, 0.1); padding: 4px 10px; border-radius: 12px; display: inline-block;">
+                                    In Progress: <b>{{tasks_progress}}</b>
+                                </span>
+                                <span
+                                    style="font-size: 12px; color: #4ADE80; background: rgba(74, 222, 128, 0.1); padding: 4px 10px; border-radius: 12px; margin-left: 10px; display: inline-block;">
+                                    Done: <b>{{tasks_done}}</b>
+                                </span>
+                            </div>
+
+                            <!-- SYSTEM SECTION -->
+                            <div
+                                style="color: #D946EF; font-size: 16px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid #2E1065; padding-bottom: 8px; margin-top: 30px; margin-bottom: 15px;">
+                                🔄 System Activities</div>
+                            <div
+                                style="background-color: rgba(46, 16, 101, 0.3); border-radius: 8px; padding: 12px; margin-top: 10px; font-size: 13px;">
+                                <div
+                                    style="padding: 4px 0; border-bottom: 1px solid rgba(167, 139, 250, 0.1); color: #e9d5ff;">
+                                    Quota Resets (Individual): <b>{{resets_individual}}</b></div>
+                                <div style="padding: 4px 0; color: #e9d5ff;">Quota Resets (Global):
+                                    <b>{{resets_global}}</b></div>
+                            </div>
+
+                        </td>
+                    </tr>
+
+                    <!-- FOOTER -->
+                    <tr>
+                        <td
+                            style="background-color: #05000C; padding: 20px; text-align: center; font-size: 12px; color: #5b4a7a; border-top: 1px solid #2E1065;">
+                            <p style="margin: 5px 0;">Report generated automatically at 8:00 AM CST.</p>
+                            <p style="margin: 5px 0;">&copy; 2026 ILYTAT Fans.</p>
+                        </td>
+                    </tr>
+                </table>
+
+            </td>
+        </tr>
+    </table>
 </body>
 
 </html>

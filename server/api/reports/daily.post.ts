@@ -145,10 +145,23 @@ function formatListToHtml(title: string, items: { displayName: string, email: st
 export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig()
 
+    // Check for test override
+    let forceRecipient = null
+    try {
+        const body = await readBody(event)
+        if (body?.forceRecipient) forceRecipient = body.forceRecipient
+    } catch (e) { /* ignore body parse error for GET requests or empty body */ }
+
     // Parse report emails (comma-separated list)
-    const reportEmailList = config.reportEmail
+    let reportEmailList = config.reportEmail
         ? config.reportEmail.split(',').map((e: string) => e.trim()).filter(Boolean)
         : []
+
+    // Override if testing
+    if (forceRecipient) {
+        reportEmailList = [forceRecipient]
+        console.log(`[Daily Report] 🧪 TEST MODE: Sending only to ${forceRecipient}`)
+    }
 
     if (reportEmailList.length === 0) {
         throw createError({
@@ -162,7 +175,9 @@ export default defineEventHandler(async (event) => {
     console.log('[Daily Report] Stats gathered:', JSON.stringify(stats, null, 2))
 
     // Prepare Template Data
-    const subject = `📊 ILYTAT Daily Report - ${stats.date}`
+    const subject = forceRecipient
+        ? `[TEST] 📊 ILYTAT Daily Report - ${stats.date}`
+        : `📊 ILYTAT Daily Report - ${stats.date}`
 
     // Create HTML Lists
     const newUsersList = formatListToHtml('🆕 New Arrivals:', stats.users.newUsersDetails, '#4ADE80')

@@ -67,6 +67,11 @@ service cloud.firestore {
         allow create, delete: if canManage();
         allow update: if isOwner(userId) || canManage();
       }
+
+      // Settings Subcollection (Media Kit, Preferences)
+      match /settings/{settingId} {
+        allow read, write: if isOwner(userId) || canDevelop();
+      }
     }
 
     // Posts Collection

@@ -26,15 +26,21 @@ export default defineEventHandler(async (event) => {
         }
     }
 
-    // 2. If not public/free, enforce User Auth (Subscriber/Admin/Creator)
     if (!isAuthorized) {
         try {
-            const user = await getUserFromEvent(event)
-            if (!user.isSubscriber && user.role !== 'admin' && user.role !== 'creator') {
-                throw createError({ statusCode: 403, message: 'Forbidden: Restricted to subscribers.' })
+            const user: any = await getUserFromEvent(event)
+            // Allow if subscriber OR if has privileged role (admin, creator, developer)
+            // Checks both legacy 'role' string and new 'roles' array
+            const allowedRoles = ['admin', 'creator', 'developer']
+            const hasPrivilege = allowedRoles.includes(user.role) || (user.roles && Array.isArray(user.roles) && user.roles.some((r: any) => allowedRoles.includes(r)))
+
+            if (!user.isSubscriber && !hasPrivilege) {
+                throw createError({ statusCode: 403, message: 'Forbidden: Restricted access.' })
             }
-        } catch (e) {
-            throw createError({ statusCode: 403, message: 'Forbidden: Authentication required.' })
+        } catch (e: any) {
+            // Differentiate between Auth failure vs Permission failure
+            if (e.statusCode === 403) throw e
+            throw createError({ statusCode: 401, message: 'Unauthorized: Authentication required.' })
         }
     }
 

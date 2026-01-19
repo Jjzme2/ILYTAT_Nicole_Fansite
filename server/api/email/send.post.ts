@@ -5,14 +5,20 @@ interface EmailPayload {
     subject: string
     text?: string
     html?: string
-    templateId?: string // Optional override
+    templateId?: string // Optional override (ID)
+    templateName?: string // Optional override (Alias: 'daily', 'general')
     dynamicTemplateData?: Record<string, any> // Additional params
 }
 
 // EmailJS REST API Sender
 async function sendWithEmailJS(config: any, payload: EmailPayload): Promise<boolean> {
     const serviceId = config.emailjs?.serviceId
-    const templateId = payload.templateId || config.emailjs?.generalTemplateId
+
+    // Resolve Template ID
+    let templateId = payload.templateId
+    if (!templateId && payload.templateName === 'daily') templateId = config.emailjs?.dailyReportTemplateId
+    if (!templateId) templateId = config.emailjs?.generalTemplateId
+
     const publicKey = config.emailjs?.publicKey
     const privateKey = config.emailjs?.privateKey
 

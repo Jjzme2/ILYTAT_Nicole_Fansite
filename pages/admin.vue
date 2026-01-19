@@ -51,7 +51,7 @@
 
             <div class="pt-4 mt-4 border-t border-border space-y-2">
                  <a 
-                    v-if="role === 'creator'"
+                    v-if="role === 'creator' || isAdmin || isDeveloper"
                     href="/creator" 
                     class="flex items-center gap-3 px-4 py-3 text-indigo-400 hover:text-text rounded-xl text-sm font-medium transition"
                 >
@@ -88,7 +88,7 @@
             </div>
             <div class="flex gap-4 items-center">
                  <NotificationBell />
-                 <NuxtLink v-if="role === 'creator'" to="/creator" class="text-xs font-bold text-indigo-600 border border-indigo-200 px-2 py-1 rounded-full">Studio</NuxtLink>
+                 <NuxtLink v-if="role === 'creator' || isAdmin || isDeveloper" to="/creator" class="text-xs font-bold text-indigo-600 border border-indigo-200 px-2 py-1 rounded-full">Studio</NuxtLink>
                 <button @click="logout" class="text-xs text-red-500 font-medium">Log Out</button>
             </div>
         </div>
@@ -323,10 +323,13 @@ const { $db } = useNuxtApp()
 const { logout, user, isAdmin, role, isDeveloper } = useAuth()
 const toast = useToast()
 const appConfig = useAppConfig()
+const route = useRoute()
+const router = useRouter()
 
 // TABS & NAVIGATION
-const activeSection = ref('launchpad')
-const activeSubTab = ref('')
+// Initialize from URL query params
+const activeSection = ref(route.query.section || 'launchpad')
+const activeSubTab = ref(route.query.subtab || '')
 
 // Initialize subtabs when switching main sections
 const switchSection = (sectionId) => {
@@ -336,6 +339,18 @@ const switchSection = (sectionId) => {
     if (sectionId === 'business') activeSubTab.value = 'deals'
     if (sectionId === 'engineering') activeSubTab.value = 'tasks'
 }
+
+// Watch activeSection and sync to URL
+watch(activeSection, (val) => {
+    router.replace({ query: { ...route.query, section: val } })
+}, { immediate: true })
+
+// Watch activeSubTab and sync to URL
+watch(activeSubTab, (val) => {
+    if (val) {
+        router.replace({ query: { ...route.query, section: activeSection.value, subtab: val } })
+    }
+}, { immediate: true })
 
 const currentTab = computed(() => { // Maintain compatibility 
     if (activeSection.value === 'launchpad') return 'launchpad'

@@ -8,8 +8,8 @@
             <button @click="fetchRequests" class="p-2 border border-border rounded-lg hover:border-primary transition"><RefreshCw class="w-4 h-4" /></button>
         </header>
 
-        <div class="bg-surface border border-border rounded-2xl overflow-hidden">
-            <table class="w-full text-left text-sm">
+        <div class="bg-surface border border-border rounded-2xl overflow-x-auto">
+            <table class="w-full text-left text-sm min-w-[600px]">
                 <thead class="bg-background border-b border-border text-muted font-bold uppercase text-xs">
                     <tr>
                         <th class="p-4">User</th>

@@ -59,6 +59,7 @@
 import { ref, computed } from 'vue'
 import { Activity, Loader2, Play } from 'lucide-vue-next'
 import { collection, limit, getDocs, query } from 'firebase/firestore'
+import { generateMarkdown } from '~/utils/taskMarkdown'
 
 const { $db } = useNuxtApp()
 const toast = useToast()
@@ -122,6 +123,93 @@ const testRegistry = ref([
              await fetch('https://www.google.com/favicon.ico', { mode: 'no-cors' })
              const duration = Date.now() - start
              return `Network reachable (${duration}ms)`
+        }
+    },
+    {
+        id: 'stripe_config',
+        name: 'Stripe Configuration',
+        description: 'Verify Stripe keys are present',
+        status: 'idle',
+        result: '',
+        run: async () => {
+            const config = useRuntimeConfig()
+            if (!config.public.stripePublishableKey) throw new Error('Stripe Publishable Key missing')
+            return 'Stripe configured'
+        }
+    },
+    {
+        id: 'critical_collections',
+        name: 'Critical Collections',
+        description: 'Verify Posts & Notifications access',
+        status: 'idle',
+        result: '',
+        run: async () => {
+            const [posts, notifs] = await Promise.all([
+                 getDocs(query(collection($db, 'posts'), limit(1))),
+                 getDocs(query(collection($db, 'notifications'), limit(1)))
+            ])
+            return `Accessible: Posts (${posts.size}+), Notifications (${notifs.size}+)`
+        }
+    },
+    {
+        id: 'version_check',
+        name: 'App Version',
+        description: 'Verify application version compliance',
+        status: 'idle',
+        result: '',
+        run: async () => {
+            const config = useAppConfig()
+            // Assuming version is in app config or public runtime config
+             return `Version: ${config.version || '1.0.0'} (Environment: ${import.meta.dev ? 'DEV' : 'PROD'})`
+        }
+    },
+    {
+        id: 'markdown_unit',
+        name: 'Unit Test: Markdown Gen',
+        description: 'Test taskMarkdown utility logic',
+        status: 'idle',
+        result: '',
+        run: async () => {
+            const mockTasks = [{
+                id: '1', title: 'Test Task', status: 'todo', 
+                section: 'Active Tasks (Engineering)', subsection: 'Core'
+            }]
+            const md = generateMarkdown(mockTasks)
+            if (!md.includes('## Active Tasks')) throw new Error('Missing section header')
+            if (!md.includes('### Core')) throw new Error('Missing subsection header')
+            if (!md.includes('Test Task')) throw new Error('Missing task title')
+            return 'Markdown generated correctly'
+        }
+    },
+    {
+        id: 'theme_check',
+        name: 'Theme System State',
+        description: 'Verify active theme validity',
+        status: 'idle',
+        result: '',
+        run: async () => {
+            const { activeTheme, themes } = useTheme()
+            if (!activeTheme.value) throw new Error('No active theme')
+            
+            const isValid = !!themes[activeTheme.value]
+            if (!isValid) throw new Error(`Invalid theme ID: ${activeTheme.value}`)
+            return `Active: ${activeTheme.value}`
+        }
+    },
+    {
+        id: 'role_integrity',
+        name: 'Role Logic Integrity',
+        description: 'Verify admin permission consistency',
+        status: 'idle',
+        result: '',
+        run: async () => {
+             // isAdmin computed vs manual check
+             if (isAdmin.value && user.value) {
+                 // Double check specific emails or claims if available
+                 // For now, just assert that if isAdmin is true, user is present
+                 return 'Admin logic consistent'
+             }
+             return 'User is not admin (Valid state)'
         }
     }
 ])

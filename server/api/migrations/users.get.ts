@@ -35,12 +35,17 @@ const USER_DEFAULTS = {
 
 export default defineEventHandler(async (event) => {
     const { db } = useFirebaseAdmin()
+    const config = useRuntimeConfig()
 
-    // Security: Only allow in dev mode
-    if (!process.dev) {
+    // Security: Only allow in dev mode OR with admin secret
+    const isDev = process.dev
+    const authHeader = getHeader(event, 'authorization')
+    const isAuthenticated = config.adminSecret && authHeader === `Bearer ${config.adminSecret}`
+
+    if (!isDev && !isAuthenticated) {
         throw createError({
             statusCode: 403,
-            message: 'Migration preview only available in dev mode'
+            message: 'Migration preview only available in dev mode or with admin authentication'
         })
     }
 

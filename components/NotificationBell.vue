@@ -3,6 +3,7 @@
         <button 
             @click="togglePanel" 
             class="relative p-2 text-muted hover:text-primary transition rounded-lg hover:bg-surface"
+            :aria-label="unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'"
         >
             <Bell class="w-5 h-5" />
             <span 
@@ -54,7 +55,11 @@
                         >
                             Mark all read
                         </button>
-                        <button @click="isOpen = false" class="md:hidden p-1.5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                        <button
+                            @click="isOpen = false"
+                            class="md:hidden p-1.5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                            aria-label="Close notifications"
+                        >
                             <X class="w-5 h-5" />
                         </button>
                     </div>
@@ -165,6 +170,7 @@
                     <button 
                         @click.stop="debugMode = !debugMode"
                         class="text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-mono px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                        :aria-label="debugMode ? 'Disable debug mode' : 'Enable debug mode'"
                     >
                         {{ debugMode ? '🐛 Debug ON' : '🔧' }}
                     </button>

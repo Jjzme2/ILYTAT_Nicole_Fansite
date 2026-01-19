@@ -50,14 +50,25 @@
                 </div>
                 <div>
                     <label class="block mb-1 text-sm font-medium text-muted">Password</label>
-                    <input 
-                        v-model="password" 
-                        type="password" 
-                        required 
-                        minlength="6"
-                        class="w-full px-4 py-2 bg-background border border-border text-text rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition placeholder-muted/50"
-                        placeholder="••••••••"
-                    />
+                    <div class="relative">
+                        <input
+                            v-model="password"
+                            :type="showPassword ? 'text' : 'password'"
+                            required
+                            minlength="6"
+                            class="w-full px-4 py-2 bg-background border border-border text-text rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition placeholder-muted/50 pr-10"
+                            placeholder="••••••••"
+                        />
+                        <button
+                            type="button"
+                            @click="showPassword = !showPassword"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
+                            :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                        >
+                            <EyeOff v-if="showPassword" class="w-4 h-4" />
+                            <Eye v-else class="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
                 
                 <p v-if="error" class="text-sm text-error text-center">{{ error }}</p>
@@ -82,6 +93,8 @@
 </template>
 
 <script setup>
+import { Eye, EyeOff } from 'lucide-vue-next'
+
 definePageMeta({
     middleware: 'guest'
 })
@@ -94,6 +107,7 @@ const displayName = ref('')
 const birthday = ref('')
 const email = ref('')
 const password = ref('')
+const showPassword = ref(false)
 const loading = ref(false)
 const error = ref('')
 

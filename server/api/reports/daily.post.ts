@@ -1,4 +1,5 @@
-import { useFirebaseAdmin } from '~/server/utils/firebaseAdmin'
+
+import { defineEventHandler, useRuntimeConfig, createError } from 'h3'
 
 interface DailyStats {
     date: string
@@ -26,6 +27,8 @@ interface DailyStats {
         newToday: number
     }
     developerTasks: {
+        total: number
+        newToday: number
         open: number
         inProgress: number
         done: number
@@ -91,7 +94,7 @@ async function gatherDailyStats(): Promise<DailyStats> {
         .get()
 
     return {
-        date: now.toISOString().split('T')[0],
+        date: now.toLocaleDateString(),
         users: {
             total: users.length,
             newToday: newUsers.length,
@@ -129,190 +132,14 @@ async function gatherDailyStats(): Promise<DailyStats> {
     }
 }
 
-function formatReportEmail(stats: DailyStats): { subject: string; html: string; text: string } {
-    const subject = `📊 ILYTAT Daily Report - ${stats.date}`
-
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a2e; color: #eee; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #16213e; border-radius: 12px; padding: 30px; }
-        h1 { color: #e94560; margin-bottom: 5px; }
-        h2 { color: #0f3460; background: #e94560; padding: 10px 15px; border-radius: 6px; margin-top: 25px; }
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
-        .stat-card { background: #0f3460; padding: 15px; border-radius: 8px; text-align: center; }
-        .stat-value { font-size: 28px; font-weight: bold; color: #e94560; }
-        .stat-label { font-size: 12px; color: #aaa; text-transform: uppercase; margin-top: 5px; }
-        .highlight { color: #4ecca3; font-weight: bold; }
-        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #333; text-align: center; color: #666; font-size: 12px; }
-        .list-group { margin-top: 15px; background: #0f3460; border-radius: 8px; padding: 10px; }
-        .list-item { border-bottom: 1px solid #1a1a2e; padding: 8px 0; font-size: 13px; }
-        .list-item:last-child { border-bottom: none; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>📊 Daily Platform Report</h1>
-        <p style="color: #888; margin-top: 0;">${stats.date}</p>
-
-        <h2>👥 Users</h2>
-        <div class="stat-grid">
-            <div class="stat-card">
-                <div class="stat-value">${stats.users.total}</div>
-                <div class="stat-label">Total Users</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value highlight">+${stats.users.newToday}</div>
-                <div class="stat-label">New Today</div>
-            </div>
+function formatListToHtml(title: string, items: { displayName: string, email: string }[], color: string) {
+    if (items.length === 0) return ''
+    return `
+        <div class="list-group">
+            <div style="font-weight:bold; margin-bottom:5px; color:${color};">${title}</div>
+            ${items.map(u => `<div class="list-item"><b>${u.displayName}</b> (${u.email})</div>`).join('')}
         </div>
-
-        ${stats.users.newUsersDetails.length > 0 ? `
-            <div class="list-group">
-                <div style="font-weight:bold; margin-bottom:5px; color:#4ecca3;">🆕 New Arrivals:</div>
-                ${stats.users.newUsersDetails.map(u => `<div class="list-item"><b>${u.displayName}</b> (${u.email})</div>`).join('')}
-            </div>
-        ` : ''}
-
-        <div class="stat-grid" style="margin-top:15px;">
-             <div class="stat-card">
-                <div class="stat-value">${stats.users.subscribers}</div>
-                <div class="stat-label">Subscribers</div>
-            </div>
-             <div class="stat-card">
-                <div class="stat-value">${stats.users.creators + stats.users.admins}</div>
-                <div class="stat-label">Team</div>
-            </div>
-        </div>
-
-        ${stats.users.subscribersDetails.length > 0 ? `
-             <div class="list-group">
-                <div style="font-weight:bold; margin-bottom:5px; color:#ffd700;">🌟 Current Subscribers:</div>
-                ${stats.users.subscribersDetails.map(u => `<div class="list-item"><b>${u.displayName}</b> (${u.email})</div>`).join('')}
-            </div>
-        ` : ''}
-
-
-        <h2>📝 Content</h2>
-        <div class="stat-grid">
-            <div class="stat-card">
-                <div class="stat-value">${stats.posts.total}</div>
-                <div class="stat-label">Total Posts</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value highlight">+${stats.posts.newToday}</div>
-                <div class="stat-label">Posted Today</div>
-            </div>
-        </div>
-        <p style="color: #888; font-size: 13px; margin-top: 10px;">
-            By type: ${Object.entries(stats.posts.byType).map(([type, count]) => `${type}: ${count}`).join(', ') || 'None yet'}
-        </p>
-
-        <h2>🤝 Brand Deals</h2>
-        <div class="stat-grid">
-            <div class="stat-card">
-                <div class="stat-value">${stats.brandDeals.total}</div>
-                <div class="stat-label">Total Deals</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" style="color: #ffc107;">${stats.brandDeals.pending}</div>
-                <div class="stat-label">Pending Review</div>
-            </div>
-        </div>
-
-        <h2>💡 Fan Suggestions</h2>
-        <div class="stat-grid">
-            <div class="stat-card">
-                <div class="stat-value">${stats.suggestions.total}</div>
-                <div class="stat-label">Total</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value highlight">+${stats.suggestions.newToday}</div>
-                <div class="stat-label">New Today</div>
-            </div>
-        </div>
-
-        <h2>🛠️ Dev Tasks & Issues</h2>
-        <div class="stat-grid">
-            <div class="stat-card">
-                <div class="stat-value highlight text-red-400">+${stats.developerTasks.newToday}</div>
-                <div class="stat-label">New Reports Today</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" style="color: #ff6b6b;">${stats.developerTasks.open}</div>
-                <div class="stat-label">Open / Todo</div>
-            </div>
-        </div>
-        <div style="text-align: center; margin-top: 10px;">
-             <span style="font-size: 12px; color: #888;">In Progress: ${stats.developerTasks.inProgress} • Done: ${stats.developerTasks.done}</span>
-        </div>
-
-        <h2>🔄 Admin Actions</h2>
-        <div class="stat-grid">
-            <div class="stat-card">
-                <div class="stat-value highlight">${stats.quotaResets.individualToday}</div>
-                <div class="stat-label">Member Quota Resets</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value highlight">${stats.quotaResets.globalToday}</div>
-                <div class="stat-label">Global Resets</div>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>This report is sent daily at 8:00 AM CST.</p>
-            <p>ILYTAT Platform &copy; ${new Date().getFullYear()}</p>
-        </div>
-    </div>
-</body>
-</html>
-`
-
-    const text = `
-📊 ILYTAT Daily Report - ${stats.date}
-
-👥 USERS
-- Total: ${stats.users.total}
-- New Today: +${stats.users.newToday}
-${stats.users.newUsersDetails.map(u => `  - ${u.displayName} (${u.email})`).join('\n')}
-
-- Subscribers: ${stats.users.subscribers}
-${stats.users.subscribersDetails.map(u => `  - ${u.displayName} (${u.email})`).join('\n')}
-
-- Team Members: ${stats.users.creators + stats.users.admins}
-
-📝 CONTENT
-- Total Posts: ${stats.posts.total}
-- Posted Today: +${stats.posts.newToday}
-- By Type: ${Object.entries(stats.posts.byType).map(([type, count]) => `${type}: ${count}`).join(', ') || 'None yet'}
-
-🤝 BRAND DEALS
-- Total: ${stats.brandDeals.total}
-- Pending: ${stats.brandDeals.pending}
-- Active: ${stats.brandDeals.active}
-
-💡 FAN SUGGESTIONS
-- Total: ${stats.suggestions.total}
-- New Today: +${stats.suggestions.newToday}
-
-🛠️ DEV TASKS & ISSUES
-- New Reports Today: +${stats.developerTasks.newToday}
-- Open/Todo: ${stats.developerTasks.open}
-- In Progress: ${stats.developerTasks.inProgress}
-- Done: ${stats.developerTasks.done}
-
-🔄 ADMIN ACTIONS
-- Individual Quota Resets: ${stats.quotaResets.individualToday}
-- Global Resets: ${stats.quotaResets.globalToday}
-
----
-This report is sent daily at 8:00 AM CST.
-ILYTAT Platform © ${new Date().getFullYear()}
-`
-
-    return { subject, html, text }
+    `
 }
 
 export default defineEventHandler(async (event) => {
@@ -334,7 +161,42 @@ export default defineEventHandler(async (event) => {
     const stats = await gatherDailyStats()
     console.log('[Daily Report] Stats gathered:', JSON.stringify(stats, null, 2))
 
-    const { subject, html, text } = formatReportEmail(stats)
+    // Prepare Template Data
+    const subject = `📊 ILYTAT Daily Report - ${stats.date}`
+
+    // Create HTML Lists
+    const newUsersList = formatListToHtml('🆕 New Arrivals:', stats.users.newUsersDetails, '#4ADE80')
+    const subsList = formatListToHtml('🌟 Current Subscribers:', stats.users.subscribersDetails, '#FACC15')
+
+    const dynamicTemplateData = {
+        title: subject,
+        date: stats.date,
+
+        users_total: stats.users.total,
+        users_new: stats.users.newToday,
+        users_subscribers: stats.users.subscribers,
+        users_team: stats.users.creators + stats.users.admins,
+        users_new_list: newUsersList,
+        users_subscribers_list: subsList, // Note: Ensure template handles this if not used
+
+        posts_total: stats.posts.total,
+        posts_new: stats.posts.newToday,
+        posts_by_type: Object.entries(stats.posts.byType).map(([k, v]) => `${k}: ${v}`).join(', '),
+
+        deals_total: stats.brandDeals.total,
+        deals_pending: stats.brandDeals.pending,
+
+        suggestions_total: stats.suggestions.total,
+        suggestions_new: stats.suggestions.newToday,
+
+        tasks_new: stats.developerTasks.newToday,
+        tasks_open: stats.developerTasks.open,
+        tasks_progress: stats.developerTasks.inProgress,
+        tasks_done: stats.developerTasks.done,
+
+        resets_individual: stats.quotaResets.individualToday,
+        resets_global: stats.quotaResets.globalToday
+    }
 
     // Send to each recipient
     const results: { email: string; success: boolean; error?: string }[] = []
@@ -347,8 +209,8 @@ export default defineEventHandler(async (event) => {
                 body: {
                     to: email,
                     subject,
-                    html,
-                    text
+                    templateId: config.emailjs?.dailyReportTemplateId, // Use specific template
+                    dynamicTemplateData
                 }
             })
             results.push({ email, success: true })

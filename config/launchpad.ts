@@ -36,14 +36,23 @@ export const adminLinks = [
         borderColor: 'border-green-600/20'
     },
     {
-        label: 'SendGrid',
-        url: 'https://dashboard.sendgrid.com/',
+        label: 'Cloudflare',
+        url: 'https://dash.cloudflare.com/',
+        icon: 'Cloud',
+        description: 'Manage DNS & CDN',
+        color: 'text-orange-500',
+        bgColor: 'bg-orange-500/10',
+        borderColor: 'border-orange-500/20'
+    },
+    {
+        label: 'EmailJS',
+        url: 'https://dashboard.emailjs.com/admin',
         icon: 'Mail',
         description: 'Email & Notifications',
-        color: 'text-blue-500',
-        bgColor: 'bg-blue-500/10',
-        borderColor: 'border-blue-500/20'
-    }
+        color: 'text-orange-500',
+        bgColor: 'bg-orange-500/10',
+        borderColor: 'border-orange-500/20'
+    },
 ]
 
 export const creatorLinks = [

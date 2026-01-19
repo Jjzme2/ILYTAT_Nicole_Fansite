@@ -1,4 +1,3 @@
-import sgMail from '@sendgrid/mail'
 import nodemailer from 'nodemailer'
 
 interface EmailPayload {
@@ -6,63 +5,66 @@ interface EmailPayload {
     subject: string
     text?: string
     html?: string
-    templateId?: string // SendGrid template ID
-    dynamicTemplateData?: Record<string, any> // SendGrid template variables
+    templateId?: string // Optional override (ID)
+    templateName?: string // Optional override (Alias: 'daily', 'general')
+    dynamicTemplateData?: Record<string, any> // Additional params
 }
 
-// SendGrid sender
-async function sendWithSendGrid(config: any, payload: EmailPayload): Promise<boolean> {
-    if (!config.sendgridApiKey) {
-        console.log('[Email] SendGrid not configured, skipping...')
+// EmailJS REST API Sender
+async function sendWithEmailJS(config: any, payload: EmailPayload): Promise<boolean> {
+    const serviceId = config.emailjs?.serviceId
+
+    // Resolve Template ID
+    let templateId = payload.templateId
+    if (!templateId && payload.templateName === 'daily') templateId = config.emailjs?.dailyReportTemplateId
+    if (!templateId) templateId = config.emailjs?.generalTemplateId
+
+    const publicKey = config.emailjs?.publicKey
+    const privateKey = config.emailjs?.privateKey
+
+
+
+    if (!serviceId || !templateId || !publicKey || !privateKey) {
+        console.log('[Email] EmailJS not fully configured, skipping...')
         return false
     }
 
-    sgMail.setApiKey(config.sendgridApiKey)
-
-    const msg: any = {
-        to: payload.to,
-        from: config.sendgridFromEmail || 'noreply@ilytat.com',
-        subject: payload.subject
-    }
-
-    // Use template if provided, otherwise use text/html
-    if (payload.templateId) {
-        msg.templateId = payload.templateId
-        msg.dynamicTemplateData = payload.dynamicTemplateData || {}
-    } else {
-        msg.text = payload.text || ''
-        msg.html = payload.html || ''
+    // Map standard fields to common EmailJS template constraints
+    // Assuming template has variables: {{to_email}}, {{subject}}, {{message}}, {{html_message}}
+    const templateParams = {
+        title: payload.subject,
+        name: payload.to,
+        message: payload.text || '',
+        time: new Date().toLocaleString(),
+        ...payload.dynamicTemplateData
     }
 
     try {
-        await sgMail.send(msg)
-        console.log('[Email] Sent via SendGrid')
+        await $fetch('https://api.emailjs.com/api/v1.0/email/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: {
+                service_id: serviceId,
+                template_id: templateId,
+                user_id: publicKey,
+                accessToken: privateKey,
+                template_params: templateParams
+            }
+        })
+        console.log('[Email] Sent via EmailJS')
         return true
     } catch (error: any) {
-        const errorBody = error?.response?.body
-        console.error('[Email] SendGrid failed:', errorBody || error.message)
-
-        // Check if it's a rate limit or capacity error (should fallback)
-        const statusCode = error?.code || error?.response?.statusCode
-        if (statusCode === 429 || statusCode === 503) {
-            console.log('[Email] SendGrid capacity reached, will try fallback...')
-            return false
-        }
-
-        // For other errors (invalid API key, bad request), throw
-        throw error
+        console.error('[Email] EmailJS failed:', error.data || error.message)
+        // Fallback on any error
+        return false
     }
 }
 
 // Nodemailer fallback sender
 async function sendWithNodemailer(config: any, payload: EmailPayload): Promise<boolean> {
     console.log('[Email] Checking Nodemailer config...')
-    console.log('[Email] SMTP Host:', config.smtpHost || '(not set)')
-    console.log('[Email] SMTP Port:', config.smtpPort || '(not set)')
-    console.log('[Email] SMTP User:', config.smtpUser || '(not set)')
-    console.log('[Email] SMTP Pass:', config.smtpPass ? '****' + config.smtpPass.slice(-4) : '(not set)')
-    console.log('[Email] SMTP From:', config.smtpFrom || '(not set)')
-    console.log('[Email] SMTP Secure:', config.smtpSecure)
 
     if (!config.smtpHost || !config.smtpUser) {
         console.log('[Email] Nodemailer SMTP not configured, skipping...')
@@ -79,11 +81,6 @@ async function sendWithNodemailer(config: any, payload: EmailPayload): Promise<b
         }
     }
 
-    console.log('[Email] Creating transport with config:', {
-        ...transportConfig,
-        auth: { user: transportConfig.auth.user, pass: '****' }
-    })
-
     const transporter = nodemailer.createTransport(transportConfig)
 
     const mailOptions = {
@@ -94,20 +91,13 @@ async function sendWithNodemailer(config: any, payload: EmailPayload): Promise<b
         html: payload.html || ''
     }
 
-    console.log('[Email] Sending with options:', {
-        from: mailOptions.from,
-        to: mailOptions.to,
-        subject: mailOptions.subject
-    })
-
     try {
         const result = await transporter.sendMail(mailOptions)
         console.log('[Email] Sent via Nodemailer (fallback), messageId:', result.messageId)
         return true
     } catch (error: any) {
         console.error('[Email] Nodemailer failed:', error.message)
-        console.error('[Email] Full error:', error)
-        throw error
+        return false
     }
 }
 
@@ -131,36 +121,25 @@ export default defineEventHandler(async (event) => {
 
     const config = useRuntimeConfig()
 
-    // Waterfall: Try SendGrid first, then Nodemailer
+    // Waterfall: Try EmailJS first, then Nodemailer
     let sent = false
-    let provider: 'sendgrid' | 'nodemailer' | null = null
+    let provider: 'emailjs' | 'nodemailer' | null = null
 
-    // 1. Try SendGrid
-    try {
-        sent = await sendWithSendGrid(config, { to, subject, text, html, templateId, dynamicTemplateData })
-        if (sent) provider = 'sendgrid'
-    } catch (e) {
-        // SendGrid failed with a non-capacity error, still try fallback
-        console.warn('[Email] SendGrid error, trying fallback...')
-    }
+    // 1. Try EmailJS
+    sent = await sendWithEmailJS(config, { to, subject, text, html, templateId, dynamicTemplateData })
+    if (sent) provider = 'emailjs'
 
     // 2. Fallback to Nodemailer
     if (!sent) {
-        try {
-            sent = await sendWithNodemailer(config, { to, subject, text, html })
-            if (sent) provider = 'nodemailer'
-        } catch (e: any) {
-            throw createError({
-                statusCode: 500,
-                message: 'All email providers failed: ' + e.message
-            })
-        }
+        console.warn('[Email] Primary provider failed or not configured, trying Nodemailer...')
+        sent = await sendWithNodemailer(config, { to, subject, text, html })
+        if (sent) provider = 'nodemailer'
     }
 
     if (!sent) {
         throw createError({
             statusCode: 500,
-            message: 'No email provider configured. Set NUXT_SENDGRID_API_KEY or SMTP settings.'
+            message: 'All email providers failed or are not configured.'
         })
     }
 

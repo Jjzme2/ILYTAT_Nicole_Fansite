@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0A0118; /* Background */
+            color: #FAF5FF; /* Text */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #1A0B2E; /* Surface */
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid #2E1065; /* Border */
+        }
+        .header {
+            background: linear-gradient(135deg, #0A0118 0%, #1A0B2E 100%);
+            padding: 40px 30px;
+            text-align: center;
+            border-bottom: 1px solid #2E1065;
+        }
+        .logo-text {
+            color: #D946EF; /* Primary */
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(217, 70, 239, 0.3);
+        }
+        .content {
+            padding: 40px 30px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #FAF5FF;
+            font-size: 22px;
+            margin: 0 0 20px 0;
+            font-weight: 600;
+        }
+        .message-box {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid #2E1065;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            color: #A78BFA; /* Muted */
+            font-size: 15px;
+        }
+        .footer {
+            background-color: #05000C; /* Darker than background */
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #5b4a7a;
+            border-top: 1px solid #2E1065;
+        }
+        .timestamp {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 4px 12px;
+            background-color: rgba(217, 70, 239, 0.1);
+            color: #D946EF;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .button {
+            display: inline-block;
+            background-color: #D946EF;
+            color: #FAF5FF;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(217, 70, 239, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-text">ILYTAT FANS</div>
+        </div>
+        
+        <div class="content">
+            <h1>{{title}}</h1>
+            
+            <p>Hello <span style="color: #D946EF; font-weight: bold;">{{name}}</span>,</p>
+            
+            <div class="message-box">
+                {{message}}
+            </div>
+            
+            <div style="text-align: center;">
+                <span class="timestamp">{{time}}</span>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2026 ILYTAT Fans. All rights reserved.</p>
+            <p>You received this email because you are part of the inner circle.</p>
+        </div>
+    </div>
+</body>
+</html>

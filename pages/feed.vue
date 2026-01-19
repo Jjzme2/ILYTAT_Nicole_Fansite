@@ -155,7 +155,7 @@
                     <div v-if="post.type === 'video'" class="w-full h-full">
                          <!-- YouTube Embed -->
                          <iframe 
-                            v-if="post.mediaUrl.includes('youtube.com') || post.mediaUrl.includes('youtu.be')"
+                            v-if="post.mediaUrl && (post.mediaUrl.includes('youtube.com') || post.mediaUrl.includes('youtu.be'))"
                             :src="getEmbedUrl(post.mediaUrl)" 
                             frameborder="0" 
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -163,7 +163,22 @@
                             class="w-full h-full"
                         ></iframe>
                         
-                        <!-- Native Video -->
+                        <!-- R2 / Native Video -->
+                        <SecureResource v-else-if="post.storageKey" :storageKey="post.storageKey" :postId="post.id">
+                            <template #default="{ src, loading }">
+                                <div v-if="loading" class="w-full h-full flex items-center justify-center text-muted">
+                                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                                </div>
+                                <video 
+                                    v-else-if="src"
+                                    :src="src" 
+                                    controls
+                                    class="w-full h-full object-contain"
+                                ></video>
+                                <div v-else class="w-full h-full flex items-center justify-center text-red-500">Video Unavailable</div>
+                            </template>
+                        </SecureResource>
+
                         <video 
                             v-else
                             :src="post.mediaUrl || post.imageUrl" 
@@ -176,12 +191,39 @@
                         <div class="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4 animate-pulse">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
                         </div>
+                        
+                        <SecureResource v-if="post.storageKey" :storageKey="post.storageKey" :postId="post.id">
+                            <template #default="{ src, loading }">
+                                <div v-if="loading" class="text-xs text-center py-2">Loading audio...</div>
+                                <audio 
+                                    v-else
+                                    :src="src" 
+                                    controls
+                                    class="w-full max-w-md"
+                                ></audio>
+                            </template>
+                        </SecureResource>
+                        
                         <audio 
+                            v-else
                             :src="post.mediaUrl" 
                             controls
                             class="w-full max-w-md"
                         ></audio>
                     </div>
+
+                    <SecureResource v-else-if="post.storageKey" :storageKey="post.storageKey" :postId="post.id">
+                         <template #default="{ src, loading }">
+                            <div v-if="loading" class="w-full h-full flex items-center justify-center bg-surface animate-pulse"></div>
+                            <img 
+                                v-else
+                                :src="src" 
+                                loading="lazy"
+                                class="object-contain w-full h-full"
+                                alt="Content"
+                            />
+                        </template>
+                    </SecureResource>
 
                     <img 
                         v-else

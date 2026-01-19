@@ -68,34 +68,74 @@
                     <!-- Media Preview -->
                     <div class="aspect-video w-full bg-black relative overflow-hidden">
                         <template v-if="post.type !== 'text'">
-                            <img 
-                                v-if="post.type === 'image' || !post.type"
-                                :src="post.mediaUrl || post.imageUrl" 
-                                loading="lazy"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                            />
-                            <div v-else-if="post.type === 'video'" class="w-full h-full bg-black">
-                                <iframe 
-                                    v-if="post.mediaUrl && (post.mediaUrl.includes('youtube.com') || post.mediaUrl.includes('youtu.be'))"
-                                    :src="getEmbedUrl(post.mediaUrl)" 
-                                    frameborder="0" 
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                    allowfullscreen
-                                    class="w-full h-full"
-                                ></iframe>
-                                <video 
-                                    v-else
-                                    :src="post.mediaUrl" 
-                                    controls
-                                    class="w-full h-full object-cover"
-                                    :poster="post.thumbnailUrl"
-                                ></video>
-                            </div>
-                            <div v-else-if="post.type === 'audio'" class="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900 to-black">
-                                <div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                                    🎤
+                            <SecureResource v-if="post.storageKey" :storageKey="post.storageKey" :postId="post.id">
+                                <template #default="{ src, loading }">
+                                    
+                                    <!-- Image -->
+                                    <div v-if="post.type === 'image' || !post.type" class="w-full h-full">
+                                        <div v-if="loading" class="w-full h-full bg-surface animate-pulse"></div>
+                                        <img 
+                                            v-else
+                                            :src="src" 
+                                            loading="lazy"
+                                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                        />
+                                    </div>
+
+                                    <!-- Video -->
+                                    <div v-else-if="post.type === 'video'" class="w-full h-full bg-black">
+                                         <div v-if="loading" class="w-full h-full flex items-center justify-center text-muted">Loading...</div>
+                                         <video 
+                                            v-else
+                                            :src="src" 
+                                            controls
+                                            class="w-full h-full object-cover"
+                                            :poster="post.thumbnailUrl"
+                                        ></video>
+                                    </div>
+                                    
+                                    <!-- Audio -->
+                                    <div v-else-if="post.type === 'audio'" class="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900 to-black">
+                                         <div v-if="loading" class="text-white text-xs">Loading...</div>
+                                         <div v-else class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                                            🎤
+                                        </div>
+                                         <!-- Optional: Play button or similar -->
+                                    </div>
+
+                                </template>
+                            </SecureResource>
+
+                            <template v-else>
+                                <img 
+                                    v-if="post.type === 'image' || !post.type"
+                                    :src="post.mediaUrl || post.imageUrl" 
+                                    loading="lazy"
+                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                />
+                                <div v-else-if="post.type === 'video'" class="w-full h-full bg-black">
+                                    <iframe 
+                                        v-if="post.mediaUrl && (post.mediaUrl.includes('youtube.com') || post.mediaUrl.includes('youtu.be'))"
+                                        :src="getEmbedUrl(post.mediaUrl)" 
+                                        frameborder="0" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowfullscreen
+                                        class="w-full h-full"
+                                    ></iframe>
+                                    <video 
+                                        v-else
+                                        :src="post.mediaUrl" 
+                                        controls
+                                        class="w-full h-full object-cover"
+                                        :poster="post.thumbnailUrl"
+                                    ></video>
                                 </div>
-                            </div>
+                                <div v-else-if="post.type === 'audio'" class="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900 to-black">
+                                    <div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                                        🎤
+                                    </div>
+                                </div>
+                            </template>
                         </template>
                         <template v-else>
                             <div class="w-full h-full flex items-center justify-center p-6 bg-surface text-center">

@@ -39,7 +39,7 @@
             </NuxtLink>
 
             <div class="pt-4 mt-4 border-t border-border space-y-2">
-                <a href="/admin" class="flex items-center gap-3 px-4 py-3 text-muted hover:text-text rounded-xl text-sm font-medium transition">
+                <a v-if="isAdmin || isDeveloper" href="/admin" class="flex items-center gap-3 px-4 py-3 text-muted hover:text-text rounded-xl text-sm font-medium transition">
                     <Briefcase class="w-5 h-5" />
                     Admin Office
                 </a>
@@ -76,7 +76,7 @@
                 <h1 class="font-bold text-xl">THE STUDIO</h1>
             </div>
             <div class="flex gap-4 items-center">
-                <NuxtLink to="/admin" class="text-xs font-bold font-mono uppercase text-muted border border-border px-2 py-1 rounded">Admin</NuxtLink>
+                <NuxtLink v-if="isAdmin || isDeveloper" to="/admin" class="text-xs font-bold font-mono uppercase text-muted border border-border px-2 py-1 rounded">Admin</NuxtLink>
                 <button @click="logout" class="text-xs text-red-500 font-medium">Log Out</button>
             </div>
         </div>
@@ -176,7 +176,7 @@
                     <!-- Preview -->
                     <div v-if="file" class="w-full bg-black rounded-lg overflow-hidden flex justify-center bg-checkered">
                         <img v-if="postType === 'image'" :src="previewUrl" class="max-h-[400px] object-contain">
-                        <video v-if="postType === 'video'" :src="previewUrl" controls class="max-h-[400px] w-full"></video>
+                        <video v-if="postType === 'video'" ref="videoPreviewRef" :src="previewUrl" controls class="max-h-[400px] w-full"></video>
                         <audio v-if="postType === 'audio'" :src="previewUrl" controls class="w-full my-4"></audio>
                     </div>
 
@@ -300,6 +300,19 @@
                             </div>
                         </label>
 
+                        <!-- Update Media Kit Option -->
+                        <label v-if="postType === 'image' || postType === 'video'" class="flex items-center gap-3 p-4 bg-background rounded-xl border border-border cursor-pointer select-none hover:bg-surface/50 transition">
+                            <input 
+                                type="checkbox" 
+                                v-model="updateMediaKitPhoto"
+                                class="w-6 h-6 rounded border-2 border-border text-primary focus:ring-primary focus:ring-offset-0 transition bg-surface"
+                            >
+                            <div>
+                                <span class="font-bold text-sm block">Use as Media Kit Photo</span>
+                                <span class="text-xs text-muted block">Updates your public profile picture</span>
+                            </div>
+                        </label>
+
                         <button 
                             type="submit" 
                             :disabled="uploading"
@@ -364,22 +377,31 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-muted mb-2">Hero Photo URL</label>
-                                <div class="flex gap-2">
-                                     <input v-model="mediaKit.photoUrl" type="text" class="flex-1 border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none" placeholder="https://...">
-                                     <button type="button" @click="openGalleryPicker" class="bg-surface border border-border hover:border-primary p-3 rounded-xl transition text-primary">
-                                        <ImageIcon class="w-5 h-5" />
-                                     </button>
+                                <div class="space-y-2">
+                                    <div v-if="mediaKit.previewUrl" class="relative group w-20 h-20 rounded-lg overflow-hidden border border-border">
+                                        <img :src="mediaKit.previewUrl" class="w-full h-full object-cover">
+                                        <button @click="mediaKit.previewUrl = null; mediaKit.photoStorageKey = null; mediaKit.photoUrl = ''" type="button" class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition">
+                                            <X class="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    <div class="flex gap-2">
+                                         <input 
+                                            v-model="mediaKit.photoUrl" 
+                                            @input="mediaKit.photoStorageKey = null; mediaKit.previewUrl = mediaKit.photoUrl"
+                                            type="text" 
+                                            class="flex-1 border-2 border-border bg-background text-text rounded-xl p-3 focus:border-primary focus:ring-0 outline-none" 
+                                            placeholder="https://... or select from gallery"
+                                        >
+                                         <button type="button" @click="openGalleryPicker" class="bg-surface border border-border hover:border-primary p-3 rounded-xl transition text-primary">
+                                            <ImageIcon class="w-5 h-5" />
+                                         </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="mt-8 pt-6 border-t border-border flex justify-end gap-4">
-                             <button 
-                                type="button" 
-                                class="px-6 py-3 font-bold text-muted hover:text-text transition"
-                            >
-                                Preview
-                            </button>
+
                             <button 
                                 type="submit" 
                                 class="px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition shadow-lg shadow-primary/20"
@@ -437,8 +459,15 @@
     <div v-if="showGalleryPicker" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" @click.self="showGalleryPicker = false">
         <div class="bg-surface w-full max-w-2xl rounded-2xl shadow-2xl border border-border flex flex-col max-h-[80vh]">
             <div class="p-4 border-b border-border flex justify-between items-center">
-                <h3 class="font-bold text-lg text-text">Select from Gallery</h3>
-                <button type="button" @click="showGalleryPicker = false" class="text-muted hover:text-text"><X class="w-6 h-6" /></button>
+                <h3 class="font-bold text-lg text-text">Select Photo</h3>
+                <div class="flex gap-2">
+                    <button @click="triggerMediaKitUpload" class="flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition">
+                        <Upload class="w-4 h-4" />
+                        Upload New
+                    </button>
+                    <input type="file" ref="mediaKitFileInput" class="hidden" accept="image/*" @change="handleMediaKitUpload">
+                    <button type="button" @click="showGalleryPicker = false" class="text-muted hover:text-text"><X class="w-6 h-6" /></button>
+                </div>
             </div>
             <div class="flex-1 overflow-y-auto p-4">
                 <div v-if="loadingGallery" class="text-center py-10 text-muted">Loading photos...</div>
@@ -447,10 +476,26 @@
                     <div 
                         v-for="img in galleryImages" 
                         :key="img.id" 
-                        @click="selectGalleryImage(img.mediaUrl || img.imageUrl)"
-                        class="aspect-square bg-black rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition relative group"
+                        @click="selectGalleryImage(img)"
+                        class="aspect-square bg-surface rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition relative group border-2"
+                        :class="[(img.storageKey === mediaKit.photoStorageKey || img.mediaUrl === mediaKit.photoUrl) ? 'border-primary' : 'border-transparent']"
                     >
-                        <img :src="img.mediaUrl || img.imageUrl" class="w-full h-full object-cover">
+                        <div v-if="img.type !== 'image'" class="w-full h-full flex flex-col items-center justify-center bg-background text-muted p-2 text-center">
+                            <VideoIcon v-if="img.type === 'video'" class="w-8 h-8 mb-1" />
+                            <Mic v-if="img.type === 'audio'" class="w-8 h-8 mb-1" />
+                            <span class="text-[10px] font-bold uppercase">{{ img.type }}</span>
+                            <span class="text-[9px] opacity-75 leading-tight mt-1">(Cannot use as photo)</span>
+                        </div>
+                        <SecureResource v-else-if="img.storageKey" :storageKey="img.storageKey">
+                             <template #default="{ src, loading }">
+                                <div v-if="loading" class="w-full h-full flex items-center justify-center bg-surface">
+                                    <div class="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>
+                                </div>
+                                <img v-else :src="src" class="w-full h-full object-cover">
+                             </template>
+                        </SecureResource>
+                        <img v-else :src="img.mediaUrl || img.imageUrl" class="w-full h-full object-cover">
+                        
                         <div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                             <Check class="w-8 h-8 text-white drop-shadow-md" />
                         </div>
@@ -508,7 +553,7 @@
 </template>
 
 <script setup>
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+// import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, doc, setDoc, getDoc, updateDoc, limit, where } from 'firebase/firestore'
 import { 
     LayoutDashboard, 
@@ -567,16 +612,26 @@ definePageMeta({
 })
 
 const { $storage, $db } = useNuxtApp()
-const { logout, user } = useAuth()
+const { logout, user, isAdmin, isDeveloper } = useAuth()
 const toast = useToast()
 const route = useRoute()
 const router = useRouter()
 
-// TABS
-const currentTab = ref('content') // 'content', 'media-kit'
+// Helper to get auth headers for API calls
+const getAuthHeaders = async () => {
+    if (!user.value) return {}
+    const token = await user.value.getIdToken()
+    return { Authorization: `Bearer ${token}` }
+}
 
-// Watch tab for fetch
+// TABS
+const currentTab = ref(route.query.tab || 'content') // 'content', 'media-kit'
+
+// Watch tab for fetch & URL sync
 watch(currentTab, (val) => {
+    // Update URL without reloading
+    router.replace({ query: { ...route.query, tab: val } })
+    
     if (val === 'suggestions') fetchSuggestions()
     if (val === 'media-kit') fetchMediaKit()
 })
@@ -600,6 +655,8 @@ const embedPlatform = ref('youtube')
 const embedInput = ref('')
 
 const isFree = ref(false)
+const updateMediaKitPhoto = ref(false)
+const videoPreviewRef = ref(null)
 const uploading = ref(false)
 const editingPostId = ref(null)
 
@@ -624,14 +681,25 @@ onMounted(async () => {
                 isFree.value = data.isFree || false
                 
                 // Handle Previews based on type
-                if (data.type === 'video' && (data.mediaUrl.includes('youtube') || data.mediaUrl.includes('youtu.be'))) {
+                if (data.type === 'video' && (data.mediaUrl && (data.mediaUrl.includes('youtube') || data.mediaUrl.includes('youtu.be')))) {
                     // It's an embed
                     captureMode.value = 'link'
                     embedPlatform.value = 'youtube'
                     embedInput.value = data.mediaUrl
                     processEmbedInput()
+                } else if (data.storageKey) {
+                    // It's an R2 file - Fetch Signed URL
+                    try {
+                        const res = await $fetch('/api/vault/view', {
+                            params: { key: data.storageKey }
+                        })
+                        previewUrl.value = res.url
+                    } catch (err) {
+                        console.error("Failed to load R2 preview:", err)
+                        toast.error("Could not load current media.")
+                    }
                 } else {
-                    // It's a file
+                    // Legacy File
                     previewUrl.value = data.mediaUrl
                 }
             } else {
@@ -740,6 +808,7 @@ const resetForm = () => {
     isFree.value = false
     captureMode.value = null
     editingPostId.value = null
+    updateMediaKitPhoto.value = false
     router.replace('/creator') // Clear query param
 }
 
@@ -760,18 +829,37 @@ const handleUpload = async () => {
     
     uploading.value = true
     try {
-        let downloadURL = embedUrl.value || previewUrl.value // Default to existing/embed
-        
-        // Handle NEW File Upload
+        let downloadURL = embedUrl.value || previewUrl.value // Legacy/Embed
+        let storageKey = null
+
+        // Handle NEW File Upload via R2 Vault
         if (!embedUrl.value && postType.value !== 'text' && file.value) {
-            const fileName = `${Date.now()}_${file.value.name}`
-            const fileRef = storageRef($storage, `posts/${fileName}`)
-            const snapshot = await uploadBytes(fileRef, file.value)
-            downloadURL = await getDownloadURL(snapshot.ref)
+            // 1. Get Signed URL
+            const { uploadUrl, key } = await $fetch('/api/vault/upload', {
+                method: 'POST',
+                body: {
+                    filename: file.value.name,
+                    contentType: file.value.type
+                }
+            })
+
+            // 2. Upload to R2 directly
+            await fetch(uploadUrl, {
+                method: 'PUT',
+                body: file.value,
+                headers: {
+                    'Content-Type': file.value.type
+                }
+            })
+
+            storageKey = key
+            downloadURL = null // R2 items are not public
         }
         
         const payload = {
             mediaUrl: downloadURL,
+            storageKey: storageKey, // NEW: R2 Key
+            provider: storageKey ? 'r2' : 'firebase',
             type: postType.value,
             subtype: postType.value === 'text' ? postSubtype.value : null,
             citation: postType.value === 'text' && postSubtype.value === 'quote' ? citation.value : null,
@@ -802,15 +890,57 @@ const handleUpload = async () => {
                 onClick: () => router.push(`/feed?highlight=${docRef.id}`)
             })
         }
+
+        // --- UPDATE MEDIA KIT IF CHECKED ---
+        if (updateMediaKitPhoto.value) {
+            try {
+                let mkKey = storageKey
+                let mkUrl = downloadURL
+
+                // If VIDEO, Capture Frame and Upload
+                if (postType.value === 'video' && videoPreviewRef.value) {
+                    const canvas = document.createElement('canvas')
+                    canvas.width = videoPreviewRef.value.videoWidth
+                    canvas.height = videoPreviewRef.value.videoHeight
+                    canvas.getContext('2d').drawImage(videoPreviewRef.value, 0, 0)
+                    
+                    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.8))
+                    const mkFile = new File([blob], `mediakit_${Date.now()}.jpg`, { type: 'image/jpeg' })
+                    
+                    // Upload Thumbnail
+                    const { uploadUrl, key } = await $fetch('/api/vault/upload', {
+                        method: 'POST',
+                        body: { filename: mkFile.name, contentType: mkFile.type }
+                    })
+                    await fetch(uploadUrl, { method: 'PUT', body: mkFile, headers: { 'Content-Type': mkFile.type } })
+                    
+                    mkKey = key
+                    mkUrl = null
+                }
+
+                await setDoc(doc($db, 'users', user.value.uid, 'settings', 'mediaKit'), {
+                    photoStorageKey: mkKey,
+                    photoUrl: mkUrl,
+                    updatedAt: serverTimestamp()
+                }, { merge: true })
+                
+                toast.success('Media Kit Photo Updated!')
+            } catch (err) {
+                console.error("Failed to update media kit photo:", err)
+                toast.error("Posted, but failed to update Media Kit photo.")
+            }
+        }
         
         resetForm()
+
     } catch (e) {
-        console.error(e)
-        toast.error('Operation failed: ' + e.message)
+        console.error('Upload error:', e)
+        toast.error('Failed to post content. Please try again.')
     } finally {
         uploading.value = false
     }
 }
+
 
 // --- MEDIA KIT LOGIC ---
 const mediaKit = ref({
@@ -862,9 +992,9 @@ const openGalleryPicker = async () => {
         // Fetch recent image posts
         const q = query(
             collection($db, 'posts'), 
-            where('type', '==', 'image'), 
+            // where('type', '==', 'image'), // Allow all types, check manually
             orderBy('createdAt', 'desc'), 
-            limit(20)
+            limit(50)
         )
         const snapshot = await getDocs(q)
         galleryImages.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
@@ -874,23 +1004,229 @@ const openGalleryPicker = async () => {
         loadingGallery.value = false
     }
 }
+const fetchMediaKit = async () => {
+    console.log("[MediaKit] Fetching for user:", user.value?.uid)
+    if (!user.value?.uid) return
+    
+    // DEBUG: Identify user clearly
+    console.log("DEBUG: Current Authenticated UID:", user.value.uid)
 
-const selectGalleryImage = (url) => {
-    mediaKit.value.photoUrl = url
+    try {
+        const docRef = doc($db, 'users', user.value.uid, 'settings', 'mediaKit')
+        const docSnap = await getDoc(docRef)
+        console.log("[MediaKit] Primary doc exists:", docSnap.exists())
+        
+        if (docSnap.exists()) {
+            const data = docSnap.data()
+            mediaKit.value = { 
+                ...mediaKit.value, 
+                ...data,
+                updatedAt: data.updatedAt || data.createdAt
+            }
+
+            // Hydrate preview if storage key exists
+             if (data.photoStorageKey) {
+                try {
+                    const res = await $fetch('/api/vault/view', { params: { key: data.photoStorageKey } })
+                    mediaKit.value.previewUrl = res.url
+                } catch (e) { console.error(e) }
+            } else {
+                mediaKit.value.previewUrl = data.photoUrl
+            }
+            toast.success("Loaded saved Media Kit")
+        } else {
+            // Fallback: Check for legacy media kit in 'media_kits' collection
+            // Fallback 1: Check 'createdBy'
+            let q = query(
+                collection($db, 'media_kits'), 
+                where('createdBy', '==', user.value?.uid),
+                limit(1)
+            )
+            let snapshot = await getDocs(q)
+            
+            // Fallback 2: Check 'uid' if 'createdBy' failed
+            if (snapshot.empty) {
+                 console.log("[MediaKit] Fallback 1 (createdBy) empty. Trying 'uid'...")
+                 q = query(
+                    collection($db, 'media_kits'), 
+                    where('uid', '==', user.value?.uid),
+                    limit(1)
+                )
+                snapshot = await getDocs(q)
+            }
+
+            console.log("[MediaKit] Fallback query found docs:", snapshot.size)
+
+            // DEBUG: Check what ANY doc looks like to verify schema
+            if (snapshot.empty) {
+                 try {
+                    const sampleQ = query(collection($db, 'media_kits'), limit(1));
+                    const sampleSnap = await getDocs(sampleQ);
+                    if (!sampleSnap.empty) {
+                        console.log("[MediaKit] Schema Check - First doc in collection:", sampleSnap.docs[0].data())
+                    } else {
+                        console.log("[MediaKit] Collection 'media_kits' appears to be essentially empty.")
+                    }
+                 } catch (err) { console.error("Schema check failed", err)}
+            }
+
+            if (!snapshot.empty) {
+                const legacyData = snapshot.docs[0].data()
+                console.log("[MediaKit] Loading legacy data:", legacyData)
+                mediaKit.value = {
+                    ...mediaKit.value,
+                    ...legacyData,
+                    updatedAt: legacyData.createdAt
+                }
+
+                // Hydrate preview for legacy
+                 if (legacyData.photoStorageKey) {
+                    try {
+                        const res = await $fetch('/api/vault/view', { params: { key: legacyData.photoStorageKey } })
+                        mediaKit.value.previewUrl = res.url
+                    } catch (e) { console.error(e) }
+                } else {
+                    mediaKit.value.previewUrl = legacyData.photoUrl
+                }
+                
+                // Optional: We could migrate it here, but letting them hit 'Save' is safer/simpler
+                console.log("Loaded legacy Media Kit")
+                toast.success("Loaded saved Media Kit (Legacy)")
+            } else {
+                console.log("[MediaKit] No personal data found.")
+                
+                // Fallback 3: Developer Bypass - load ANY kit
+                if (isAdmin.value || isDeveloper.value) {
+                     console.log("[MediaKit] Admin/Dev Detected. Attempting to load ANY media kit.")
+                     const anyQ = query(collection($db, 'media_kits'), limit(1))
+                     const anySnap = await getDocs(anyQ)
+                     
+                     if (!anySnap.empty) {
+                        const devData = anySnap.docs[0].data()
+                        mediaKit.value = {
+                            ...mediaKit.value,
+                            ...devData,
+                            updatedAt: devData.createdAt
+                        }
+                         // Hydrate preview
+                        if (devData.photoStorageKey) {
+                            try {
+                                const res = await $fetch('/api/vault/view', { params: { key: devData.photoStorageKey } })
+                                mediaKit.value.previewUrl = res.url
+                            } catch (e) { console.error(e) }
+                        } else {
+                            mediaKit.value.previewUrl = devData.photoUrl
+                        }
+                        toast.info("Loaded Global Media Kit (Admin View)")
+                        return
+                     }
+                }
+                
+                // toast.info("No saved Media Kit found. Please fill it out.")
+            }
+        }
+    } catch (e) {
+        console.error('Error fetching existing media kit:', e)
+    }
+}
+
+
+// Media Kit Upload Logic
+const mediaKitFileInput = ref(null)
+
+const triggerMediaKitUpload = () => {
+    mediaKitFileInput.value.click()
+}
+
+const handleMediaKitUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    // Immediate preview
+    mediaKit.value.previewUrl = URL.createObjectURL(file)
+
+    loadingGallery.value = true
+    try {
+        // 1. Get Signed URL
+        const { uploadUrl, key } = await $fetch('/api/vault/upload', {
+            method: 'POST',
+            body: {
+                filename: file.name,
+                contentType: file.type
+            }
+        })
+
+        // 2. Upload to R2 directly
+        // 2. Upload to R2 directly
+        await fetch(uploadUrl, {
+            method: 'PUT',
+            body: file,
+            headers: {
+                'Content-Type': file.type
+            }
+        })
+
+        console.log("[MediaKit] Upload success. Key:", key)
+
+        // 3. Set as selected
+        mediaKit.value.photoStorageKey = key
+        
+        // 4. Fetch preview
+        const headers = await getAuthHeaders()
+        const res = await $fetch('/api/vault/view', { params: { key }, headers })
+        console.log("[MediaKit] View URL fetched:", res.url)
+        
+        mediaKit.value.previewUrl = res.url 
+        mediaKit.value.photoUrl = res.url 
+        
+        console.log("[MediaKit] Set photoUrl to:", mediaKit.value.photoUrl)
+        
+        showGalleryPicker.value = false
+        toast.success("Photo uploaded and selected")
+
+    } catch (err) {
+        console.error("Media Kit upload failed:", err)
+        toast.error("Upload failed")
+    } finally {
+        loadingGallery.value = false
+    }
+}
+
+const selectGalleryImage = async (item) => {
+    if (item.type !== 'image' && !item.imageUrl) {
+        toast.error("Please select an image.")
+        return
+    }
+
+    if (item.storageKey) {
+        mediaKit.value.photoStorageKey = item.storageKey
+        // Fetch preview
+        try {
+            const headers = await getAuthHeaders()
+            const res = await $fetch('/api/vault/view', { params: { key: item.storageKey }, headers })
+            mediaKit.value.previewUrl = res.url
+            mediaKit.value.photoUrl = res.url // Populate URL field
+        } catch (e) { console.error(e) }
+    } else {
+        mediaKit.value.photoUrl = item.mediaUrl || item.imageUrl
+        mediaKit.value.photoStorageKey = null
+        mediaKit.value.previewUrl = mediaKit.value.photoUrl
+    }
     showGalleryPicker.value = false
 }
 
 const saveMediaKit = async () => {
     uploading.value = true
     try {
-        await addDoc(collection($db, 'media_kits'), {
+        await setDoc(doc($db, 'users', user.value.uid, 'settings', 'mediaKit'), {
             bio: mediaKit.value.bio,
             location: mediaKit.value.location || '',
             photoUrl: mediaKit.value.photoUrl || '',
+            photoStorageKey: mediaKit.value.photoStorageKey || '',
             platforms: mediaKit.value.platforms,
-            createdAt: serverTimestamp(),
-            createdBy: user.value?.uid
-        })
+            updatedAt: serverTimestamp(),
+            uid: user.value?.uid
+        }, { merge: true })
         toast.success('Media Kit updated!')
     } catch (e) {
         console.error(e)
@@ -901,30 +1237,19 @@ const saveMediaKit = async () => {
 }
 
 // Fetch existing Media Kit to populate form
-const fetchMediaKit = async () => {
-    try {
-        const q = query(collection($db, 'media_kits'), orderBy('createdAt', 'desc'), limit(1))
-        const snapshot = await getDocs(q)
-        if (!snapshot.empty) {
-            const data = snapshot.docs[0].data()
-            mediaKit.value = {
-                bio: data.bio || '',
-                location: data.location || '',
-                photoUrl: data.photoUrl || '',
-                platforms: {
-                    ...mediaKit.value.platforms,
-                    ...(data.platforms || {})
-                },
-                updatedAt: data.updatedAt || data.createdAt
-            }
-        }
-    } catch (e) {
-        console.error('Error fetching existing media kit:', e)
-    }
-}
-
 onMounted(() => {
-    fetchMediaKit()
+    if (user.value) {
+        if (currentTab.value === 'suggestions') fetchSuggestions()
+        if (currentTab.value === 'media-kit') fetchMediaKit()
+    }
+})
+
+// Watch user to fetch once auth resolves
+watch(user, (u) => {
+    if (u) {
+        if (currentTab.value === 'suggestions') fetchSuggestions()
+        if (currentTab.value === 'media-kit') fetchMediaKit()
+    }
 })
 
 // Dev Task Logic

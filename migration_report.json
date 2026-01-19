@@ -1,0 +1,38 @@
+{
+  "total": 11,
+  "migrated": 6,
+  "errors": 0,
+  "skipped": 5,
+  "details": [
+    {
+      "id": "3FXom72lYe6ZDDKhaiMj",
+      "status": "success",
+      "key": "f64a1813-0534-4184-b6c3-960d751fad6b.jpeg"
+    },
+    {
+      "id": "FU8t6aJBRXPfVUFiazH2",
+      "status": "success",
+      "key": "5dc1f991-03e7-480f-9af1-b5a499a24df2.jpeg"
+    },
+    {
+      "id": "K3OLUO8j8AGNtBphV8Fv",
+      "status": "success",
+      "key": "f0ef400e-87db-4c9b-b1e6-35ce4565ecd1.mp4"
+    },
+    {
+      "id": "XbZxJufqhUAX9feM51AN",
+      "status": "success",
+      "key": "e2e6de6e-ff20-4991-acf5-a64f8c21452a.jpeg"
+    },
+    {
+      "id": "cPBLwYkjn7TptK0VWVjj",
+      "status": "success",
+      "key": "132b86ab-1a46-4fb1-b131-b3448e6ff5df.jpeg"
+    },
+    {
+      "id": "lsj18rDUNrVH4WyqjKqk",
+      "status": "success",
+      "key": "430f605b-1722-4c24-96b7-cfad4f68352f.mp4"
+    }
+  ]
+}

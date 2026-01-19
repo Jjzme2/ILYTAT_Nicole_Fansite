@@ -30,6 +30,12 @@
                <component v-else :is="link.icon" class="w-5 h-5" />
              </a>
           </div>
+          
+          <!-- ILYTAT Parenting Brand -->
+          <div class="mb-6">
+              <img :src="`https://${runtimeConfig.public.mediaDomain}/logo.png`" alt="ILYTAT" class="h-8 mx-auto opacity-50 hover:opacity-80 transition-opacity" />
+          </div>
+
           <div class="text-sm text-muted">
               <p>&copy; {{ new Date().getFullYear() }} {{ config.meta.copyright }}. All rights reserved.</p>
               <p class="mt-2">
@@ -104,6 +110,7 @@
 <script setup>
 import { Loader as LucideLoader, Home } from 'lucide-vue-next'
 const config = useAppConfig()
+const runtimeConfig = useRuntimeConfig()
 const { themeStyles, activeTheme } = useTheme()
 
 const { socialLinks } = useSocials()

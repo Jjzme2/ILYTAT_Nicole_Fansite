@@ -65,8 +65,18 @@
 
             <button @click="enterRoomForPost(latestPost)" class="w-full bg-surface border border-border rounded-2xl p-4 flex gap-4 items-center hover:bg-surface/80 hover:border-text/20 transition text-left group">
                 <div class="w-16 h-16 rounded-lg bg-black flex-shrink-0 overflow-hidden relative">
+                    <SecureResource v-if="latestPost.storageKey" :storageKey="latestPost.storageKey" :postId="latestPost.id">
+                        <template #default="{ src, loading }">
+                            <div v-if="loading" class="w-full h-full bg-surface animate-pulse"></div>
+                            <img 
+                                v-else
+                                :src="src" 
+                                class="w-full h-full object-cover opacity-80"
+                            />
+                        </template>
+                    </SecureResource>
                     <img 
-                        v-if="['image', 'video'].includes(latestPost.type)" 
+                        v-else-if="['image', 'video'].includes(latestPost.type)" 
                         :src="latestPost.mediaUrl || latestPost.imageUrl" 
                         class="w-full h-full object-cover opacity-80"
                     />
@@ -161,7 +171,19 @@
                         <div v-for="post in posts" :key="post.id" class="break-inside-avoid relative group rounded-2xl overflow-hidden bg-black shadow-lg">
                             
                              <div v-if="canView(post)">
+                                <SecureResource v-if="post.storageKey" :storageKey="post.storageKey" :postId="post.id">
+                                    <template #default="{ src, loading }">
+                                        <div v-if="loading" class="aspect-[3/4] bg-surface animate-pulse"></div>
+                                        <img 
+                                            v-else
+                                            :src="src" 
+                                            class="w-full object-cover transition duration-700 group-hover:scale-105" 
+                                            loading="lazy"
+                                        >
+                                    </template>
+                                </SecureResource>
                                 <img 
+                                    v-else
                                     :src="post.mediaUrl || post.imageUrl" 
                                     class="w-full object-cover transition duration-700 group-hover:scale-105" 
                                     loading="lazy"
@@ -208,6 +230,18 @@
                                     allowfullscreen
                                     class="w-full h-full"
                                 ></iframe>
+                                <SecureResource v-else-if="post.storageKey" :storageKey="post.storageKey" :postId="post.id">
+                                    <template #default="{ src, loading }">
+                                        <div v-if="loading" class="w-full h-full flex items-center justify-center text-muted">Loading film...</div>
+                                        <video 
+                                            v-else
+                                            :src="src" 
+                                            class="w-full h-full object-contain" 
+                                            controls
+                                            :poster="post.thumbnailUrl"
+                                        ></video>
+                                    </template>
+                                </SecureResource>
                                 <video 
                                     v-else
                                     :src="post.mediaUrl" 
@@ -269,7 +303,13 @@
                              
                              <!-- Player -->
                              <div v-if="canView(post)" class="w-full">
-                                 <audio :src="post.mediaUrl" controls class="w-full h-8 px-0"></audio>
+                                 <SecureResource v-if="post.storageKey" :storageKey="post.storageKey" :postId="post.id">
+                                     <template #default="{ src, loading }">
+                                         <div v-if="loading" class="text-xs text-muted">Loading...</div>
+                                         <audio v-else :src="src" controls class="w-full h-8 px-0"></audio>
+                                     </template>
+                                 </SecureResource>
+                                 <audio v-else :src="post.mediaUrl" controls class="w-full h-8 px-0"></audio>
                              </div>
                              <button v-else @click="handleSubscribe" class="text-xs font-bold text-primary hover:underline">
                                  Subscribe to Listen
@@ -292,18 +332,42 @@
                              <div v-if="canView(post)">
                                  <!-- Image/Video -->
                                  <div v-if="['image', 'video'].includes(post.format) || (!post.format && ['image', 'video'].includes(post.type))">
-                                     <video 
-                                        v-if="post.format === 'video' || post.type === 'video'"
-                                        :src="post.mediaUrl" 
-                                        class="w-full object-cover" 
-                                        controls
-                                    ></video>
-                                    <img 
-                                        v-else 
-                                        :src="post.mediaUrl || post.imageUrl" 
-                                        class="w-full object-cover transition duration-700 group-hover:scale-105" 
-                                        loading="lazy"
-                                    >
+                                     <div v-if="post.format === 'video' || post.type === 'video'">
+                                        <SecureResource v-if="post.storageKey" :storageKey="post.storageKey" :postId="post.id">
+                                            <template #default="{ src, loading }">
+                                                 <video 
+                                                    v-if="!loading"
+                                                    :src="src" 
+                                                    class="w-full object-cover" 
+                                                    controls
+                                                ></video>
+                                            </template>
+                                        </SecureResource>
+                                         <video 
+                                            v-else
+                                            :src="post.mediaUrl" 
+                                            class="w-full object-cover" 
+                                            controls
+                                        ></video>
+                                     </div>
+                                     <div v-else>
+                                         <SecureResource v-if="post.storageKey" :storageKey="post.storageKey" :postId="post.id">
+                                            <template #default="{ src, loading }">
+                                                <img 
+                                                    v-if="!loading"
+                                                    :src="src" 
+                                                    class="w-full object-cover transition duration-700 group-hover:scale-105" 
+                                                    loading="lazy"
+                                                >
+                                            </template>
+                                         </SecureResource>
+                                        <img 
+                                            v-else 
+                                            :src="post.mediaUrl || post.imageUrl" 
+                                            class="w-full object-cover transition duration-700 group-hover:scale-105" 
+                                            loading="lazy"
+                                        >
+                                     </div>
                                  </div>
                                  
                                  <!-- Audio -->
@@ -314,7 +378,12 @@
                                          </div>
                                          <span class="text-xs font-bold text-muted">Audio Drop</span>
                                      </div>
-                                     <audio :src="post.mediaUrl" controls class="w-full h-8 px-0"></audio>
+                                     <SecureResource v-if="post.storageKey" :storageKey="post.storageKey" :postId="post.id">
+                                        <template #default="{ src, loading }">
+                                            <audio v-if="!loading" :src="src" controls class="w-full h-8 px-0"></audio>
+                                        </template>
+                                     </SecureResource>
+                                     <audio v-else :src="post.mediaUrl" controls class="w-full h-8 px-0"></audio>
                                  </div>
                                  
                                  <!-- Text -->

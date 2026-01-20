@@ -4,40 +4,35 @@ const props = defineProps<{
   postId?: string
 }>()
 
-const src = ref('')
-const loading = ref(true)
-const error = ref(null)
-
 const { user } = useAuth()
 
-onMounted(async () => {
-    if (!props.storageKey) {
-        loading.value = false
-        return
-    }
-    
-    try {
-        const headers: Record<string, string> = {}
-        if (user.value) {
-            const token = await user.value.getIdToken()
-            headers.Authorization = `Bearer ${token}`
-        }
+// Use a computed getter for params to ensure reactivity
+const params = computed(() => ({
+    key: props.storageKey,
+    postId: props.postId
+}))
 
-        const data = await $fetch('/api/vault/view', {
-            params: { 
-                key: props.storageKey,
-                postId: props.postId
-            },
-            headers
-        })
-        src.value = data.url
-    } catch (e: any) {
-        console.error('Failed to load secure resource', e)
-        error.value = e
-    } finally {
-        loading.value = false
-    }
+const { data, status, error } = await useFetch('/api/vault/view', {
+    key: `vault-${props.storageKey}`, // Caching key prevents refetching on navigation
+    params,
+    onRequest: async ({ options }) => {
+        if (user.value) {
+            try {
+                const token = await user.value.getIdToken()
+                options.headers = options.headers || {}
+                ;(options.headers as any).Authorization = `Bearer ${token}`
+            } catch (e) {
+                console.warn('Failed to attach auth token', e)
+            }
+        }
+    },
+    server: false, // Client-side only as we need the Firebase token
+    lazy: true,    // Non-blocking
+    immediate: !!props.storageKey
 })
+
+const src = computed(() => data.value?.url || '')
+const loading = computed(() => status.value === 'pending')
 </script>
 
 <template>

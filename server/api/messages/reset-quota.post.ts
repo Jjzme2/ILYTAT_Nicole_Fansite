@@ -8,6 +8,14 @@
 import { serverTimestamp } from 'firebase/firestore'
 
 export default defineEventHandler(async (event) => {
+    const user = await getUserFromEvent(event)
+    if (user.role !== 'admin' && user.role !== 'creator') {
+        throw createError({
+            statusCode: 403,
+            message: 'Forbidden: Insufficient permissions'
+        })
+    }
+
     const { db } = useFirebaseAdmin()
     const { userId } = await readBody(event)
 

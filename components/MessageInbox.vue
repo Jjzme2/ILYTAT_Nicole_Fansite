@@ -254,14 +254,33 @@ let repliesListener = null
 // Listeners
 const startInboxListener = () => {
     loading.value = true
-    // Order by createdAt desc
+    // Detach any existing listener
+    if (inboxListener) {
+        inboxListener()
+    }
+
     const q = query(collection($db, 'messages'), orderBy('createdAt', 'desc'))
     
     inboxListener = onSnapshot(q, (snapshot) => {
-        messages.value = snapshot.docs.map(doc => ({ 
-            id: doc.id, 
-            ...doc.data() 
-        }))
+        snapshot.docChanges().forEach(change => {
+            const docData = { id: change.doc.id, ...change.doc.data() }
+
+            if (change.type === "added") {
+                messages.value.splice(change.newIndex, 0, docData)
+            }
+            if (change.type === "modified") {
+                const index = messages.value.findIndex(m => m.id === docData.id)
+                if (index !== -1) {
+                    messages.value[index] = docData
+                }
+            }
+            if (change.type === "removed") {
+                const index = messages.value.findIndex(m => m.id === docData.id)
+                if (index !== -1) {
+                    messages.value.splice(index, 1)
+                }
+            }
+        })
         loading.value = false
     }, (error) => {
         console.error("Error fetching messages:", error)
@@ -355,8 +374,6 @@ const sendReply = async () => {
             repliedAt: serverTimestamp()
         })
         
-        viewingMessage.value.hasReply = true
-        
         replyContent.value = ''
         toast.show('Reply sent!', 'success')
     } catch (e) {
@@ -376,10 +393,6 @@ const markAsReplied = async () => {
             hasReply: true,
             repliedAt: serverTimestamp()
         })
-        
-        const idx = messages.value.findIndex(m => m.id === viewingMessage.value.id)
-        if (idx !== -1) messages.value[idx].hasReply = true
-        viewingMessage.value.hasReply = true
         
         toast.show('Marked as replied', 'success')
     } catch (e) {

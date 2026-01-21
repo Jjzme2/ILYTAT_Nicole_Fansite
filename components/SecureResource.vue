@@ -4,40 +4,40 @@ const props = defineProps<{
   postId?: string
 }>()
 
-const src = ref('')
-const loading = ref(true)
-const error = ref(null)
-
 const { user } = useAuth()
 
-onMounted(async () => {
-    if (!props.storageKey) {
-        loading.value = false
-        return
-    }
-    
-    try {
+// Bolt Optimization: Use useAsyncData for caching and deduplication
+// This prevents multiple requests for the same resource across the feed
+// and allows caching if the user navigates away and back.
+const { data, status, error } = useAsyncData<{ url: string } | null>(
+    `secure-resource:${props.storageKey}`,
+    async () => {
+        if (!props.storageKey) return null
+
         const headers: Record<string, string> = {}
         if (user.value) {
             const token = await user.value.getIdToken()
             headers.Authorization = `Bearer ${token}`
         }
 
-        const data = await $fetch('/api/vault/view', {
+        return $fetch<{ url: string }>('/api/vault/view', {
             params: { 
                 key: props.storageKey,
                 postId: props.postId
             },
             headers
         })
-        src.value = data.url
-    } catch (e: any) {
-        console.error('Failed to load secure resource', e)
-        error.value = e
-    } finally {
-        loading.value = false
+    },
+    {
+        lazy: true,
+        immediate: !!props.storageKey,
+        dedupe: 'defer',
+        watch: [user] // Re-fetch when user auth state changes (e.g. initial load)
     }
-})
+)
+
+const src = computed(() => data.value?.url || '')
+const loading = computed(() => status.value === 'pending')
 </script>
 
 <template>

@@ -4,22 +4,27 @@ const props = defineProps<{
   alt?: string
 }>()
 
-const src = ref('')
-const loading = ref(true)
+const { user } = useAuth()
 
-// Fetch the temporary pass on mount
-onMounted(async () => {
-  try {
-    const data = await $fetch('/api/vault/view', {
-      params: { key: props.storageKey }
-    })
-    src.value = data.url
-  } catch (e) {
-    console.error('Failed to load secure image', e)
-  } finally {
-    loading.value = false
-  }
-})
+// Bolt Optimization: Replace onMounted+$fetch with useAsyncData
+// This enables caching and prevents duplicate requests for the same image
+const { data, status } = useAsyncData<{ url: string } | null>(
+    `secure-image:${props.storageKey}`,
+    async () => {
+        if (!props.storageKey) return null
+        return $fetch<{ url: string }>('/api/vault/view', {
+          params: { key: props.storageKey }
+        })
+    },
+    {
+        lazy: true,
+        dedupe: 'defer',
+        watch: [user] // Consistent behavior
+    }
+)
+
+const src = computed(() => data.value?.url || '')
+const loading = computed(() => status.value === 'pending')
 </script>
 
 <template>

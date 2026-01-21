@@ -137,7 +137,7 @@ export default defineEventHandler(async (event) => {
                             needsUpdate = true
                         } else {
                             // Check keys inside the object
-                            const subUpdates = {}
+                            const subUpdates: Record<string, any> = {}
                             let subChanged = false
                             for (const [subKey, subVal] of Object.entries(defaultVal)) {
                                 if (data[key][subKey] === undefined) {

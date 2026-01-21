@@ -11,3 +11,8 @@
 **Vulnerability:** Found usage of native `new Map()` for server-side caching of user profiles in `server/api/users/public.post.ts`. This allows attackers to exhaust server memory (DoS) by requesting random IDs.
 **Learning:** Developers may use `Map` for quick caching solutions, forgetting that serverless/long-running node processes retain memory. Commented-out secure code (`lru-cache`) suggests intent was there but implementation lagged.
 **Prevention:** Use `lru-cache` or Redis for any server-side caching. Enforce explicit `max` items and `ttl` (Time To Live) limits on all caches.
+
+## 2026-01-20 - [Critical] Unauthenticated Quota Reset Endpoints
+**Vulnerability:** Found `POST /api/messages/reset-all-quotas` and `POST /api/messages/reset-quota` endpoints that allowed resetting user messaging quotas without any authentication or authorization.
+**Learning:** Admin-only tools created for "internal use" or convenience often lack security controls because developers assume they are hidden. Always verify auth on EVERY endpoint.
+**Prevention:** Added `getUserFromEvent` check to ensure the caller has 'admin' or 'creator' role.

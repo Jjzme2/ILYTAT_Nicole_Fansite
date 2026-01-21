@@ -10,12 +10,10 @@ import { getUserFromEvent } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
     const user = await getUserFromEvent(event)
-
-    // Security Check: Only admin can reset ALL quotas
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'creator') {
         throw createError({
             statusCode: 403,
-            message: 'Unauthorized: Admin access required'
+            message: 'Forbidden: Insufficient permissions'
         })
     }
 

@@ -6,8 +6,19 @@
  */
 
 import { FieldValue } from 'firebase-admin/firestore'
+import { getUserFromEvent } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
+    const user = await getUserFromEvent(event)
+
+    // Security Check: Only admin can reset ALL quotas
+    if (user.role !== 'admin') {
+        throw createError({
+            statusCode: 403,
+            message: 'Unauthorized: Admin access required'
+        })
+    }
+
     const { db } = useFirebaseAdmin()
 
     try {

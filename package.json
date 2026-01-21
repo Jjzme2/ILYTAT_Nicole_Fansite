@@ -8,6 +8,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "test": "vitest run",
     "manage-users": "node .dev/scripts/manage-users.js",
     "create-task-list": "node .dev/scripts/createFile.js --name TaskList --path .dev/Tasks/",
     "migrate": "curl -X POST http://localhost:3000/api/migrations/run-all",

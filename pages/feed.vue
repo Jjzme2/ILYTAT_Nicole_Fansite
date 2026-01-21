@@ -52,6 +52,9 @@
             <button 
                 @click="showSuggestionForm = !showSuggestionForm"
                 class="w-full bg-surface hover:bg-background border border-primary/20 text-primary p-4 rounded-xl flex items-center justify-between transition group"
+                :aria-expanded="showSuggestionForm"
+                aria-controls="suggestion-form"
+                aria-label="Toggle suggestion form"
             >
                 <div class="flex items-center gap-3">
                     <div class="bg-background p-2 rounded-full shadow-sm">
@@ -65,7 +68,11 @@
                 <ChevronDown :class="['w-5 h-5 transition', showSuggestionForm ? 'rotate-180' : '']" />
             </button>
 
-            <div v-if="showSuggestionForm" class="mt-4 bg-surface border border-border rounded-xl p-4 shadow-sm animate-in fade-in slide-in-from-top-2">
+            <div
+                v-if="showSuggestionForm"
+                id="suggestion-form"
+                class="mt-4 bg-surface border border-border rounded-xl p-4 shadow-sm animate-in fade-in slide-in-from-top-2"
+            >
                 <form @submit.prevent="submitSuggestion" class="space-y-3">
                     <div class="grid grid-cols-2 gap-3">
                          <select v-model="suggestionType" class="bg-background border border-border text-text text-sm rounded-lg block w-full p-2.5 font-medium">
@@ -122,6 +129,9 @@
                         @click="toggleComments(post.id)"
                         class="p-2 text-gray-400 hover:text-indigo-600 transition rounded-full hover:bg-indigo-50"
                         title="Comments"
+                        :aria-expanded="activeCommentId === post.id"
+                        :aria-controls="'comments-section-' + post.id"
+                        :aria-label="activeCommentId === post.id ? 'Hide comments' : 'Show comments'"
                     >
                         <MessageSquare class="w-4 h-4" />
                     </button>
@@ -349,7 +359,11 @@
             </div>
 
             <!-- Comments Section -->
-            <div v-if="activeCommentId === post.id" class="px-4 pb-4 border-t border-border pt-4 bg-background/50">
+            <div
+                v-if="activeCommentId === post.id"
+                :id="'comments-section-' + post.id"
+                class="px-4 pb-4 border-t border-border pt-4 bg-background/50"
+            >
                 <h4 class="font-bold text-xs uppercase text-muted mb-3 tracking-wider">Comments</h4>
                 
                 <!-- List -->
@@ -419,7 +433,7 @@
         </article>
 
         <!-- Load More Sentinel -->
-        <div ref="loadMoreTrigger" class="h-20 w-full flex items-center justify-center mt-4">
+        <div ref="loadMoreTrigger" class="h-20 w-full flex items-center justify-center mt-4" role="status" aria-live="polite">
              <p v-if="isFetchingMore" class="text-gray-400 text-sm animate-pulse">Loading more...</p>
              <p v-if="!hasMore && posts.length > 0" class="text-gray-300 text-xs">You're all caught up!</p>
         </div>

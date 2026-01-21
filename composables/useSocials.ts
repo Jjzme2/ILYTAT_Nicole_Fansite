@@ -25,17 +25,17 @@ export const useSocials = () => {
     // I will use component names as strings "LogosInstagram", "LogosTwitter", etc. which Nuxt maps to components/logos/Instagram.vue -> <LogosInstagram />
 
     const socialLinks = computed(() => {
-        const s = config.socials || {}
-        const links = []
+        const s = (config.socials || {}) as Record<string, any>
+        const links: { name: string; url: string; icon: string | null; color: string }[] = []
 
         // Helper to process social entries
-        const processSocial = (key, name, defaultColor) => {
+        const processSocial = (key: string, name: string, defaultColor: string) => {
             const entry = s[key]
             if (!entry) return
 
             // Support both string (legacy) and object formats
-            const url = typeof entry === 'string' ? entry : entry.url
-            const icon = typeof entry === 'object' ? entry.icon : null
+            const url = typeof entry === 'string' ? entry : (entry as any).url
+            const icon = typeof entry === 'object' ? (entry as any).icon : null
 
             if (url) {
                 links.push({

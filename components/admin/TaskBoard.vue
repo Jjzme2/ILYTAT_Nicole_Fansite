@@ -86,23 +86,23 @@
                         <h4 class="font-bold text-lg text-text">{{ task.title }}</h4>
                         <p v-if="task.description" class="text-sm text-text/80 mb-1 leading-snug max-w-2xl">{{ task.description }}</p>
                          <div class="flex items-center gap-2 text-xs text-muted">
-                            <span :class="getPriorityColor(task.priority)" class="capitalize">{{ task.priority }} Priority</span>
+                            <span :class="getPriorityColor(task.priority || 'med')" class="capitalize">{{ task.priority }} Priority</span>
                             <span>•</span>
                             <span class="capitalize">{{ task.status }}</span>
                         </div>
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <button v-if="task.status !== 'done'" @click="updateTaskStatus(task.id, 'done')" class="p-2 hover:bg-green-50 text-green-600 rounded-lg transition" title="Mark Done">
+                    <button v-if="task.status !== 'done' && task.id" @click="updateTaskStatus(task.id, 'done')" class="p-2 hover:bg-green-50 text-green-600 rounded-lg transition" title="Mark Done">
                         <Check class="w-5 h-5" />
                     </button>
-                    <button @click="updateTaskStatus(task.id, 'in_progress')" class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition" title="Mark In Progress">
+                    <button v-if="task.id" @click="updateTaskStatus(task.id, 'in_progress')" class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition" title="Mark In Progress">
                         <RefreshCw class="w-5 h-5" />
                     </button>
                     <button @click="archiveTask(task)" class="p-2 hover:bg-amber-50 text-amber-600 rounded-lg transition" title="Archive">
                         <Archive class="w-5 h-5" />
                     </button>
-                    <button @click="deleteTask(task.id)" class="p-2 hover:bg-red-50 text-red-600 rounded-lg transition opacity-0 group-hover:opacity-100">
+                    <button v-if="task.id" @click="deleteTask(task.id)" class="p-2 hover:bg-red-50 text-red-600 rounded-lg transition opacity-0 group-hover:opacity-100">
                         <Trash2 class="w-5 h-5" />
                     </button>
                 </div>
@@ -134,8 +134,8 @@ const {
 } = useTaskBoard()
 
 // Icons helper
-const getIcon = (type: string) => {
-    switch(type) {
+const getIcon = (type: string | undefined) => {
+    switch((type || '') as string) {
         case 'feature': return Zap
         case 'bug': return Bug
         case 'design': return Palette

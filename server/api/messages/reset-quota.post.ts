@@ -6,13 +6,16 @@
  */
 
 import { serverTimestamp } from 'firebase/firestore'
+import { getUserFromEvent } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
     const user = await getUserFromEvent(event)
+
+    // Security Check: Only admin or creator can reset quotas
     if (user.role !== 'admin' && user.role !== 'creator') {
         throw createError({
             statusCode: 403,
-            message: 'Forbidden: Insufficient permissions'
+            message: 'Unauthorized: Insufficient permissions'
         })
     }
 

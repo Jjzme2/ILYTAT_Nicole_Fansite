@@ -1,4 +1,5 @@
 import { Cron } from 'croner'
+import { sendDailyReport } from '../utils/reports'
 
 export default defineNitroPlugin((nitroApp) => {
     const config = useRuntimeConfig()
@@ -25,11 +26,8 @@ export default defineNitroPlugin((nitroApp) => {
         console.log('[Scheduler] Current time:', new Date().toISOString())
 
         try {
-            // Make internal API call to send the daily report
-            const baseUrl = process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-            const response = await $fetch(`${baseUrl}/api/reports/daily`, {
-                method: 'POST'
-            })
+            // Use utility directly to bypass API auth requirement for internal cron
+            const response = await sendDailyReport()
             console.log('[Scheduler] Daily report completed:', response)
         } catch (error: any) {
             console.error('[Scheduler] Daily report failed:', error.message)

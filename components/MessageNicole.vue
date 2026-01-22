@@ -228,6 +228,7 @@
 <script setup>
 import { Send, ArrowLeft, User, Sparkles, MessageCircle, Inbox, Mail, Loader2, Clock, AlertCircle } from 'lucide-vue-next'
 import { collection, addDoc, query, where, orderBy, getDocs, doc, updateDoc, getDoc, serverTimestamp, onSnapshot, Timestamp } from 'firebase/firestore'
+import { formatTime } from '~/utils/date'
 
 const { $db } = useNuxtApp()
 const { user } = useAuth()
@@ -443,13 +444,6 @@ const closeConversation = () => {
     }
     replies.value = []
     fetchMessages() // Refresh list to update read statuses
-}
-
-// Time Format Helpers
-const formatTime = (ts) => {
-    if (!ts) return ''
-    const date = ts.toDate ? ts.toDate() : new Date(ts)
-    return date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 const formatTimeShort = (ts) => {

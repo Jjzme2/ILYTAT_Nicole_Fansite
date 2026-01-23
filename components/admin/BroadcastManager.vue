@@ -195,7 +195,7 @@
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between mb-1">
                                 <span class="text-xs font-bold uppercase tracking-wider text-muted">{{ msg.type }}</span>
-                                <span class="text-[10px] text-muted font-mono">{{ formatDate(msg.createdAt) }}</span>
+                                <span class="text-[10px] text-muted font-mono">{{ formatDateTime(msg.createdAt) }}</span>
                             </div>
                             <p class="text-sm font-medium text-text break-words">{{ msg.content }}</p>
                             <div class="flex items-center gap-3 mt-2 text-xs text-muted">
@@ -384,12 +384,6 @@ const deactivateBroadcast = async (id) => {
         console.error(e)
         toast.error('Failed to deactivate')
     }
-}
-
-const formatDate = (timestamp) => {
-    if (!timestamp) return ''
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
-    return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
 }
 
 watch(() => props.initialTarget, (u) => {

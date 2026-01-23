@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
+  <div class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none" role="region" aria-label="Notifications">
     <TransitionGroup name="toast">
         <div 
         v-for="toast in toasts" 
@@ -11,8 +11,10 @@
             toast.type === 'info' ? 'border-blue-500/50 bg-blue-50/10' :
             'border-border'
         ]"
+        :role="toast.type === 'error' ? 'alert' : 'status'"
+        aria-atomic="true"
       >
-        <div class="shrink-0">
+        <div class="shrink-0" aria-hidden="true">
             <CheckCircle v-if="toast.type === 'success'" class="w-5 h-5 text-green-600" />
             <AlertCircle v-else-if="toast.type === 'error'" class="w-5 h-5 text-red-600" />
             <Info v-else class="w-5 h-5 text-blue-600" />
@@ -27,8 +29,8 @@
                 {{ toast.action.label }}
             </button>
         </div>
-        <button @click="removeToast(toast.id)" class="text-muted hover:text-text transition">
-            <X class="w-4 h-4" />
+        <button @click="removeToast(toast.id)" class="text-muted hover:text-text transition" aria-label="Close">
+            <X class="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
     </TransitionGroup>

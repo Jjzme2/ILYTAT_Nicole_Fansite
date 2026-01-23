@@ -79,7 +79,7 @@
                     </button>
                     <div>
                         <p class="font-bold text-xl text-text">{{ deal.value }}</p>
-                        <p class="text-xs text-muted">{{ formatDate(deal.createdAt) }}</p>
+                        <p class="text-xs text-muted">{{ formatDateOnly(deal.createdAt) }}</p>
                     </div>
                 </div>
             </div>
@@ -166,12 +166,6 @@ const getStatusColor = (status) => {
         case 'cancelled': return 'bg-red-100 text-red-700'
         default: return 'bg-gray-100 text-gray-700'
     }
-}
-
-const formatDate = (timestamp) => {
-    if (!timestamp) return ''
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
-    return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(date)
 }
 
 onMounted(() => {

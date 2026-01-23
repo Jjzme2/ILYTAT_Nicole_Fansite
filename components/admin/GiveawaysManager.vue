@@ -104,9 +104,9 @@
                     <div>
                             <div class="flex items-center gap-2 mb-1">
                             <span class="bg-gray-100 text-gray-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase">{{ round.status }}</span>
-                            <span class="text-sm font-mono">{{ formatDate(round.activationTime) }}</span>
+                            <span class="text-sm font-mono">{{ formatDateTime(round.activationTime) || '-' }}</span>
                             </div>
-                            <p class="text-xs text-muted">Ends: {{ formatDate(round.endTime) }}</p>
+                            <p class="text-xs text-muted">Ends: {{ formatDateTime(round.endTime) || '-' }}</p>
                     </div>
                     <div class="text-right">
                             <div class="text-xs text-muted mb-1">Winner</div>
@@ -207,12 +207,6 @@ const saveRound = async () => {
     } finally {
         uploading.value = false
     }
-}
-
-const formatDate = (timestamp) => {
-    if (!timestamp) return '-'
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
-    return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
 }
 
 onMounted(() => {

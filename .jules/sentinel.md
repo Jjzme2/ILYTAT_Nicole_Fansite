@@ -16,3 +16,8 @@
 **Vulnerability:** Found `POST /api/messages/reset-all-quotas` and `POST /api/messages/reset-quota` endpoints that allowed resetting user messaging quotas without any authentication or authorization.
 **Learning:** Admin-only tools created for "internal use" or convenience often lack security controls because developers assume they are hidden. Always verify auth on EVERY endpoint.
 **Prevention:** Added `getUserFromEvent` check to ensure the caller has 'admin' or 'creator' role.
+
+## 2026-01-20 - [Critical] Unauthenticated Email Relay
+**Vulnerability:** Found `POST /api/email/send` and `GET /api/email/test` endpoints that allowed unauthenticated users to send emails via the server's configured providers.
+**Learning:** Internal tasks (like Cron jobs) often tempt developers to leave API endpoints public or rely on weak checks because they lack a user session.
+**Prevention:** Extract sensitive logic (email sending, report generation) into shared `server/utils/` functions. This allows internal tasks (Cron) to import and execute the logic directly without HTTP calls, while the public API endpoint remains a thin, authenticated wrapper around the utility.

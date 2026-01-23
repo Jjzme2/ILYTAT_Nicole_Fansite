@@ -28,7 +28,10 @@ export default defineNitroPlugin((nitroApp) => {
             // Make internal API call to send the daily report
             const baseUrl = process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000'
             const response = await $fetch(`${baseUrl}/api/reports/daily`, {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${config.adminSecret}`
+                }
             })
             console.log('[Scheduler] Daily report completed:', response)
         } catch (error: any) {

@@ -1,3 +1,4 @@
+import { sendEmail } from "~/server/utils/email"
 
 
 
@@ -145,6 +146,32 @@ function formatListToHtml(title: string, items: { displayName: string, email: st
 export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig()
 
+    // 1. Security Check
+    // We allow either Authorization header (Bearer <adminSecret>) or User Authentication (Admin role)
+    let isAuthorized = false
+    const authHeader = getRequestHeader(event, 'Authorization')
+    const adminSecret = config.adminSecret
+
+    // Check 1: Admin Secret (from Scheduler)
+    if (adminSecret && authHeader === `Bearer ${adminSecret}`) {
+        isAuthorized = true
+    } else {
+        // Check 2: User Session (from Manual Trigger)
+        try {
+            const user = await getUserFromEvent(event)
+            if (user.role === 'admin') isAuthorized = true
+        } catch (e) {
+            // Not a user, ignore
+        }
+    }
+
+    if (!isAuthorized) {
+        throw createError({
+            statusCode: 401,
+            message: 'Unauthorized: Authentication required'
+        })
+    }
+
     // Check for test override
     let forceRecipient = null
     try {
@@ -219,17 +246,20 @@ export default defineEventHandler(async (event) => {
     for (const email of reportEmailList) {
         try {
             console.log(`[Daily Report] Sending to ${email}...`)
-            await $fetch('/api/email/send', {
-                method: 'POST',
-                body: {
-                    to: email,
-                    subject,
-                    templateId: config.emailjs?.dailyReportTemplateId, // Use specific template
-                    dynamicTemplateData
-                }
+            const result = await sendEmail(config, {
+                to: email,
+                subject,
+                templateId: config.emailjs?.dailyReportTemplateId, // Use specific template
+                dynamicTemplateData
             })
-            results.push({ email, success: true })
-            console.log(`[Daily Report] ✅ Sent to ${email}`)
+
+            if (result.success) {
+                results.push({ email, success: true })
+                console.log(`[Daily Report] ✅ Sent to ${email}`)
+            } else {
+                console.error(`[Daily Report] ❌ Failed to send to ${email}:`, result.message)
+                results.push({ email, success: false, error: result.message })
+            }
         } catch (error: any) {
             console.error(`[Daily Report] ❌ Failed to send to ${email}:`, error.message)
             results.push({ email, success: false, error: error.message })

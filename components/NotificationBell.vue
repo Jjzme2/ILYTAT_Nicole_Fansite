@@ -102,8 +102,12 @@
                         <div 
                             v-for="notif in unreadNotifications" 
                             :key="notif.id"
+                            role="button"
+                            tabindex="0"
                             @click="handleNotificationClick(notif)"
-                            class="notification-item p-4 cursor-pointer transition-all duration-200"
+                            @keydown.enter="handleNotificationClick(notif)"
+                            @keydown.space.prevent="handleNotificationClick(notif)"
+                            class="notification-item p-4 cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
                             :class="[
                                 !notif.read 
                                     ? 'bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30' 

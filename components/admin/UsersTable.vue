@@ -112,13 +112,6 @@ const props = defineProps({
     pageSize: Number
 })
 
-const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
-const formatDate = (timestamp) => {
-    if (!timestamp) return ''
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
-    return dateFormatter.format(date)
-}
-
 const getRoleBadgeClass = (role) => {
     switch (role) {
         case 'admin': return 'border-purple-500 text-purple-600 bg-purple-50'

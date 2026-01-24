@@ -16,3 +16,8 @@
 **Vulnerability:** Found `POST /api/messages/reset-all-quotas` and `POST /api/messages/reset-quota` endpoints that allowed resetting user messaging quotas without any authentication or authorization.
 **Learning:** Admin-only tools created for "internal use" or convenience often lack security controls because developers assume they are hidden. Always verify auth on EVERY endpoint.
 **Prevention:** Added `getUserFromEvent` check to ensure the caller has 'admin' or 'creator' role.
+
+## 2025-01-26 - [Critical] Unauthenticated Email Sending Endpoint
+**Vulnerability:** Found `POST /api/email/send` which allowed sending emails to any recipient without authentication. This could be used as an open spam relay.
+**Learning:** Developers sometimes expose utility endpoints for convenience (e.g., for frontend usage) without adding proper authentication, assuming "nobody knows the URL".
+**Prevention:** All API endpoints that perform actions (sending email, modifying data) must verify user authentication and roles (`getUserFromEvent`). For internal usage (e.g. scheduled tasks), extract logic to server utilities (`server/utils/`) instead of calling the API endpoint.

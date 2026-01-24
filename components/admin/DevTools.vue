@@ -237,8 +237,12 @@ const sendTestEmail = async () => {
             payload.html = `<div style="font-family: sans-serif; padding: 20px;"><h2>Test Email</h2><p>${testEmail.message}</p><hr><p style="color: #888; font-size: 12px;">Sent from ILYTAT Dev Tools</p></div>`
         }
 
+        const token = await user.value?.getIdToken()
         const response = await $fetch('/api/email/send', {
             method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
             body: payload
         })
         devToolsResults.email = {

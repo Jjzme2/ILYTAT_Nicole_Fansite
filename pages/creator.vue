@@ -598,15 +598,6 @@ const fetchSuggestions = async () => {
 
 
 
-// Optimize: Reuse formatter instance to avoid creation overhead in loops
-const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
-
-const formatDate = (timestamp) => {
-    if (!timestamp) return ''
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
-    return dateFormatter.format(date)
-}
-
 definePageMeta({
     middleware: 'creator'
 })

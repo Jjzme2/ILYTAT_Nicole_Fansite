@@ -240,15 +240,6 @@ onMounted(async () => {
     }
 })
 
-// Optimize: Reuse formatter instance to avoid creation overhead in loops
-const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
-
-const formatDate = (timestamp) => {
-    if (!timestamp) return ''
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
-    return dateFormatter.format(date)
-}
-
 const getEmbedUrl = (url) => {
     if (!url) return ''
     if (url.includes('youtube.com/watch')) {

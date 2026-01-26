@@ -1,10 +1,11 @@
 <template>
     <div class="space-y-1.5">
-        <label v-if="label" class="text-xs font-bold text-muted uppercase tracking-wider ml-1">
+        <label v-if="label" :for="textareaId" class="text-xs font-bold text-muted uppercase tracking-wider ml-1">
             {{ label }} <span v-if="required" class="text-semantic-error">*</span>
         </label>
         
         <textarea
+            :id="textareaId"
             :value="modelValue"
             @input="$emit('update:modelValue', $event.target.value)"
             :placeholder="placeholder"
@@ -29,7 +30,7 @@
 <script setup>
 import { AlertCircle } from 'lucide-vue-next'
 
-defineProps({
+const props = defineProps({
     modelValue: String,
     label: String,
     placeholder: String,
@@ -37,8 +38,12 @@ defineProps({
     error: String,
     disabled: Boolean,
     required: Boolean,
-    monospace: Boolean
+    monospace: Boolean,
+    id: String
 })
 
 defineEmits(['update:modelValue'])
+
+const autoId = useId()
+const textareaId = computed(() => props.id || autoId)
 </script>

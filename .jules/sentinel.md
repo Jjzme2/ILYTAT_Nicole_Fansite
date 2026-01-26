@@ -16,3 +16,8 @@
 **Vulnerability:** Found `POST /api/messages/reset-all-quotas` and `POST /api/messages/reset-quota` endpoints that allowed resetting user messaging quotas without any authentication or authorization.
 **Learning:** Admin-only tools created for "internal use" or convenience often lack security controls because developers assume they are hidden. Always verify auth on EVERY endpoint.
 **Prevention:** Added `getUserFromEvent` check to ensure the caller has 'admin' or 'creator' role.
+
+## 2026-02-15 - [Critical] Open Relay Email Endpoints
+**Vulnerability:** The `/api/email/send` endpoint had no authentication, allowing anyone to send arbitrary emails from the application's domain. The `/api/email/test` and `/api/reports/daily` endpoints were also unprotected.
+**Learning:** Internal utility endpoints (like email senders) are prime targets if exposed as public API routes. Authentication bypass logic (like `$fetch` internal calls losing headers) often discourages developers from adding auth to these "internal" endpoints.
+**Prevention:** Refactor internal logic (email sending) into server-side utility functions (`server/utils/`) so they can be called directly by other secured endpoints without HTTP overhead. Secure the API wrappers with strict Role-Based Access Control (RBAC) or System Secret authentication.

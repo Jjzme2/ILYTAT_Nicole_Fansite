@@ -1,5 +1,5 @@
-
-
+import { sendEmail } from '../../utils/email'
+import { getUserFromEvent } from '../../utils/auth'
 
 interface DailyStats {
     date: string
@@ -143,6 +143,15 @@ function formatListToHtml(title: string, items: { displayName: string, email: st
 }
 
 export default defineEventHandler(async (event) => {
+    // 1. Security Check
+    const user = await getUserFromEvent(event)
+    if (user.role !== 'admin') {
+        throw createError({
+            statusCode: 403,
+            message: 'Unauthorized: Admin permissions required'
+        })
+    }
+
     const config = useRuntimeConfig()
 
     // Check for test override
@@ -219,14 +228,11 @@ export default defineEventHandler(async (event) => {
     for (const email of reportEmailList) {
         try {
             console.log(`[Daily Report] Sending to ${email}...`)
-            await $fetch('/api/email/send', {
-                method: 'POST',
-                body: {
-                    to: email,
-                    subject,
-                    templateId: config.emailjs?.dailyReportTemplateId, // Use specific template
-                    dynamicTemplateData
-                }
+            await sendEmail({
+                to: email,
+                subject,
+                templateId: config.emailjs?.dailyReportTemplateId, // Use specific template
+                dynamicTemplateData
             })
             results.push({ email, success: true })
             console.log(`[Daily Report] ✅ Sent to ${email}`)

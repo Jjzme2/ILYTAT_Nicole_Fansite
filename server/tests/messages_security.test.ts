@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+const mockGetUserFromEvent = vi.hoisted(() => vi.fn())
+
+vi.mock('../utils/auth', () => ({
+    getUserFromEvent: mockGetUserFromEvent
+}))
+
 describe('Message Quota Security', () => {
     let resetAllHandler: any
     let resetQuotaHandler: any
@@ -9,7 +15,7 @@ describe('Message Quota Security', () => {
     const mockCreateError = vi.fn((err) => err)
     const mockDefineEventHandler = (handler: any) => handler
     const mockUseRuntimeConfig = vi.fn(() => ({ public: {} }))
-    const mockGetUserFromEvent = vi.fn()
+    // const mockGetUserFromEvent = vi.fn() // Removed local definition
 
     // Firebase Mock
     const mockBatch = {
@@ -56,7 +62,7 @@ describe('Message Quota Security', () => {
         vi.stubGlobal('readBody', mockReadBody)
         vi.stubGlobal('createError', mockCreateError)
         vi.stubGlobal('useRuntimeConfig', mockUseRuntimeConfig)
-        vi.stubGlobal('getUserFromEvent', mockGetUserFromEvent)
+        // vi.stubGlobal('getUserFromEvent', mockGetUserFromEvent) // Global stub is not enough for explicit imports
         vi.stubGlobal('useFirebaseAdmin', () => ({ db: mockDb }))
 
         vi.clearAllMocks()

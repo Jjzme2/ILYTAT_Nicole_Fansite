@@ -19,6 +19,18 @@ export const getUserFromEvent = async (event: any) => {
         })
     }
 
+    // 0. Check for System Admin Secret (Server-to-Server)
+    const config = useRuntimeConfig()
+    if (config.adminSecret && token === config.adminSecret) {
+        return {
+            uid: 'system',
+            email: 'system@internal',
+            role: 'admin',
+            isSubscriber: true,
+            displayName: 'System Admin'
+        }
+    }
+
     try {
         const { db } = useFirebaseAdmin()
 

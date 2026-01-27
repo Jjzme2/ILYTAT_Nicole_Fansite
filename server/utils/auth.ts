@@ -56,3 +56,34 @@ export const getUserFromEvent = async (event: any) => {
         })
     }
 }
+
+/**
+ * Enforces Admin access via either:
+ * 1. Bearer token matching NUXT_ADMIN_SECRET (for cron/system calls)
+ * 2. Firebase Auth with 'admin' role (for user calls)
+ */
+export const requireAdmin = async (event: any) => {
+    const config = useRuntimeConfig()
+    const authHeader = getRequestHeader(event, 'Authorization')
+    const secret = config.adminSecret
+
+    // 1. Check strict Bearer token (System/Cron access)
+    if (secret && authHeader === `Bearer ${secret}`) {
+        return true
+    }
+
+    // 2. Check User Role (Admin access)
+    try {
+        const user = await getUserFromEvent(event)
+        if (user.role === 'admin') {
+            return true
+        }
+    } catch (e) {
+        // Ignore auth errors here, fail later if not authorized
+    }
+
+    throw createError({
+        statusCode: 401,
+        message: 'Unauthorized: Admin access required.'
+    })
+}

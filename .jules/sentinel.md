@@ -16,3 +16,8 @@
 **Vulnerability:** Found `POST /api/messages/reset-all-quotas` and `POST /api/messages/reset-quota` endpoints that allowed resetting user messaging quotas without any authentication or authorization.
 **Learning:** Admin-only tools created for "internal use" or convenience often lack security controls because developers assume they are hidden. Always verify auth on EVERY endpoint.
 **Prevention:** Added `getUserFromEvent` check to ensure the caller has 'admin' or 'creator' role.
+
+## 2026-05-21 - [Critical] Unauthenticated Email Relay and Report Exposure
+**Vulnerability:** `server/api/email/send.post.ts` and `server/api/reports/daily.post.ts` were completely unauthenticated. Attackers could send phishing emails via the app's domain or trigger daily reports containing sensitive user data (PII) to be generated (DoS/Info Leak risk).
+**Learning:** Endpoints intended for "internal use" via `$fetch` are still public HTTP endpoints. The assumption that `daily.post.ts` is only called by a cron job does not secure it from the internet.
+**Prevention:** Refactored email logic to `server/utils/email.ts` to allow direct internal calls without HTTP overhead. Secured all endpoints with `requireAdmin` helper that supports both Bearer token (system) and User Role (admin) auth.

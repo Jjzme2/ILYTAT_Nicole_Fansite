@@ -139,7 +139,7 @@
                                     </p>
                                     <p class="text-xs text-gray-400 dark:text-gray-500 mt-2 flex items-center gap-1">
                                         <span class="inline-block w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
-                                        {{ formatTime(notif.createdAt) }}
+                                        {{ formatTimeAgo(notif.createdAt) }}
                                     </p>
                                 </div>
 
@@ -185,7 +185,7 @@
 
 <script setup>
 import { Bell, BellOff, Briefcase, AlertTriangle, Gift, Zap, Check, X } from 'lucide-vue-next'
-import { collection, query, orderBy, getDocs, doc, updateDoc, where, writeBatch, onSnapshot } from 'firebase/firestore'
+import { collection, query, orderBy, getDocs, doc, updateDoc, where, writeBatch, onSnapshot, limit } from 'firebase/firestore'
 import { onClickOutside } from '@vueuse/core'
 
 const { $db } = useNuxtApp()
@@ -225,7 +225,8 @@ const setupListener = () => {
     if (user.value?.uid) {
         const userQ = query(
             collection($db, 'users', user.value.uid, 'notifications'),
-            orderBy('createdAt', 'desc')
+            orderBy('createdAt', 'desc'),
+            limit(50)
         )
         onSnapshot(userQ, (snap) => {
             const personalNotifs = snap.docs.map(d => ({ id: d.id, ...d.data(), _source: 'personal' }))
@@ -237,7 +238,8 @@ const setupListener = () => {
     if (isAdmin.value || isCreator.value) {
         const adminQ = query(
             collection($db, 'notifications'),
-            orderBy('createdAt', 'desc')
+            orderBy('createdAt', 'desc'),
+            limit(50)
         )
         onSnapshot(adminQ, (snap) => {
             const adminNotifs = snap.docs.map(d => ({ id: d.id, ...d.data(), _source: 'admin' }))
@@ -330,21 +332,6 @@ const getTypeStyles = (type) => {
     }
 }
 
-const formatTime = (timestamp) => {
-    if (!timestamp) return ''
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
-    const now = new Date()
-    const diffMs = now - date
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMins / 60)
-    const diffDays = Math.floor(diffHours / 24)
-
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays < 7) return `${diffDays}d ago`
-    return date.toLocaleDateString()
-}
 </script>
 
 <style scoped>

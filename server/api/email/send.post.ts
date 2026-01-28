@@ -102,6 +102,9 @@ async function sendWithNodemailer(config: any, payload: EmailPayload): Promise<b
 }
 
 export default defineEventHandler(async (event) => {
+    // Verify admin access (prevents open relay)
+    await requireAdmin(event)
+
     const body = await readBody(event) as EmailPayload
     const { to, subject, text, html, templateId, dynamicTemplateData } = body
 

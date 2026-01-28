@@ -56,3 +56,26 @@ export const getUserFromEvent = async (event: any) => {
         })
     }
 }
+
+export const requireAdmin = async (event: any) => {
+    const config = useRuntimeConfig()
+    const authHeader = getRequestHeader(event, 'Authorization')
+
+    // 1. Check System Secret (Service-to-Service)
+    if (config.adminSecret && authHeader === `Bearer ${config.adminSecret}`) {
+        return { role: 'admin', uid: 'system' }
+    }
+
+    // 2. Check User Token (Client-to-Service)
+    // getUserFromEvent will throw 401 if token is missing/invalid
+    const user = await getUserFromEvent(event)
+
+    if (user.role !== 'admin') {
+        throw createError({
+            statusCode: 403,
+            message: 'Forbidden: Admin access required'
+        })
+    }
+
+    return user
+}

@@ -20,6 +20,9 @@ export default defineEventHandler(async (event) => {
     try {
         const result = await $fetch('/api/email/send', {
             method: 'POST',
+            headers: {
+                Authorization: `Bearer ${config.adminSecret}`
+            },
             body: {
                 to,
                 subject: '🎉 ILYTAT Email Test - Success!',

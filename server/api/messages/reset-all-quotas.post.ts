@@ -27,20 +27,30 @@ export default defineEventHandler(async (event) => {
         const totalUsers = usersSnapshot.size
         const today = new Date().toISOString().split('T')[0]
 
-        // 2. Perform batch update for better performance
-        const batch = db.batch()
+        // 2. Perform batch update with chunking (Firestore limit: 500 ops)
+        const BATCH_SIZE = 500
+        const chunks = []
+        const docs = usersSnapshot.docs
 
-        usersSnapshot.docs.forEach(userDoc => {
-            const userData = userDoc.data()
-            const dailyCap = userData.messagingQuota?.dailyCap || 3
+        for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+            chunks.push(docs.slice(i, i + BATCH_SIZE))
+        }
 
-            batch.update(userDoc.ref, {
-                'messagingQuota.remaining': dailyCap,
-                'messagingQuota.lastResetDate': today
+        console.log(`[GlobalReset] Processing ${chunks.length} batches for ${totalUsers} users.`)
+
+        for (const chunk of chunks) {
+            const batch = db.batch()
+            chunk.forEach(userDoc => {
+                const userData = userDoc.data()
+                const dailyCap = userData.messagingQuota?.dailyCap || 3
+
+                batch.update(userDoc.ref, {
+                    'messagingQuota.remaining': dailyCap,
+                    'messagingQuota.lastResetDate': today
+                })
             })
-        })
-
-        await batch.commit()
+            await batch.commit()
+        }
 
         // 3. Log the global reset event
         await db.collection('quota_resets').add({

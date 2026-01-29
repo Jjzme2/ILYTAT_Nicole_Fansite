@@ -1,4 +1,9 @@
+import { requireAdmin } from '../../utils/auth'
+
 export default defineEventHandler(async (event) => {
+    const config = useRuntimeConfig()
+    await requireAdmin(event)
+
     const query = getQuery(event)
     const to = query.to as string
 
@@ -9,7 +14,12 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    const config = useRuntimeConfig()
+    if (!config.adminSecret) {
+        throw createError({
+            statusCode: 500,
+            message: 'Server configuration error: adminSecret not set.'
+        })
+    }
 
     // Show which providers are configured
     const providers = {
@@ -20,6 +30,9 @@ export default defineEventHandler(async (event) => {
     try {
         const result = await $fetch('/api/email/send', {
             method: 'POST',
+            headers: {
+                Authorization: `Bearer ${config.adminSecret}`
+            },
             body: {
                 to,
                 subject: '🎉 ILYTAT Email Test - Success!',

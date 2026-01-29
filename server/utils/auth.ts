@@ -56,3 +56,28 @@ export const getUserFromEvent = async (event: any) => {
         })
     }
 }
+
+export const requireAdmin = async (event: any) => {
+    const config = useRuntimeConfig()
+    const authHeader = getRequestHeader(event, 'Authorization')
+
+    // 1. Check for Admin Secret (System/Server-to-Server)
+    // Only allow if adminSecret is configured and matches
+    if (config.adminSecret && authHeader === `Bearer ${config.adminSecret}`) {
+        return { uid: 'system', role: 'admin', email: 'system@ilytat.com' }
+    }
+
+    // 2. Check for User Token
+    // This will throw 401 if token is missing or invalid
+    const user = await getUserFromEvent(event)
+
+    // 3. Verify Role
+    if (user.role !== 'admin' && user.role !== 'creator') {
+        throw createError({
+            statusCode: 403,
+            message: 'Forbidden: Insufficient permissions'
+        })
+    }
+
+    return user
+}

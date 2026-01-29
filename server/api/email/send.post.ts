@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer'
+import { requireAdmin } from '../../utils/auth'
 
 interface EmailPayload {
     to: string
@@ -102,6 +103,9 @@ async function sendWithNodemailer(config: any, payload: EmailPayload): Promise<b
 }
 
 export default defineEventHandler(async (event) => {
+    // Require Admin/System Access
+    await requireAdmin(event)
+
     const body = await readBody(event) as EmailPayload
     const { to, subject, text, html, templateId, dynamicTemplateData } = body
 

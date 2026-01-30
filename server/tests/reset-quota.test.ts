@@ -9,7 +9,10 @@ const mockCreateError = vi.fn((opts) => {
     return err
 })
 const mockDefineEventHandler = (handler: any) => handler
-const mockGetUserFromEvent = vi.fn()
+// Mock auth
+const { mockGetUserFromEvent } = vi.hoisted(() => ({
+    mockGetUserFromEvent: vi.fn()
+}))
 
 const mockDb = {
     collection: vi.fn(() => ({
@@ -37,7 +40,8 @@ vi.stubGlobal('useFirebaseAdmin', mockUseFirebaseAdmin)
 
 // Also mock the auth utility
 vi.mock('../utils/auth', () => ({
-    getUserFromEvent: mockGetUserFromEvent
+    getUserFromEvent: mockGetUserFromEvent,
+    requireAdmin: vi.fn()
 }))
 
 describe('Reset Quota Security', () => {

@@ -1,5 +1,4 @@
-
-
+import { sendEmail } from '../../utils/email'
 
 interface DailyStats {
     date: string
@@ -143,6 +142,9 @@ function formatListToHtml(title: string, items: { displayName: string, email: st
 }
 
 export default defineEventHandler(async (event) => {
+    // 1. Verify Admin Access
+    await requireAdmin(event)
+
     const config = useRuntimeConfig()
 
     // Check for test override
@@ -219,14 +221,11 @@ export default defineEventHandler(async (event) => {
     for (const email of reportEmailList) {
         try {
             console.log(`[Daily Report] Sending to ${email}...`)
-            await $fetch('/api/email/send', {
-                method: 'POST',
-                body: {
-                    to: email,
-                    subject,
-                    templateId: config.emailjs?.dailyReportTemplateId, // Use specific template
-                    dynamicTemplateData
-                }
+            await sendEmail({
+                to: email,
+                subject,
+                templateId: config.emailjs?.dailyReportTemplateId, // Use specific template
+                dynamicTemplateData
             })
             results.push({ email, success: true })
             console.log(`[Daily Report] ✅ Sent to ${email}`)

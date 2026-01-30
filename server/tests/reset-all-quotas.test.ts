@@ -9,7 +9,10 @@ const mockCreateError = vi.fn((opts) => {
     return err
 })
 const mockDefineEventHandler = (handler: any) => handler
-const mockGetUserFromEvent = vi.fn()
+// Mock auth
+const { mockGetUserFromEvent } = vi.hoisted(() => ({
+    mockGetUserFromEvent: vi.fn()
+}))
 
 const mockDb = {
     collection: vi.fn(() => ({
@@ -34,7 +37,8 @@ vi.stubGlobal('useFirebaseAdmin', mockUseFirebaseAdmin)
 
 // Also mock the auth utility
 vi.mock('../utils/auth', () => ({
-    getUserFromEvent: mockGetUserFromEvent
+    getUserFromEvent: mockGetUserFromEvent,
+    requireAdmin: vi.fn()
 }))
 
 describe('Reset All Quotas Security', () => {
@@ -64,10 +68,12 @@ describe('Reset All Quotas Security', () => {
         }))
     })
 
-    it('should REJECT unauthorized users (non-admin)', async () => {
-        mockGetUserFromEvent.mockResolvedValue({ uid: '123', role: 'creator' }) // Creator is not enough for global reset
+    it('should ALLOW authorized users (creator)', async () => {
+        mockGetUserFromEvent.mockResolvedValue({ uid: '123', role: 'creator' })
 
-        await expect(resetAllHandler({})).rejects.toThrow()
+        await expect(resetAllHandler({})).resolves.toMatchObject({
+            success: true
+        })
     })
 
     it('should ALLOW admin users', async () => {

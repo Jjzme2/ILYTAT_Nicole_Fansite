@@ -1,5 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+const { mockGetUserFromEvent } = vi.hoisted(() => ({
+    mockGetUserFromEvent: vi.fn()
+}))
+
+vi.mock('../utils/auth', () => ({
+    getUserFromEvent: mockGetUserFromEvent,
+    requireAdmin: vi.fn()
+}))
+
 describe('Message Quota Security', () => {
     let resetAllHandler: any
     let resetQuotaHandler: any
@@ -9,7 +18,7 @@ describe('Message Quota Security', () => {
     const mockCreateError = vi.fn((err) => err)
     const mockDefineEventHandler = (handler: any) => handler
     const mockUseRuntimeConfig = vi.fn(() => ({ public: {} }))
-    const mockGetUserFromEvent = vi.fn()
+    // mockGetUserFromEvent is hoisted above
 
     // Firebase Mock
     const mockBatch = {

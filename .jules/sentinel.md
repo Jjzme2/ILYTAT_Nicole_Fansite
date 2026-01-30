@@ -16,3 +16,8 @@
 **Vulnerability:** Found `POST /api/messages/reset-all-quotas` and `POST /api/messages/reset-quota` endpoints that allowed resetting user messaging quotas without any authentication or authorization.
 **Learning:** Admin-only tools created for "internal use" or convenience often lack security controls because developers assume they are hidden. Always verify auth on EVERY endpoint.
 **Prevention:** Added `getUserFromEvent` check to ensure the caller has 'admin' or 'creator' role.
+
+## 2026-02-05 - [Critical] Unauthenticated Email and Report Endpoints
+**Vulnerability:** Found `POST /api/email/send` and `POST /api/reports/daily` endpoints exposed without any authentication, allowing open mail relay and information disclosure of user stats.
+**Learning:** Internal utility endpoints (like email sending) are often assumed to be "safe" because they are only called by other server functions, but in Nuxt/Nitro, all `/server/api` files are public HTTP endpoints.
+**Prevention:** Moved sensitive logic (email sending) to `server/utils/email.ts` (not an API route) and secured the API routes with `requireAdmin` which validates both system secrets (for schedulers) and user roles.

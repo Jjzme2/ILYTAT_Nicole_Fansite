@@ -72,7 +72,7 @@
 import { 
     Loader2, BellOff, Briefcase, AlertTriangle, Gift, Zap, Check, ArrowRight
 } from 'lucide-vue-next'
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, writeBatch } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, writeBatch, limit } from 'firebase/firestore'
 
 definePageMeta({
     middleware: 'auth'
@@ -94,7 +94,8 @@ onMounted(() => {
     if (user.value?.uid) {
         const userQ = query(
             collection($db, 'users', user.value.uid, 'notifications'),
-            orderBy('createdAt', 'desc')
+            orderBy('createdAt', 'desc'),
+            limit(50)
         )
         const unsub1 = onSnapshot(userQ, (snap) => {
             const personal = snap.docs.map(d => ({ id: d.id, ...d.data(), _source: 'personal' }))
@@ -105,7 +106,7 @@ onMounted(() => {
     
     // 2. Global (Admin/Creator)
     if (isAdmin.value || isCreator.value) {
-        const adminQ = query(collection($db, 'notifications'), orderBy('createdAt', 'desc'))
+        const adminQ = query(collection($db, 'notifications'), orderBy('createdAt', 'desc'), limit(50))
         const unsub2 = onSnapshot(adminQ, (snap) => {
              const admin = snap.docs.map(d => ({ id: d.id, ...d.data(), _source: 'admin' }))
              updateNotifs(admin, 'admin')

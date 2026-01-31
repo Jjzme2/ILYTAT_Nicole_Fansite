@@ -16,3 +16,8 @@
 **Vulnerability:** Found `POST /api/messages/reset-all-quotas` and `POST /api/messages/reset-quota` endpoints that allowed resetting user messaging quotas without any authentication or authorization.
 **Learning:** Admin-only tools created for "internal use" or convenience often lack security controls because developers assume they are hidden. Always verify auth on EVERY endpoint.
 **Prevention:** Added `getUserFromEvent` check to ensure the caller has 'admin' or 'creator' role.
+
+## 2026-02-18 - [Critical] Unauthenticated Email Relay and Report Endpoints
+**Vulnerability:** `POST /api/email/send` and `POST /api/reports/daily` were completely unauthenticated, allowing anyone to send emails (spam/phishing) and leak sensitive business metrics.
+**Learning:** Nuxt server API routes are public by default. "Internal" calls via `$fetch` within the server still access these public endpoints. Without `requireAdmin` checks, they are open relays.
+**Prevention:** Implemented `requireAdmin` utility enforcing `Authorization: Bearer <adminSecret>` (for cron/system) or verified Admin/Creator/Developer user roles.

@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+const { mockGetUserFromEvent } = vi.hoisted(() => ({
+    mockGetUserFromEvent: vi.fn()
+}))
+
 describe('Message Quota Security', () => {
     let resetAllHandler: any
     let resetQuotaHandler: any
@@ -9,7 +13,8 @@ describe('Message Quota Security', () => {
     const mockCreateError = vi.fn((err) => err)
     const mockDefineEventHandler = (handler: any) => handler
     const mockUseRuntimeConfig = vi.fn(() => ({ public: {} }))
-    const mockGetUserFromEvent = vi.fn()
+    // mockGetUserFromEvent is hoisted
+    const mockGetRequestHeader = vi.fn()
 
     // Firebase Mock
     const mockBatch = {
@@ -47,6 +52,11 @@ describe('Message Quota Security', () => {
         batch: vi.fn(() => mockBatch)
     }
 
+    // Mock the auth utility
+    vi.mock('../utils/auth', () => ({
+        getUserFromEvent: mockGetUserFromEvent
+    }))
+
     beforeEach(async () => {
         // Ensure modules are re-evaluated with new globals
         vi.resetModules()
@@ -56,7 +66,7 @@ describe('Message Quota Security', () => {
         vi.stubGlobal('readBody', mockReadBody)
         vi.stubGlobal('createError', mockCreateError)
         vi.stubGlobal('useRuntimeConfig', mockUseRuntimeConfig)
-        vi.stubGlobal('getUserFromEvent', mockGetUserFromEvent)
+        vi.stubGlobal('getRequestHeader', mockGetRequestHeader)
         vi.stubGlobal('useFirebaseAdmin', () => ({ db: mockDb }))
 
         vi.clearAllMocks()

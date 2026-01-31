@@ -143,6 +143,9 @@ function formatListToHtml(title: string, items: { displayName: string, email: st
 }
 
 export default defineEventHandler(async (event) => {
+    // 🛡️ Security: Enforce Admin/System Access
+    await requireAdmin(event)
+
     const config = useRuntimeConfig()
 
     // Check for test override
@@ -221,6 +224,9 @@ export default defineEventHandler(async (event) => {
             console.log(`[Daily Report] Sending to ${email}...`)
             await $fetch('/api/email/send', {
                 method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${config.adminSecret}`
+                },
                 body: {
                     to: email,
                     subject,

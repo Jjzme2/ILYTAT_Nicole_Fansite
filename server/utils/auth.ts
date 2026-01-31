@@ -56,3 +56,26 @@ export const getUserFromEvent = async (event: any) => {
         })
     }
 }
+
+export const requireAdmin = async (event: any) => {
+    const config = useRuntimeConfig()
+    const authHeader = getRequestHeader(event, 'Authorization')
+
+    // 1. Check for System Secret (for internal cron jobs/scripts)
+    if (config.adminSecret && authHeader === `Bearer ${config.adminSecret}`) {
+        return { uid: 'system', role: 'admin', email: 'system@local' }
+    }
+
+    // 2. Check for User Token
+    const user = await getUserFromEvent(event)
+
+    // 3. Verify Role
+    if (!['admin', 'creator', 'developer'].includes(user.role)) {
+        throw createError({
+            statusCode: 403,
+            message: 'Forbidden: Insufficient permissions'
+        })
+    }
+
+    return user
+}

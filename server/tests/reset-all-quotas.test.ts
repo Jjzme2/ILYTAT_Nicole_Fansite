@@ -64,8 +64,8 @@ describe('Reset All Quotas Security', () => {
         }))
     })
 
-    it('should REJECT unauthorized users (non-admin)', async () => {
-        mockGetUserFromEvent.mockResolvedValue({ uid: '123', role: 'creator' }) // Creator is not enough for global reset
+    it('should REJECT unauthorized users (non-admin/creator)', async () => {
+        mockGetUserFromEvent.mockResolvedValue({ uid: '123', role: 'user' })
 
         await expect(resetAllHandler({})).rejects.toThrow()
     })

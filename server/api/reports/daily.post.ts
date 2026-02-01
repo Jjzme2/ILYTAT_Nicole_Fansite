@@ -1,5 +1,5 @@
 
-
+import { sendEmail } from '../../utils/email'
 
 interface DailyStats {
     date: string
@@ -219,14 +219,11 @@ export default defineEventHandler(async (event) => {
     for (const email of reportEmailList) {
         try {
             console.log(`[Daily Report] Sending to ${email}...`)
-            await $fetch('/api/email/send', {
-                method: 'POST',
-                body: {
-                    to: email,
-                    subject,
-                    templateId: config.emailjs?.dailyReportTemplateId, // Use specific template
-                    dynamicTemplateData
-                }
+            await sendEmail({
+                to: email,
+                subject,
+                templateId: config.emailjs?.dailyReportTemplateId, // Use specific template
+                dynamicTemplateData
             })
             results.push({ email, success: true })
             console.log(`[Daily Report] ✅ Sent to ${email}`)

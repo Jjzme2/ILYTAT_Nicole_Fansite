@@ -185,7 +185,7 @@
 
 <script setup>
 import { Bell, BellOff, Briefcase, AlertTriangle, Gift, Zap, Check, X } from 'lucide-vue-next'
-import { collection, query, orderBy, getDocs, doc, updateDoc, where, writeBatch, onSnapshot } from 'firebase/firestore'
+import { collection, query, orderBy, limit, getDocs, doc, updateDoc, where, writeBatch, onSnapshot } from 'firebase/firestore'
 import { onClickOutside } from '@vueuse/core'
 
 const { $db } = useNuxtApp()
@@ -225,7 +225,8 @@ const setupListener = () => {
     if (user.value?.uid) {
         const userQ = query(
             collection($db, 'users', user.value.uid, 'notifications'),
-            orderBy('createdAt', 'desc')
+            orderBy('createdAt', 'desc'),
+            limit(50)
         )
         onSnapshot(userQ, (snap) => {
             const personalNotifs = snap.docs.map(d => ({ id: d.id, ...d.data(), _source: 'personal' }))
@@ -237,7 +238,8 @@ const setupListener = () => {
     if (isAdmin.value || isCreator.value) {
         const adminQ = query(
             collection($db, 'notifications'),
-            orderBy('createdAt', 'desc')
+            orderBy('createdAt', 'desc'),
+            limit(50)
         )
         onSnapshot(adminQ, (snap) => {
             const adminNotifs = snap.docs.map(d => ({ id: d.id, ...d.data(), _source: 'admin' }))

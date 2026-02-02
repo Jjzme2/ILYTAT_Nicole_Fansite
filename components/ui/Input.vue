@@ -1,6 +1,6 @@
 <template>
     <div class="space-y-1.5">
-        <label v-if="label" class="text-xs font-bold text-muted uppercase tracking-wider ml-1">
+        <label v-if="label" :for="inputId" class="text-xs font-bold text-muted uppercase tracking-wider ml-1">
             {{ label }} <span v-if="required" class="text-semantic-error">*</span>
         </label>
         
@@ -11,6 +11,7 @@
             </div>
 
             <input
+                :id="inputId"
                 :value="modelValue"
                 @input="$emit('update:modelValue', $event.target.value)"
                 :type="type"
@@ -22,9 +23,15 @@
                     error 
                         ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/10' 
                         : 'border-border focus:border-primary focus:ring-4 focus:ring-primary/10 hover:border-border-hover',
-                    $slots['icon-left'] ? 'pl-10' : ''
+                    $slots['icon-left'] ? 'pl-10' : '',
+                    $slots['icon-right'] ? 'pr-10' : ''
                 ]"
             />
+
+            <!-- Icon Right -->
+            <div v-if="$slots['icon-right']" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-primary transition-colors">
+                <slot name="icon-right" />
+            </div>
         </div>
 
         <p v-if="error" class="text-xs text-red-500 font-medium ml-1 flex items-center gap-1">
@@ -35,16 +42,21 @@
 
 <script setup>
 import { AlertCircle } from 'lucide-vue-next'
+import { useId, computed } from 'vue'
 
-defineProps({
+const props = defineProps({
     modelValue: [String, Number],
     label: String,
     placeholder: String,
     type: { type: String, default: 'text' },
     error: String,
     disabled: Boolean,
-    required: Boolean
+    required: Boolean,
+    id: String
 })
 
 defineEmits(['update:modelValue'])
+
+const generatedId = useId()
+const inputId = computed(() => props.id || generatedId)
 </script>

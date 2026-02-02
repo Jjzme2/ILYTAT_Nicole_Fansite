@@ -142,7 +142,12 @@ function formatListToHtml(title: string, items: { displayName: string, email: st
     `
 }
 
+import { requireAdmin } from '../../utils/auth'
+
 export default defineEventHandler(async (event) => {
+    // Verify Admin/System permissions
+    await requireAdmin(event)
+
     const config = useRuntimeConfig()
 
     // Check for test override

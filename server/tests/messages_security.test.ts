@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+// Hoisted mocks for auth
+const mocks = vi.hoisted(() => {
+    return {
+        getUserFromEvent: vi.fn()
+    }
+})
+
 describe('Message Quota Security', () => {
     let resetAllHandler: any
     let resetQuotaHandler: any
@@ -9,7 +16,6 @@ describe('Message Quota Security', () => {
     const mockCreateError = vi.fn((err) => err)
     const mockDefineEventHandler = (handler: any) => handler
     const mockUseRuntimeConfig = vi.fn(() => ({ public: {} }))
-    const mockGetUserFromEvent = vi.fn()
 
     // Firebase Mock
     const mockBatch = {
@@ -56,10 +62,17 @@ describe('Message Quota Security', () => {
         vi.stubGlobal('readBody', mockReadBody)
         vi.stubGlobal('createError', mockCreateError)
         vi.stubGlobal('useRuntimeConfig', mockUseRuntimeConfig)
-        vi.stubGlobal('getUserFromEvent', mockGetUserFromEvent)
         vi.stubGlobal('useFirebaseAdmin', () => ({ db: mockDb }))
 
+        // Use the hoisted mock for stubGlobal as well (just in case)
+        vi.stubGlobal('getUserFromEvent', mocks.getUserFromEvent)
+
         vi.clearAllMocks()
+
+        // Mock the auth module so imported functions are mocked
+        vi.mock('../utils/auth', () => ({
+            getUserFromEvent: mocks.getUserFromEvent
+        }))
 
         // Import handlers
         resetAllHandler = (await import('../api/messages/reset-all-quotas.post')).default
@@ -68,26 +81,27 @@ describe('Message Quota Security', () => {
 
     afterEach(() => {
         vi.unstubAllGlobals()
+        vi.clearAllMocks()
     })
 
     // --- Reset All Quotas Tests ---
 
     it('reset-all-quotas should REJECT when not authenticated', async () => {
-        mockGetUserFromEvent.mockRejectedValue({ statusCode: 401 })
+        mocks.getUserFromEvent.mockRejectedValue({ statusCode: 401 })
 
         await expect(resetAllHandler({})).rejects.toHaveProperty('statusCode', 401)
         expect(mockDb.collection).not.toHaveBeenCalled()
     })
 
     it('reset-all-quotas should REJECT non-admin user', async () => {
-        mockGetUserFromEvent.mockResolvedValue({ role: 'user' })
+        mocks.getUserFromEvent.mockResolvedValue({ role: 'user' })
 
         await expect(resetAllHandler({})).rejects.toHaveProperty('statusCode', 403)
         expect(mockDb.collection).not.toHaveBeenCalled()
     })
 
     it('reset-all-quotas should ALLOW admin', async () => {
-        mockGetUserFromEvent.mockResolvedValue({ role: 'admin' })
+        mocks.getUserFromEvent.mockResolvedValue({ role: 'admin' })
 
         const result = await resetAllHandler({})
 
@@ -96,7 +110,7 @@ describe('Message Quota Security', () => {
     })
 
     it('reset-all-quotas should ALLOW creator', async () => {
-        mockGetUserFromEvent.mockResolvedValue({ role: 'creator' })
+        mocks.getUserFromEvent.mockResolvedValue({ role: 'creator' })
 
         const result = await resetAllHandler({})
 
@@ -107,7 +121,7 @@ describe('Message Quota Security', () => {
     // --- Reset Single Quota Tests ---
 
     it('reset-quota should REJECT when not authenticated', async () => {
-        mockGetUserFromEvent.mockRejectedValue({ statusCode: 401 })
+        mocks.getUserFromEvent.mockRejectedValue({ statusCode: 401 })
         mockReadBody.mockResolvedValue({ userId: 'user123' })
 
         await expect(resetQuotaHandler({})).rejects.toHaveProperty('statusCode', 401)
@@ -115,7 +129,7 @@ describe('Message Quota Security', () => {
     })
 
     it('reset-quota should REJECT non-admin user', async () => {
-        mockGetUserFromEvent.mockResolvedValue({ role: 'user' })
+        mocks.getUserFromEvent.mockResolvedValue({ role: 'user' })
         mockReadBody.mockResolvedValue({ userId: 'user123' })
 
         await expect(resetQuotaHandler({})).rejects.toHaveProperty('statusCode', 403)
@@ -123,7 +137,7 @@ describe('Message Quota Security', () => {
     })
 
     it('reset-quota should ALLOW admin', async () => {
-        mockGetUserFromEvent.mockResolvedValue({ role: 'admin' })
+        mocks.getUserFromEvent.mockResolvedValue({ role: 'admin' })
         mockReadBody.mockResolvedValue({ userId: 'user123' })
 
         const result = await resetQuotaHandler({})

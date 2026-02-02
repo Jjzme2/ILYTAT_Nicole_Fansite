@@ -56,3 +56,32 @@ export const getUserFromEvent = async (event: any) => {
         })
     }
 }
+
+/**
+ * Enforces admin access via either:
+ * 1. Admin Secret (Bearer token) - For system/scheduler calls
+ * 2. Admin/Creator User Role - For human admin actions
+ */
+export const requireAdmin = async (event: any) => {
+    const config = useRuntimeConfig()
+    const authHeader = getRequestHeader(event, 'Authorization')
+
+    // 1. Check for Admin Secret (System/Scheduler Access)
+    // We strictly match 'Bearer <secret>'
+    if (config.adminSecret && authHeader === `Bearer ${config.adminSecret}`) {
+        return { role: 'admin', uid: 'system', email: 'system@internal' }
+    }
+
+    // 2. Check for User Token (Admin User Access)
+    // This throws 401 if no token, or 403 if insufficient permissions
+    const user = await getUserFromEvent(event)
+
+    if (user.role !== 'admin' && user.role !== 'creator') {
+        throw createError({
+            statusCode: 403,
+            message: 'Forbidden: Insufficient permissions'
+        })
+    }
+
+    return user
+}

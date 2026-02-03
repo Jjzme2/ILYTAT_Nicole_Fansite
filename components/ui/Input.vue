@@ -1,6 +1,6 @@
 <template>
     <div class="space-y-1.5">
-        <label v-if="label" class="text-xs font-bold text-muted uppercase tracking-wider ml-1">
+        <label v-if="label" :for="inputId" class="text-xs font-bold text-muted uppercase tracking-wider ml-1">
             {{ label }} <span v-if="required" class="text-semantic-error">*</span>
         </label>
         
@@ -11,12 +11,15 @@
             </div>
 
             <input
+                :id="inputId"
                 :value="modelValue"
                 @input="$emit('update:modelValue', $event.target.value)"
                 :type="type"
                 :placeholder="placeholder"
                 :disabled="disabled"
                 :required="required"
+                :aria-invalid="!!error"
+                :aria-describedby="error ? `${inputId}-error` : undefined"
                 :class="[
                     'w-full bg-background border rounded-xl p-2.5 outline-none transition-all duration-200 placeholder:text-muted/50 text-sm',
                     error 
@@ -27,7 +30,7 @@
             />
         </div>
 
-        <p v-if="error" class="text-xs text-red-500 font-medium ml-1 flex items-center gap-1">
+        <p v-if="error" :id="`${inputId}-error`" class="text-xs text-red-500 font-medium ml-1 flex items-center gap-1">
             <AlertCircle class="w-3 h-3" /> {{ error }}
         </p>
     </div>
@@ -35,16 +38,20 @@
 
 <script setup>
 import { AlertCircle } from 'lucide-vue-next'
+import { useId } from 'vue'
 
-defineProps({
+const props = defineProps({
     modelValue: [String, Number],
     label: String,
     placeholder: String,
     type: { type: String, default: 'text' },
     error: String,
     disabled: Boolean,
-    required: Boolean
+    required: Boolean,
+    id: { type: String, default: null }
 })
 
 defineEmits(['update:modelValue'])
+
+const inputId = props.id || useId()
 </script>

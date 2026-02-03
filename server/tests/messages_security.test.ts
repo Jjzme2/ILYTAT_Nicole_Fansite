@@ -1,5 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+// Hoist mocks to access them inside vi.mock factory
+const mocks = vi.hoisted(() => ({
+    getUserFromEvent: vi.fn()
+}))
+
+vi.mock('../utils/auth', () => ({
+    getUserFromEvent: mocks.getUserFromEvent
+}))
+
 describe('Message Quota Security', () => {
     let resetAllHandler: any
     let resetQuotaHandler: any
@@ -9,7 +18,7 @@ describe('Message Quota Security', () => {
     const mockCreateError = vi.fn((err) => err)
     const mockDefineEventHandler = (handler: any) => handler
     const mockUseRuntimeConfig = vi.fn(() => ({ public: {} }))
-    const mockGetUserFromEvent = vi.fn()
+    const mockGetUserFromEvent = mocks.getUserFromEvent
 
     // Firebase Mock
     const mockBatch = {

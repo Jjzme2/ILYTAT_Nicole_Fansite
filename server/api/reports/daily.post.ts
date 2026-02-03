@@ -1,5 +1,4 @@
-
-
+import { getUserFromEvent } from '../../utils/auth'
 
 interface DailyStats {
     date: string
@@ -144,6 +143,33 @@ function formatListToHtml(title: string, items: { displayName: string, email: st
 
 export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig()
+
+    // --- SECURITY CHECK ---
+    const authHeader = getRequestHeader(event, 'Authorization')
+    const secret = config.adminSecret
+    let isAuthenticated = false
+
+    // 1. Check System Secret (Cron/Internal)
+    if (secret && authHeader === `Bearer ${secret}`) {
+        isAuthenticated = true
+    }
+
+    // 2. Check Admin User (Manual trigger)
+    if (!isAuthenticated) {
+        try {
+            const user = await getUserFromEvent(event)
+            if (user.role === 'admin' || user.role === 'creator') {
+                isAuthenticated = true
+            }
+        } catch (e) {
+            // Ignore token errors, will fall through
+        }
+    }
+
+    if (!isAuthenticated) {
+        throw createError({ statusCode: 401, message: 'Unauthorized' })
+    }
+    // ---------------------
 
     // Check for test override
     let forceRecipient = null

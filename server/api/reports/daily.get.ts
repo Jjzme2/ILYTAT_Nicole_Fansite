@@ -1,10 +1,27 @@
+import { getUserFromEvent } from '../../utils/auth'
+
 // GET endpoint to manually trigger the daily report (for testing)
 export default defineEventHandler(async (event) => {
+    // 1. Authenticate Caller
+    try {
+        const user = await getUserFromEvent(event)
+        if (user.role !== 'admin' && user.role !== 'creator') {
+            throw createError({ statusCode: 403, message: 'Forbidden' })
+        }
+    } catch (e: any) {
+        throw createError({ statusCode: 401, message: 'Unauthorized' })
+    }
+
     console.log('[Daily Report] Manual trigger via GET request')
+    const config = useRuntimeConfig()
 
     try {
+        // 2. Call POST with System Secret
         const result = await $fetch('/api/reports/daily', {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${config.adminSecret}`
+            }
         })
 
         return {

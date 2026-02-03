@@ -72,7 +72,7 @@
 import { 
     Loader2, BellOff, Briefcase, AlertTriangle, Gift, Zap, Check, ArrowRight
 } from 'lucide-vue-next'
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, writeBatch } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, writeBatch, limit } from 'firebase/firestore'
 
 definePageMeta({
     middleware: 'auth'
@@ -92,9 +92,11 @@ onMounted(() => {
     const unsubscibers = []
     
     if (user.value?.uid) {
+        // Optimized: Limit to 100 recent notifications to prevent fetching entire history
         const userQ = query(
             collection($db, 'users', user.value.uid, 'notifications'),
-            orderBy('createdAt', 'desc')
+            orderBy('createdAt', 'desc'),
+            limit(100)
         )
         const unsub1 = onSnapshot(userQ, (snap) => {
             const personal = snap.docs.map(d => ({ id: d.id, ...d.data(), _source: 'personal' }))
@@ -105,7 +107,8 @@ onMounted(() => {
     
     // 2. Global (Admin/Creator)
     if (isAdmin.value || isCreator.value) {
-        const adminQ = query(collection($db, 'notifications'), orderBy('createdAt', 'desc'))
+        // Optimized: Limit to 100 global notifications
+        const adminQ = query(collection($db, 'notifications'), orderBy('createdAt', 'desc'), limit(100))
         const unsub2 = onSnapshot(adminQ, (snap) => {
              const admin = snap.docs.map(d => ({ id: d.id, ...d.data(), _source: 'admin' }))
              updateNotifs(admin, 'admin')
@@ -170,9 +173,15 @@ const getTypeStyles = (type) => {
         default: return { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-600 dark:text-gray-400' }
     }
 }
+// Optimized: Shared formatter instance to avoid re-creation in render loops
+const dateFormatter = new Intl.DateTimeFormat('default', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+})
+
 const formatTime = (ts) => {
     if (!ts) return ''
     const date = ts.toDate ? ts.toDate() : new Date(ts)
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    return dateFormatter.format(date)
 }
 </script>

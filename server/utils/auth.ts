@@ -56,3 +56,27 @@ export const getUserFromEvent = async (event: any) => {
         })
     }
 }
+
+export const requireAdmin = async (event: any) => {
+    const config = useRuntimeConfig()
+    const authHeader = getRequestHeader(event, 'Authorization')
+
+    // 1. System/Cron Check (via Secret)
+    // Only check if adminSecret is configured to avoid "Bearer " matching empty secret
+    if (config.adminSecret && authHeader === `Bearer ${config.adminSecret}`) {
+        return { role: 'system', uid: 'system' }
+    }
+
+    // 2. User Check (via Token)
+    // getUserFromEvent will throw 401 if no token or invalid
+    const user = await getUserFromEvent(event)
+
+    if (user.role === 'admin' || user.role === 'creator') {
+        return user
+    }
+
+    throw createError({
+        statusCode: 403,
+        message: 'Forbidden: Admin access required'
+    })
+}

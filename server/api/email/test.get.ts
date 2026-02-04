@@ -1,4 +1,8 @@
 export default defineEventHandler(async (event) => {
+    // 🛡️ Security: Require Admin
+    await requireAdmin(event)
+
+    const authHeader = getRequestHeader(event, 'Authorization')
     const query = getQuery(event)
     const to = query.to as string
 
@@ -20,6 +24,9 @@ export default defineEventHandler(async (event) => {
     try {
         const result = await $fetch('/api/email/send', {
             method: 'POST',
+            headers: {
+                Authorization: authHeader || ''
+            },
             body: {
                 to,
                 subject: '🎉 ILYTAT Email Test - Success!',

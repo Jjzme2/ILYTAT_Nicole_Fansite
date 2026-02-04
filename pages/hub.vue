@@ -630,6 +630,9 @@ const fetchRoomContent = async () => {
         // Add Sort
         constraints.push(orderBy('createdAt', 'desc'))
 
+        // Limit to 50 items for performance
+        constraints.push(limit(50))
+
         const q = query(collection($db, 'posts'), ...constraints)
         const snapshot = await getDocs(q)
         posts.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))

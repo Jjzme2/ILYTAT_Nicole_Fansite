@@ -1,5 +1,6 @@
 import { getAuth } from 'firebase-admin/auth'
 import { useFirebaseAdmin } from './firebaseAdmin'
+import { getRequestHeader, createError } from 'h3'
 
 // Helper to extract the token from headers
 const getToken = (event: any) => {
@@ -55,4 +56,26 @@ export const getUserFromEvent = async (event: any) => {
             message: 'Unauthorized: Invalid token'
         })
     }
+}
+
+export const requireAdmin = async (event: any) => {
+    const config = useRuntimeConfig()
+    const secret = config.adminSecret
+    const authHeader = getRequestHeader(event, 'Authorization')
+
+    // 1. Check for System Secret (Service-to-Service or Cron)
+    if (secret && authHeader === `Bearer ${secret}`) {
+        return { uid: 'system', role: 'admin' }
+    }
+
+    // 2. Check for User Token (Admin User)
+    const user = await getUserFromEvent(event)
+    if (user.role === 'admin' || user.role === 'developer') {
+        return user
+    }
+
+    throw createError({
+        statusCode: 403,
+        message: 'Forbidden: Admin access required'
+    })
 }

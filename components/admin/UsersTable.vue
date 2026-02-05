@@ -27,15 +27,15 @@
                                 :class="getRoleBadgeClass(r)"
                             >
                                 {{ r }}
-                                <button @click="$emit('removeRole', u, r)" class="hover:text-red-600 rounded-full p-0.5 transition"><XCircle class="w-3 h-3"/></button>
+                                <button @click="$emit('removeRole', u, r)" class="hover:text-red-600 rounded-full p-0.5 transition" aria-label="Remove role"><XCircle class="w-3 h-3"/></button>
                             </span>
                             
                             <!-- Quick Add Dropdown -->
                             <div class="relative group">
-                                <button class="px-2 py-0.5 rounded-full border border-dashed border-muted text-muted hover:border-primary hover:text-primary transition flex items-center justify-center">
+                                <button class="px-2 py-0.5 rounded-full border border-dashed border-muted text-muted hover:border-primary hover:text-primary transition flex items-center justify-center" aria-label="Add role">
                                     <Plus class="w-3 h-3" />
                                 </button>
-                                <div class="absolute top-full left-0 mt-1 bg-surface border border-border shadow-xl rounded-xl p-1 hidden group-hover:grid z-50 w-32 animate-in fade-in slide-in-from-top-1">
+                                <div class="absolute top-full left-0 mt-1 bg-surface border border-border shadow-xl rounded-xl p-1 hidden group-hover:grid group-focus-within:grid z-50 w-32 animate-in fade-in slide-in-from-top-1">
                                     <button 
                                         v-for="opt in ['admin', 'creator', 'developer', 'user']" 
                                         :key="opt" 
@@ -60,6 +60,7 @@
                             @click="$emit('notify', u)" 
                             class="p-2 hover:bg-indigo-50 text-indigo-600 rounded-lg transition" 
                             title="Send Notification"
+                            aria-label="Send Notification"
                         >
                             <Bell class="w-4 h-4" />
                         </button>

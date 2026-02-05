@@ -93,16 +93,16 @@
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <button v-if="task.status !== 'done'" @click="updateTaskStatus(task.id, 'done')" class="p-2 hover:bg-green-50 text-green-600 rounded-lg transition" title="Mark Done">
+                    <button v-if="task.status !== 'done'" @click="updateTaskStatus(task.id!, 'done')" class="p-2 hover:bg-green-50 text-green-600 rounded-lg transition" title="Mark Done" aria-label="Mark Done">
                         <Check class="w-5 h-5" />
                     </button>
-                    <button @click="updateTaskStatus(task.id, 'in_progress')" class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition" title="Mark In Progress">
+                    <button @click="updateTaskStatus(task.id!, 'in_progress')" class="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition" title="Mark In Progress" aria-label="Mark In Progress">
                         <RefreshCw class="w-5 h-5" />
                     </button>
-                    <button @click="archiveTask(task)" class="p-2 hover:bg-amber-50 text-amber-600 rounded-lg transition" title="Archive">
+                    <button @click="archiveTask(task)" class="p-2 hover:bg-amber-50 text-amber-600 rounded-lg transition" title="Archive" aria-label="Archive">
                         <Archive class="w-5 h-5" />
                     </button>
-                    <button @click="deleteTask(task.id)" class="p-2 hover:bg-red-50 text-red-600 rounded-lg transition opacity-0 group-hover:opacity-100">
+                    <button @click="deleteTask(task.id!)" class="p-2 hover:bg-red-50 text-red-600 rounded-lg transition opacity-0 group-hover:opacity-100 focus:opacity-100" aria-label="Delete">
                         <Trash2 class="w-5 h-5" />
                     </button>
                 </div>

@@ -16,3 +16,8 @@
 **Vulnerability:** Found `POST /api/messages/reset-all-quotas` and `POST /api/messages/reset-quota` endpoints that allowed resetting user messaging quotas without any authentication or authorization.
 **Learning:** Admin-only tools created for "internal use" or convenience often lack security controls because developers assume they are hidden. Always verify auth on EVERY endpoint.
 **Prevention:** Added `getUserFromEvent` check to ensure the caller has 'admin' or 'creator' role.
+
+## 2026-02-18 - [High] Unbounded Input Array in Public Endpoint
+**Vulnerability:** The `server/api/users/public.post.ts` endpoint accepted an unbounded array of `userIds`, allowing an attacker to request thousands of IDs at once, leading to potential database exhaustion and denial of service.
+**Learning:** Even with caching (LRU), the initial fetch logic (`db.getAll(...refs)`) can be overwhelmed if input size isn't validated. Caching only protects repeated reads, not massive initial batches.
+**Prevention:** Always enforce strict length limits on array inputs for public APIs (e.g., max 100 items). Fail fast before any processing or database calls.

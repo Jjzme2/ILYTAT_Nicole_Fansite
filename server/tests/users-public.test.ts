@@ -117,4 +117,14 @@ describe('Public Users Endpoint', () => {
         expect(mockGetAll).not.toHaveBeenCalled() // Should utilize cache (even for nulls)
         expect(result2).toEqual([])
     })
+
+    it('should throw error if more than 100 userIds requested', async () => {
+        const userIds = Array.from({ length: 101 }, (_, i) => `u${i}`)
+        mockReadBody.mockResolvedValue({ userIds })
+
+        await expect(handler({})).rejects.toEqual(expect.objectContaining({
+            statusCode: 400,
+            message: 'Too many user IDs requested. Limit is 100.'
+        }))
+    })
 })

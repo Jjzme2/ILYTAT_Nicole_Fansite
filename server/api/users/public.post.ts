@@ -14,6 +14,13 @@ export default defineEventHandler(async (event) => {
         return []
     }
 
+    if (userIds.length > 100) {
+        throw createError({
+            statusCode: 400,
+            message: 'Too many user IDs requested. Limit is 100.'
+        })
+    }
+
     // Deduplicate
     const uniqueIds = [...new Set(userIds)] as string[]
 

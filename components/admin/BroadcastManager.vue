@@ -386,10 +386,12 @@ const deactivateBroadcast = async (id) => {
     }
 }
 
+const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+
 const formatDate = (timestamp) => {
     if (!timestamp) return ''
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
-    return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+    return dateFormatter.format(date)
 }
 
 watch(() => props.initialTarget, (u) => {

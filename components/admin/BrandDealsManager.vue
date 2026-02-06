@@ -168,10 +168,12 @@ const getStatusColor = (status) => {
     }
 }
 
+const dateFormatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
+
 const formatDate = (timestamp) => {
     if (!timestamp) return ''
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
-    return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(date)
+    return dateFormatter.format(date)
 }
 
 onMounted(() => {
